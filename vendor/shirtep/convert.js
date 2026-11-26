@@ -13,13 +13,13 @@
   const SAMPLE_RATE = 48000;
   const CAPTURE_MEM_BYTES = 320e6;     // memoria máxima para los cuadros capturados (10 s a 30 fps caben a 512 px)
   const SIDES = [512, 448, 384, 320, 256, 224, 192, 160, 128, 96, 64];
-  const FPS_LIST = [30, 25, 20, 15, 12, 10, 8, 6, 5, 4, 3, 2];
+  const FPS_LIST = [30, 25, 20, 15, 12, 10, 9, 8, 6, 5, 4, 3, 2];
   const Q_MIN = 0.15;
   // Calidad WebP por lado: con menos píxeles conviene comprimir menos.
   const Q_BY_SIDE = { 512: 0.75, 448: 0.7, 384: 0.65, 320: 0.6, 256: 0.55, 224: 0.55, 192: 0.5, 160: 0.5, 128: 0.45, 96: 0.45, 64: 0.4 };
 
   const PROFILES = {
-    sharp: { minSide: 192, minFps: 3 },
+    sharp: { minSide: 192, minFps: 9 },
     balanced: { minSide: 128, minFps: 5 },
     smooth: { minSide: 64, minFps: 8 }
   };
@@ -30,7 +30,7 @@
     return side/512*480 + Math.min(15,fps)*4;
   }
   function captureFpsFor(dur, profile = "sharp") {
-    if (profile === "sharp") return dur <= 10 ? 20 : dur <= 20 ? 12 : dur <= 30 ? 8 : 5;
+    if (profile === "sharp") return dur <= 10 ? 20 : dur <= 20 ? 12 : dur <= 30 ? 10 : 9;
     if (profile === "balanced") return dur <= 10 ? 25 : dur <= 20 ? 20 : dur <= 40 ? 12 : 8;
     return dur <= 10 ? 30 : dur <= 20 ? 25 : dur <= 40 ? 20 : 15;
   }
@@ -958,7 +958,9 @@
     try {
       const cells = rankedCells(an.cells, profile, an.visual.kind === "image")
         .filter(c => (side === "auto" || c.side === +side) && (fps === "auto" || c.fps === +fps));
-      if (!cells.length) throw new Error("El tramo no cabe con la calidad elegida. Acórtalo, cambia el modo de calidad o usa fotograma + audio.");
+      const sharpMotion = profile === "sharp" && an.visual.kind !== "image";
+      const sharpLimitMessage = "El tramo no cabe en 1 MB con al menos 9 FPS y 192 px. Acórtalo o cambia el modo de calidad.";
+      if (!cells.length) throw new Error(sharpMotion ? sharpLimitMessage : "El tramo no cabe con la calidad elegida. Acórtalo, cambia el modo de calidad o usa fotograma + audio.");
       let lastError;
       for (const c of cells.slice(0,4)) {
         checkAbort(signal);
@@ -968,6 +970,7 @@
           return r;
         } catch(e) { if (e.code !== "STICKER_SIZE") throw e; lastError=e; }
       }
+      if (sharpMotion) throw new Error(sharpLimitMessage);
       throw lastError;
     } finally { release(an); }
   }

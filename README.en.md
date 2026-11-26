@@ -32,7 +32,7 @@ Position controls use pixels of the 512 × 512 canvas, with 0.1 px steps; zoom u
 
 ## Sticker quality
 
-The default **Maximum sharpness** mode prioritizes resolution (192 px minimum for animation; 512 px target), reducing frame rate for long clips. **Balanced** and **Maximum smoothness** offer other tradeoffs. Output depends on content and the 1 MB limit; HD is not guaranteed for every 60-second clip. Shorten the selection or use frame + audio if needed. Actual resolution and FPS appear in the result.
+The default **Maximum sharpness** mode prioritizes resolution (192 px minimum for animation; 512 px target), with a minimum **9 FPS** sampling and encoding rate for animations, including long clips. Static or low-motion sources do not gain artificial distinct frames. If both constraints cannot be met, sharp mode does not export the sticker. **Balanced** and **Maximum smoothness** offer other tradeoffs. Output depends on content and the 1 MB limit; HD is not guaranteed for every 60-second clip. Shorten the selection or use frame + audio if needed. Actual resolution and FPS appear in the result.
 
 If TikTok import fails, [SnapTik](https://snaptik.fi/) is offered as an external manual alternative: download authorized content only, then select the local file. Links are not automatically sent to that service and its API is not integrated.
 

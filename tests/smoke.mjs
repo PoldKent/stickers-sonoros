@@ -26,9 +26,10 @@ try {
   const rank=await page.evaluate(()=>{
     const {rankedCells,captureFpsFor}=window.WAAS._internals;
     const cells=[{side:64,fps:20,estado:'ok'},{side:384,fps:5,estado:'baja'},{side:256,fps:10,estado:'ok'}];
-    return {sharp:rankedCells(cells,'sharp')[0].side,smooth:rankedCells(cells,'smooth')[0].side,limit:captureFpsFor(60,'sharp'),reject:rankedCells([cells[0]],'sharp').length};
+    const floor=[{side:512,fps:8,estado:'ok'},{side:384,fps:9,estado:'baja'},{side:192,fps:10,estado:'ok'}];
+    return {sharp:rankedCells(cells,'sharp')[0].side,smooth:rankedCells(cells,'smooth')[0].side,limit:captureFpsFor(60,'sharp'),reject:rankedCells([cells[0]],'sharp').length,floor:rankedCells(floor,'sharp')[0].fps,belowFloor:rankedCells([floor[0]],'sharp').length,has9:window.WAAS.limits.FPS_LIST.includes(9),capture:[1,10,20,30,34,60].map(d=>captureFpsFor(d,'sharp')),image:rankedCells([{side:512,fps:1,estado:'ok'}],'sharp',true).length};
   });
-  assert.deepEqual(rank,{sharp:384,smooth:64,limit:5,reject:0});
+  assert.deepEqual(rank,{sharp:256,smooth:64,limit:9,reject:0,floor:9,belowFloor:0,has9:true,capture:[20,20,12,10,9,9],image:1});
   assert.equal(await page.locator('#quality').inputValue(),'sharp');
   const caps=await page.evaluate(()=>window.WAAS.capabilities());
   assert.equal(caps.opus,true,'Chromium must support Opus');
@@ -317,6 +318,8 @@ try {
     });
     assert(result.side>=192&&result.size<=1000000);
     assert.match(await qualityPage.locator('#quality-result').textContent(),/Calidad final:/);
+    const fps=Number((await qualityPage.locator('#quality-result').textContent()).match(/(\d+) FPS/)[1]);
+    assert(fps>=9);
     await qualityPage.locator('#quality').selectOption('balanced');
     assert.equal(await qualityPage.locator('#sticker-files').isVisible(),false);
   } finally {await qualityPage.close();rmSync(qualityTemp,{recursive:true,force:true});}

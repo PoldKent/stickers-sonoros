@@ -76,7 +76,7 @@ try {
   await wa.evaluate(code=>{(0,eval)(decodeURIComponent(code.slice('javascript:'.length)));},bookmarklet);
   const panel=wa.locator('#ss-local-bridge');
   await panel.waitFor();
-  await panel.locator('input').setInputFiles({name:'sticker.sonoro.json',mimeType:'application/json',buffer:packageBytes});
+  await panel.locator('input[type=file]').setInputFiles({name:'sticker.sonoro.json',mimeType:'application/json',buffer:packageBytes});
   const send=panel.getByRole('button',{name:'Confirmar y enviar al chat abierto'});
   await wa.waitForFunction(()=>!document.querySelector('#ss-local-bridge button').disabled);
   await send.click();
@@ -92,6 +92,10 @@ try {
   assert.equal(await send.isDisabled(),true);
   assert.equal(await wa.evaluate(()=>window.require('WAWebSoundStickerGating').isSoundStickerCreationEnabled()),false);
   await wa.close();
+  await page.route('**/health',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,version:'2026.11.26.5'})}));
+  await page.locator('#check-service').click();
+  await page.waitForFunction(()=>document.querySelector('#service-status').textContent.includes('Actualiza Render'));
+  await page.unroute('**/health');
   assert.deepEqual(errors,[]);
   await page.locator('[data-mode="video"]').click();
   assert.equal(await page.locator('#downloads').isVisible(),false);

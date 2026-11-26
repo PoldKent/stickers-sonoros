@@ -24,7 +24,7 @@ Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
 
 ## Encuadre preciso
 
-Los controles de posición se expresan en píxeles del lienzo de 512 × 512 y admiten pasos de 0,1 px; el zoom admite pasos de 0,01 %. Al arrastrar el vídeo o un deslizador, un imán suave ayuda a alinear el centro o los bordes reales con el lienzo, según el modo de encuadre y el zoom. Sigue arrastrando para liberar el ajuste; también puedes introducir un valor exacto o utilizar las flechas del teclado sin el imán. **Centrar** restablece solo la posición. Las guías visibles son temporales y no aparecen en el sticker.
+Los controles de posición se expresan en píxeles del lienzo de 512 × 512 y admiten pasos de 0,1 px; el zoom admite pasos de 0,01 %. Al arrastrar el vídeo o un deslizador, un imán suave ayuda a alinear el centro o los bordes reales con el lienzo, según el modo de encuadre y el zoom. Sigue arrastrando para liberar el ajuste; también puedes introducir un valor exacto o utilizar las flechas del teclado sin el imán. **Centrar** restablece solo la posición. Las guías visibles son temporales y no aparecen en el sticker. Gira el contenido 90° a la izquierda o derecha, 180°, o selecciona 0°, 90°, 180° o 270°. El encuadre magnético se adapta a la orientación y la rotación se conserva al generar el sticker. El zoom y la posición se mantienen al girar; usa **Centrar** si lo necesitas.
 
 ## Calidad del sticker
 

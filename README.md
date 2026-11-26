@@ -32,7 +32,7 @@ Los controles de posición se expresan en píxeles del lienzo de 512 × 512 y ad
 
 ## Calidad del sticker
 
-El modo predeterminado **Máxima nitidez** prioriza la resolución (mínimo de salida 192 px para animaciones; objetivo 512 px), con menos FPS para clips largos. **Equilibrado** y **Máxima fluidez** permiten otras combinaciones. La calidad final depende del contenido y del límite de 1 MB; no se garantiza HD en todos los vídeos de 60 s. Si no cabe, reduce la duración o usa fotograma + audio. La vista del resultado indica la resolución y los FPS reales.
+El modo predeterminado **Máxima nitidez** prioriza la resolución (mínimo de salida 192 px para animaciones; objetivo 512 px), con una frecuencia de muestreo y codificación de al menos **9 FPS** en animaciones, también para clips largos. No se inventan fotogramas distintos si el origen es estático o tiene menos movimiento. Si no caben ambas condiciones, el modo nitidez no exporta el sticker. **Equilibrado** y **Máxima fluidez** permiten otras combinaciones. La calidad final depende del contenido y del límite de 1 MB; no se garantiza HD en todos los vídeos de 60 s. Si no cabe, reduce la duración o usa fotograma + audio. La vista del resultado indica la resolución y los FPS reales.
 
 Si falla una importación de TikTok, se ofrece [SnapTik](https://snaptik.fi/) como alternativa manual externa: descarga únicamente contenido autorizado y selecciona el archivo local. No se envía el enlace automáticamente ni se integra su API.
 

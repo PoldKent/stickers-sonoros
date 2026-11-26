@@ -6,7 +6,7 @@ ARG DOWNLOADER_BUILD=2026-11-26
 RUN echo "Downloader build ${DOWNLOADER_BUILD}" && pip install --no-cache-dir --upgrade --pre "yt-dlp[default]" && yt-dlp --version && node --version && ffmpeg -version
 RUN useradd --create-home --uid 10001 app
 WORKDIR /app
-COPY importer/server.py importer/public_media.py ./importer/
+COPY importer/server.py importer/public_media.py importer/tiktok_public.py ./importer/
 COPY index.html app.js style.css ./
 COPY vendor/shirtep/ ./vendor/shirtep/
 USER app

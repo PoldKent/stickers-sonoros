@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/render-diagnostic.yml'
+      - 'importer/tiktok_public.py'
   workflow_dispatch:
 permissions:
   contents: read
@@ -39,7 +40,7 @@ jobs:
             echo "Importación no verificada: HTTP $status" | tee -a "$GITHUB_STEP_SUMMARY"
             if grep -iq '^content-type: application/json' "$tmp/media-headers"; then head -c 1000 "$tmp/media"; fi
           fi
-          echo 'Comprobación TikTok de la publicación indicada por el usuario'
+          echo 'Comprobación TikTok de la publicación indicada por el usuario (versión actualmente desplegada)'
           status=$(curl -sS --max-time 180 --max-filesize 83886080 -o "$tmp/tiktok" -D "$tmp/tiktok-headers" -w '%{http_code}' -H "Origin: $origin" -H 'Content-Type: application/json' --data '{"url":"https://www.tiktok.com/@ssillazul/video/7653976843833330952"}' "$base/api/import")
           echo "TikTok HTTP $status"
           if [[ "$status" == 200 ]] && grep -iq '^content-type: video/mp4' "$tmp/tiktok-headers"; then

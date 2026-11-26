@@ -153,7 +153,7 @@ try {
     const backend='https://stickers-sonoros.onrender.com';
     await pages.route(origin+'/**',route=>{
       const path=new URL(route.request().url()).pathname.replace(/^\/stickers-sonoros\//,'')||'index.html';
-      if (!['index.html','app.js','style.css','vendor/shirtep/convert.js','vendor/shirtep/local-send.js'].includes(path)) return route.abort();
+      if (!['index.html','app.js','style.css','vendor/shirtep/convert.js','vendor/shirtep/local-send.js','i18n.js'].includes(path)) return route.abort();
       const type=path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':'text/html';
       return route.fulfill({status:200,contentType:type,body:readFileSync(path)});
     });
@@ -178,7 +178,7 @@ try {
   const staticOrigin='https://poldkent.github.io';
   await staticPage.route(staticOrigin+'/**',route=>{
     const path=new URL(route.request().url()).pathname.replace(/^\/stickers-sonoros\//,'')||'index.html';
-    if (!['index.html','app.js','style.css','vendor/shirtep/convert.js','vendor/shirtep/local-send.js'].includes(path)) return route.abort();
+    if (!['index.html','app.js','style.css','vendor/shirtep/convert.js','vendor/shirtep/local-send.js','i18n.js'].includes(path)) return route.abort();
     const type=path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':'text/html';
     const body=path==='index.html'?readFileSync(path,'utf8').replace('<meta name="sticker-import-endpoint" content="https://stickers-sonoros.onrender.com">','<meta name="sticker-import-endpoint" content="">'):readFileSync(path);
     return route.fulfill({status:200,contentType:type,body});

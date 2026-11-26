@@ -510,11 +510,16 @@ canvas.addEventListener('pointermove', event => {
 });
 canvas.addEventListener('lostpointercapture', () => { drag = undefined; });
 const linkStatus = byId('link-status');
+function showLinkState(message, state = 'info') {
+  linkStatus.dataset.state = state;
+  linkStatus.textContent = message;
+}
 const maxImportBytes = 80 * 1024 * 1024;
 const socialHosts = /^(?:(?:www|m|vm|vt)\.tiktok\.com|tiktok\.com|(?:www\.)?instagram\.com|(?:www\.|m\.)?youtube\.com|youtu\.be)$/i;
 const configuredEndpoint = document.querySelector('meta[name="sticker-import-endpoint"]')?.content.trim() || '';
 // Deployment configuration belongs to the administrator, never to the user.
-const importEndpoint = configuredEndpoint || (!location.hostname.endsWith('.github.io') ? location.origin : '');
+const isPages = location.hostname.endsWith('.github.io');
+const importEndpoint = configuredEndpoint || (!isPages ? location.origin : '');
 try { localStorage.removeItem('sticker-import-endpoint'); } catch {}
 let linkTimer;
 let lastLink = '';
@@ -563,11 +568,12 @@ async function downloadVideo(response, signal) {
 const linkInput = byId('link-input');
 function queueImport() {
   clearTimeout(linkTimer);
-  if (busy) return;
+  if (busy) { showLinkState('Espera a que termine la generación antes de importar.','error'); return; }
   const text = linkInput.value.trim();
   if (text === lastLink && importing) return;
   if (importing) importController?.abort();
-  if (!text) { linkStatus.textContent = ''; return; }
+  if (!text) { showLinkState('Pega un enlace HTTPS de un video.'); return; }
+  showLinkState('Comprobando enlace…','loading');
   linkTimer = setTimeout(() => importLink(false), 500);
 }
 linkInput.addEventListener('input', queueImport);
@@ -584,12 +590,14 @@ linkInput.addEventListener('keydown', event => {
 });
 byId('load-link').onclick = () => { clearTimeout(linkTimer); importLink(true); };
 async function importLink(force) {
-  if (busy) return;
+  if (busy) { showLinkState('Espera a que termine la generación antes de importar.','error'); return; }
   const text = linkInput.value.trim();
   if (!force && text === lastLink) return;
   if (importing && text === lastLink) return;
   let controller, timer;
+  showLinkState('Comprobando enlace…','loading');
   try {
+    if (!text) throw new Error('Pega primero el enlace de un video.');
     const url = httpsUrl(text);
     const social = socialHosts.test(url.hostname);
     // Keep a single YouTube video; do not pass playlist or tracking parameters.
@@ -601,7 +609,7 @@ async function importLink(force) {
     }
     let request = url.href, options = {};
     if (social) {
-      if (!importEndpoint) throw new Error('La descarga de redes sociales aún no está disponible en esta versión del sitio. Puedes elegir un video de tu dispositivo.');
+      if (!importEndpoint) throw new Error('El enlace es de una red social, pero el servidor de descarga todavía no está conectado a esta web. No se ha descargado el video. Puedes seleccionar un MP4 del dispositivo mientras se activa el servicio.');
       const endpoint = new URL(importEndpoint);
       if (endpoint.protocol !== 'https:' && !(endpoint.origin === location.origin && ['localhost','127.0.0.1'].includes(location.hostname))) throw new Error('Servicio de descarga no disponible.');
       request = endpoint.href.replace(/\/$/, '') + '/api/import';
@@ -619,18 +627,23 @@ async function importLink(force) {
     linkInput.setAttribute('aria-busy','true');
     sync();
     timer = setTimeout(() => controller.abort(), 150000);
-    linkStatus.textContent = social ? 'Obteniendo video y audio…' : 'Conectando con el video…';
+    showLinkState(social ? 'Conectando con el servidor de descarga…' : 'Conectando con el video…','loading');
+    if (social) {
+      const health = await fetch(request.replace(/\/api\/import$/, '/health'), {signal:controller.signal,credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer'});
+      if (!health.ok || !(health.headers.get('content-type') || '').includes('application/json') || !(await health.json()).ok) throw new Error('El servidor de descarga no responde correctamente. Vuelve a intentarlo cuando esté disponible.');
+      showLinkState('Obteniendo video y audio…','loading');
+    }
     const response = await fetch(request, {...options, signal:controller.signal, credentials:'omit', referrerPolicy:'no-referrer', cache:'no-store'});
     const file = await downloadVideo(response, controller.signal);
     if (controller.signal.aborted || busy || importController !== controller) return;
     linkStatus.textContent = 'Cargando en el editor…';
     const loaded = await chooseVisual(file);
     if (!controller.signal.aborted && importController === controller) {
-      linkStatus.textContent = loaded ? 'Video listo. Ajusta el tramo y el encuadre en la vista previa.' : 'No se pudo abrir el video: ' + status.textContent;
+      showLinkState(loaded ? 'Video listo. Ajusta el tramo y el encuadre en la vista previa.' : 'No se pudo abrir el video: ' + status.textContent, loaded ? 'success' : 'error');
       if (loaded && matchMedia('(max-width:740px)').matches) byId('preview-title').scrollIntoView({behavior:'smooth',block:'start'});
     }
   } catch (error) {
-    if (!controller || importController === controller) linkStatus.textContent = error.name === 'AbortError' ? 'Importación cancelada o tiempo agotado.' : error instanceof TypeError ? 'No se pudo descargar. Comprueba el enlace o vuelve a intentarlo.' : error.message;
+    if (!controller || importController === controller) showLinkState(error.name === 'AbortError' ? 'Importación cancelada o tiempo agotado.' : error instanceof TypeError ? 'No se pudo conectar con la fuente del video. Comprueba tu conexión o vuelve a intentarlo.' : error.message, 'error');
   } finally {
     clearTimeout(timer);
     if (controller && importController === controller) {
@@ -822,3 +835,7 @@ byId('play-source').onclick = async () => {
     tick();
   } catch (error) { if (previewSession === session) stopSourcePreview(); status.textContent=error.message; }
 };
+
+// Set only after every handler has been registered.
+document.documentElement.dataset.editorReady = 'true';
+showLinkState(importEndpoint ? 'Pega un enlace para comenzar.' : 'Importa un archivo de video mediante un enlace directo. YouTube, TikTok e Instagram requieren el servidor de descarga, todavía sin conectar.');

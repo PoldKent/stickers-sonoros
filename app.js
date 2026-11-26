@@ -108,7 +108,7 @@ const cropAxes = ['pan-x','pan-y'];
 let cropKey = '';
 let guideTimer;
 const clampCrop = (n,min,max) => Math.max(min,Math.min(max,n));
-const quantizeCrop = (n,step) => Math.round(n/step)*step;
+const quantizeCrop = (n,step) => Number((Math.round(n/step)*step).toFixed(2));
 function cropGeometry(media = visual?.frame || visual?.media, zoom = Number(byId('zoom').value)) {
   if (!media) return null;
   const width = media.videoWidth || media.naturalWidth || media.displayWidth;
@@ -159,7 +159,7 @@ function paint(media) {
 }
 function hideCropGuides() {
   clearTimeout(guideTimer);
-  byId('crop-guides').hidden=true;
+  byId('crop-guides').setAttribute('hidden','');
   byId('crop-guide-lines').setAttribute('d','');
 }
 function showCropGuides() {
@@ -176,7 +176,7 @@ function showCropGuides() {
   if(near(top,0))lines.push('M0 2H512');
   if(near(top+g.h,cropSide))lines.push('M0 510H512');
   byId('crop-guide-lines').setAttribute('d',lines.join(' '));
-  byId('crop-guides').hidden=!lines.length;
+  byId('crop-guides').toggleAttribute('hidden',!lines.length);
   clearTimeout(guideTimer);
   guideTimer=setTimeout(hideCropGuides,700);
 }

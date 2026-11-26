@@ -1,5 +1,7 @@
 # Stickers Sonoros
 
+![Stickers Sonoros — brand identity](docs/images/brand.svg)
+
 **Create sound stickers for WhatsApp from your browser.**  
 Video, image or GIF + audio · up to 60 seconds · Español / English.
 
@@ -8,6 +10,8 @@ Video, image or GIF + audio · up to 60 seconds · Español / English.
 [![Automated checks](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml)
 
 ![Illustrative desktop and phone editor layout](docs/images/interface.svg)
+
+[Real screenshots from the latest verified build](https://github.com/PoldKent/stickers-sonoros/actions/runs/45852351963#artifacts) (temporary CI artifacts).
 
 ## How it works
 

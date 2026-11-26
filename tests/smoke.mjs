@@ -57,6 +57,30 @@ try {
     await page.locator('#play-source').click();
     await page.waitForFunction(()=>document.querySelector('#play-source').textContent.includes('Detener'));
     await page.locator('#play-source').click();
+    const pages=await browser.newPage();
+    const origin='https://poldkent.github.io';
+    const backend='https://stickers-sonoros.onrender.com';
+    await pages.route(origin+'/**',route=>{
+      const path=new URL(route.request().url()).pathname.replace(/^\/stickers-sonoros\//,'')||'index.html';
+      if (!['index.html','app.js','style.css','vendor/shirtep/convert.js'].includes(path)) return route.abort();
+      const type=path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':'text/html';
+      return route.fulfill({status:200,contentType:type,body:readFileSync(path)});
+    });
+    const headers={'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type'};
+    await pages.route(backend+'/health',route=>route.fulfill({status:200,headers,contentType:'application/json',body:'{"ok":true}'}));
+    let remoteRequested;
+    await pages.route(backend+'/api/import',route=>{
+      if (route.request().method()==='OPTIONS') return route.fulfill({status:204,headers});
+      remoteRequested=route.request().postDataJSON().url;
+      return route.fulfill({status:200,headers,contentType:'video/webm',body:readFileSync(path)});
+    });
+    await pages.goto(origin+'/stickers-sonoros/');
+    await pages.locator('#link-input').fill('https://www.youtube.com/watch?v=YBB4FHPFVmM');
+    await pages.locator('#load-link').click();
+    await pages.waitForFunction(()=>document.querySelector('#link-status').dataset.state==='success',{},{timeout:20000});
+    assert.equal(remoteRequested,'https://www.youtube.com/watch?v=YBB4FHPFVmM');
+    assert.equal(await pages.locator('#export').isDisabled(),false);
+    await pages.close();
   } finally {rmSync(dir,{recursive:true,force:true});}
   // Verify GitHub Pages without a configured backend: explicit error, never a silent click.
   const staticPage=await browser.newPage();
@@ -65,7 +89,8 @@ try {
     const path=new URL(route.request().url()).pathname.replace(/^\/stickers-sonoros\//,'')||'index.html';
     if (!['index.html','app.js','style.css','vendor/shirtep/convert.js'].includes(path)) return route.abort();
     const type=path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':'text/html';
-    return route.fulfill({status:200,contentType:type,body:readFileSync(path)});
+    const body=path==='index.html'?readFileSync(path,'utf8').replace('<meta name="sticker-import-endpoint" content="https://stickers-sonoros.onrender.com">','<meta name="sticker-import-endpoint" content="">'):readFileSync(path);
+    return route.fulfill({status:200,contentType:type,body});
   });
   await staticPage.goto(staticOrigin+'/stickers-sonoros/');
   await staticPage.locator('#link-input').fill('https://www.youtube.com/watch?v=YBB4FHPFVmM');

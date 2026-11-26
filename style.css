@@ -39,3 +39,30 @@ footer{padding:26px 0 34px;font-size:.82rem}
 
 /* Native sticker workflow takes precedence over the optional video export. */
 #native-bridge .primary{display:block;width:100%;margin-bottom:8px}#native-bridge h4{font-size:1rem}#downloads a{border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--text);text-decoration:none}#check-service{margin-left:8px;text-decoration:underline}#service-status{display:inline-block;margin-left:6px;overflow-wrap:anywhere}button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* Responsive layout: one media preview, comfortable touch targets, no horizontal scroll. */
+.header-tools{display:flex;align-items:center;gap:14px;min-width:0}.language-picker select{font-size:.85rem;padding:7px 9px;min-height:36px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+#mobile-preview-slot:empty,#desktop-preview-slot:empty,.mobile-send-note{display:none}
+.workspace>*{min-width:0}.panel{min-width:0}.stage{max-width:100%}.file-actions a,.file-actions button{overflow-wrap:anywhere}.sticker-preview div{min-width:0}.sticker-preview audio{max-width:100%}
+@media(max-width:740px){
+  header,main,footer{width:calc(100% - 24px);max-width:540px}
+  header{height:auto;min-height:60px;padding:9px 0;gap:8px}
+  .brand{font-size:.9rem;gap:7px}.logo{flex:none;width:32px;height:32px}.header-tools{gap:7px}.header-tools .privacy{display:none}
+  .language-picker select{font-size:16px;min-height:44px;max-width:126px}
+  .intro{padding:18px 0 16px}.intro h1{font-size:clamp(1.75rem,7.2vw,2.45rem);line-height:1.12}.intro p{font-size:.9rem;line-height:1.45}
+  .panel{padding:13px;border-radius:14px}.workspace{gap:12px}.modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-bottom:10px}.modes button{font-size:.76rem;padding:7px 4px;line-height:1.25;overflow-wrap:anywhere}
+  button,select,input[type=number],input[type=file]:not(#visual),.file-actions a,#download{min-height:44px}
+  button,.file-actions a,#download{touch-action:manipulation}.linkbar input,input[type=number],select,#sound{font-size:16px}.linkbar button{font-size:.82rem;padding:8px}.linkbar{align-items:stretch}
+  #links{padding:9px;margin:7px 0 11px}.drop{min-height:80px;padding:9px}.drop small{font-size:.75rem}form{gap:12px}
+  #mobile-preview-slot{border:1px solid var(--line);border-radius:12px;padding:10px;background:#171221}
+  #mobile-preview-slot .heading h2{margin:0 0 9px;font-size:.95rem}#mobile-preview-slot .stage{width:min(100%,320px,52vh)}
+  #source-preview{gap:6px;margin-top:9px}#source-preview button{flex:1 1 42%;font-size:.8rem;line-height:1.2}#source-preview small{width:100%;text-align:center}
+  .row{gap:8px}.row label{min-width:0}.trim-actions{gap:6px}fieldset{padding:9px;margin:0}fieldset label{grid-template-columns:4.5rem minmax(0,1fr);min-height:40px}fieldset input[type=range],#scrub{height:34px;min-width:0;max-width:100%;margin:0}
+  .editor .primary{min-height:48px}.note{line-height:1.45}#demo{min-height:44px}
+  .preview:not(:has(#downloads:not([hidden]),#components:not([hidden]),#native:not([hidden]))){display:none}
+  #downloads{margin-top:0}#downloads a,#downloads button{width:100%;display:grid;place-items:center}#downloads small{line-height:1.45}
+  .sticker-preview{flex-wrap:nowrap;gap:8px}.sticker-preview img{width:84px;height:84px;flex:none}#native-bridge{padding:9px}.mobile-send-note{display:block;font-size:.82rem;line-height:1.5;color:var(--muted)}
+  .file-actions a,.file-actions button{display:flex;align-items:center;justify-content:center;flex:1 1 42%;text-align:center}.file-actions{gap:6px}
+  details ol{padding-left:22px}footer{padding:20px 0 28px;line-height:1.65;overflow-wrap:anywhere}
+}
+@media(max-width:350px){header,main,footer{width:calc(100% - 16px)}.panel{padding:10px}.linkbar{flex-wrap:wrap}.linkbar input{flex:1 1 100%}.linkbar button{flex:1}.sticker-preview{flex-wrap:wrap}}

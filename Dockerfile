@@ -7,7 +7,7 @@ RUN echo "Downloader build ${DOWNLOADER_BUILD}" && pip install --no-cache-dir --
 RUN useradd --create-home --uid 10001 app
 WORKDIR /app
 COPY importer/server.py importer/public_media.py importer/tiktok_public.py ./importer/
-COPY index.html app.js style.css ./
+COPY index.html app.js i18n.js style.css ./
 COPY vendor/shirtep/ ./vendor/shirtep/
 USER app
 ENV PORT=8080 PYTHONUNBUFFERED=1 WEB_ROOT=/app

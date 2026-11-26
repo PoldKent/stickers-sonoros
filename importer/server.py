@@ -27,6 +27,7 @@ WEB_ROOT = Path(os.environ.get("WEB_ROOT", str(Path(__file__).resolve().parent.p
 STATIC_FILES = {
     "/": ("index.html", "text/html; charset=utf-8"),
     "/index.html": ("index.html", "text/html; charset=utf-8"),
+    "/i18n.js": ("i18n.js", "text/javascript; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/style.css": ("style.css", "text/css; charset=utf-8"),
     "/vendor/shirtep/local-send.js": ("vendor/shirtep/local-send.js", "text/javascript; charset=utf-8"),
@@ -38,7 +39,7 @@ MAX_DURATION = 600
 # Sort by the short edge; vertical videos must not be filtered by height.
 FORMAT_SELECTOR = "bv*+ba/b"
 FORMAT_SORT = "res:480,vcodec:h264,acodec:aac"
-SERVICE_VERSION = '2026.11.26.18'
+SERVICE_VERSION = '2026.11.26.19'
 MAX_CLIP_DURATION = 60
 MAX_CLIP_BYTES = 16 * 1024 * 1024
 try:

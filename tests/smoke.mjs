@@ -115,7 +115,19 @@ try {
   await send.click();
   await panel.getByText('WhatsApp confirmó el envío.',{exact:false}).waitFor();
   assert.deepEqual(await wa.evaluate(()=>[window.mockCalls.uploads,window.mockCalls.sends]),[2,2]);
+  await panel.getByRole('button',{name:'Cerrar'}).click();
+  await page.locator('#language').selectOption('en');
+  const enBookmark=await page.locator('#wa-bookmark').getAttribute('href');
+  await wa.evaluate(code=>{(0,eval)(decodeURIComponent(code.slice('javascript:'.length)));},enBookmark);
+  await panel.getByText('Stickers Sonoros · Send to WhatsApp',{exact:true}).waitFor();
+  await panel.locator('input[type=file]').setInputFiles({name:'sticker.sonoro.json',mimeType:'application/json',buffer:packageBytes});
+  const enSend=panel.getByRole('button',{name:'Send sticker with sound'});
+  await wa.waitForFunction(()=>!document.querySelector('#ss-local-bridge button').disabled);
+  await enSend.click();
+  await panel.getByText('WhatsApp confirmed the send.',{exact:false}).waitFor();
+  assert.deepEqual(await wa.evaluate(()=>[window.mockCalls.uploads,window.mockCalls.sends]),[3,3]);
   await wa.close();
+  await page.locator('#language').selectOption('es');
   await page.route('**/health',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,version:'2026.11.26.5'})}));
   await page.locator('#check-service').click();
   await page.waitForFunction(()=>document.querySelector('#service-status').textContent.includes('Actualiza Render'));
@@ -153,7 +165,7 @@ try {
     const backend='https://stickers-sonoros.onrender.com';
     await pages.route(origin+'/**',route=>{
       const path=new URL(route.request().url()).pathname.replace(/^\/stickers-sonoros\//,'')||'index.html';
-      if (!['index.html','app.js','style.css','vendor/shirtep/convert.js','vendor/shirtep/local-send.js'].includes(path)) return route.abort();
+      if (!['index.html','app.js','style.css','vendor/shirtep/convert.js','vendor/shirtep/local-send.js','i18n.js'].includes(path)) return route.abort();
       const type=path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':'text/html';
       return route.fulfill({status:200,contentType:type,body:readFileSync(path)});
     });
@@ -178,7 +190,7 @@ try {
   const staticOrigin='https://poldkent.github.io';
   await staticPage.route(staticOrigin+'/**',route=>{
     const path=new URL(route.request().url()).pathname.replace(/^\/stickers-sonoros\//,'')||'index.html';
-    if (!['index.html','app.js','style.css','vendor/shirtep/convert.js','vendor/shirtep/local-send.js'].includes(path)) return route.abort();
+    if (!['index.html','app.js','style.css','vendor/shirtep/convert.js','vendor/shirtep/local-send.js','i18n.js'].includes(path)) return route.abort();
     const type=path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':'text/html';
     const body=path==='index.html'?readFileSync(path,'utf8').replace('<meta name="sticker-import-endpoint" content="https://stickers-sonoros.onrender.com">','<meta name="sticker-import-endpoint" content="">'):readFileSync(path);
     return route.fulfill({status:200,contentType:type,body});
@@ -252,5 +264,44 @@ try {
     await durations.locator('#ve').dispatchEvent('change');
     await durations.waitForFunction(()=>document.querySelector('#export').disabled);
   }finally{await durations.close();rmSync(temp,{recursive:true,force:true});}
+  // Mobile layout and language switch preserve the active media and project.
+  for(const width of [320,390,740,1024]){
+    const phone=await browser.newPage({viewport:{width,height:844},isMobile:width<=740,hasTouch:width<=740});
+    const pageErrors=[];
+    phone.on('pageerror',error=>pageErrors.push(error.message));
+    await phone.goto('http://127.0.0.1:8000');
+    await phone.waitForFunction(()=>document.documentElement.dataset.editorReady==='true'&&!!window.StickerUI);
+    assert.equal(await phone.locator('#preview-media').evaluate(e=>e.parentElement.id),width<=740?'mobile-preview-slot':'desktop-preview-slot');
+    assert(await phone.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
+    await phone.locator('#language').selectOption('en');
+    assert.equal(await phone.locator('html').getAttribute('lang'),'en');
+    assert.match(await phone.locator('#export').textContent(),/Create sound sticker/);
+    assert.equal(await phone.locator('#link-input').getAttribute('placeholder'),'Web page, video, image or audio');
+    await phone.locator('#load-link').click();
+    await phone.waitForFunction(()=>document.querySelector('#link-status').textContent.includes('Paste a video link first.'));
+    await phone.locator('#demo').click();
+    await phone.waitForFunction(()=>!document.querySelector('#export').disabled);
+    await phone.waitForFunction(()=>document.querySelector('#selection-info').textContent.includes('Duration: 2.00 s of 60 s allowed.'));
+    assert(await phone.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
+    await phone.locator('#language').selectOption('es');
+    assert.match(await phone.locator('#selection-info').textContent(),/Duración: 2\.00 s/);
+    assert.equal(await phone.locator('#export').isDisabled(),false);
+    await phone.locator('#language').selectOption('en');
+    assert.match(await phone.locator('#selection-info').textContent(),/Duration: 2\.00 s/);
+    const englishBookmark=await phone.locator('#wa-bookmark').getAttribute('href');
+    assert.match(decodeURIComponent(englishBookmark),/\)\("en"\)$/);
+    if(width===390){
+      await phone.locator('#export').click();
+      await phone.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
+      assert.match(await phone.locator('#sticker-state').textContent(),/SHA-256 link verified/);
+      assert.match(await phone.locator('#package-download').textContent(),/Save sound sticker package/);
+      assert(await phone.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
+    }
+    await phone.reload();
+    assert.equal(await phone.locator('#language').inputValue(),'en');
+    assert.match(await phone.locator('#export').textContent(),/Create sound sticker/);
+    assert.deepEqual(pageErrors,[]);
+    await phone.close();
+  }
   console.log('OK: ejemplo, exportación, WebP/Ogg, vínculo de audio y limpieza al cambiar fuente.');
 } finally { await browser.close(); }

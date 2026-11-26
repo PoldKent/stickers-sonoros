@@ -91,7 +91,9 @@ function sync() {
   byId('position').hidden = !visual;
   for (const id of ['pan-x','pan-y','zoom','pan-x-value','pan-y-value','zoom-value','center-crop','rotation','rotate-left','rotate-right','rotate-half']) byId(id).disabled = busy || importing || !!stickerJob || !visual;
   if (!visual) hideCropGuides();
-  byId('scrub-row').hidden = !visual || visual.kind === 'image';
+  byId('scrub-row').hidden = !visual || visual.kind === 'image' || !!result;
+  byId('scrub').disabled = busy || importing || loadingVisual || loadingAudio || !!stickerJob || !!result;
+  updateTimeline();
   byId('source-preview').hidden = !visual || !audio || loadingVisual || loadingAudio || busy || importing || !!result;
   byId('play-source').disabled = busy || importing;
   byId('use-frame').hidden = !visual || visual.kind === 'image' || !audio;
@@ -217,7 +219,7 @@ function range(prefix, duration) {
   byId(prefix + 'e').max = max;
   byId(prefix + 'e').value = max;
   updateTrimReadouts();
-  if (prefix === 'v') { byId('scrub').max = max; byId('scrub').value = 0; byId('scrub-time').textContent = '0.00 s'; }
+  if (prefix === 'v') { byId('scrub').max = max; byId('scrub').value = 0; updateTimeline(0); }
 }
 
 function loadVideo(video, url) {
@@ -427,26 +429,48 @@ async function gifAt(item, time) {
   return image;
 }
 
-async function previewFrame(at) {
-  if (!visual || busy) return;
+// Serialize seeks so dragging a slider never races GIF decoding or video seek events.
+let pendingSeek, seekTask;
+function previewFrame(at) {
+  if (!visual || busy || stickerJob) return Promise.resolve();
   stopSourcePreview();
-  const item = visual;
-  const time = Math.max(0, Math.min(item.duration || 0, typeof at === 'number' ? at : (byId('vs').valueAsNumber || 0)));
-  try {
-    if (item.kind === 'video') await seek(item.media, time);
-    const media = item.kind === 'gif' ? await gifAt(item, time) : item.media;
-    if (visual === item && !busy) paint(media);
-  } catch (error) {
-    if (visual === item && !busy) status.textContent = error.message;
-  }
+  const item=visual;
+  const time=Math.max(0,Math.min(item.duration||0,typeof at==='number'?at:(byId('vs').valueAsNumber||0)));
+  pendingSeek={item,time};
+  if (!seekTask) seekTask=(async()=>{
+    while(pendingSeek){
+      const {item,time}=pendingSeek;pendingSeek=undefined;
+      if(visual!==item||busy||stickerJob)continue;
+      try {
+        if(item.kind==='video')await seek(item.media,time);
+        const media=item.kind==='gif'?await gifAt(item,time):item.media;
+        if(visual===item&&!busy&&!stickerJob&&!pendingSeek)paint(media);
+      } catch(error) {if(visual===item&&!busy&&!pendingSeek)status.textContent=error.message;}
+    }
+  })().finally(()=>{seekTask=undefined;});
+  return seekTask;
+}
+function updateTimeline(at) {
+  const scrub=byId('scrub'),max=Number(scrub.max)||1;
+  if(Number.isFinite(at))scrub.value=Math.max(0,Math.min(max,at)).toFixed(2);
+  const current=Number(scrub.value)||0;
+  byId('scrub-time').textContent=formatTrimTime(current);
+  byId('scrub-total').textContent=formatTrimTime(max);
+  scrub.setAttribute('aria-valuetext',formatTrimTime(current)+' / '+formatTrimTime(max));
+  const row=byId('scrub-row');
+  row.style.setProperty('--playhead',current/max*100+'%');
+  row.style.setProperty('--trim-start',Number(byId('vs').value)/max*100+'%');
+  row.style.setProperty('--trim-end',Number(byId('ve').value)/max*100+'%');
+}
+function updateScrub(){
+  updateTimeline();
+  return previewFrame(byId('scrub').valueAsNumber);
 }
 byId('fit').addEventListener('change', () => { if (visual) { paint(visual.frame || visual.media); } previewFrame(byId('scrub').valueAsNumber); });
-byId('vs').addEventListener('change', () => { editTrim('vs'); byId('scrub').value = byId('vs').value; updateScrub(); });
-byId('ve').addEventListener('change', () => { editTrim('ve'); byId('scrub').value = byId('ve').value; updateScrub(); });
+for(const id of ['vs','ve'])byId(id).addEventListener('change',()=>{editTrim(id);updateTimeline(byId(id).valueAsNumber);updateScrub();});
 for (const id of ['motion','fit']) byId(id).addEventListener('change', clearResult);
-function updateScrub() { byId('scrub-time').textContent = Number(byId('scrub').value).toFixed(2) + ' s'; previewFrame(byId('scrub').valueAsNumber); }
-byId('scrub').addEventListener('change', updateScrub);
-byId('scrub').addEventListener('input', () => { byId('scrub-time').textContent = Number(byId('scrub').value).toFixed(2) + ' s'; });
+byId('scrub').addEventListener('input',updateScrub);
+byId('scrub').addEventListener('change',updateScrub);
 
 function trimmed(prefix) {
   const start = byId(prefix + 's').valueAsNumber;
@@ -560,6 +584,7 @@ byId('project').addEventListener('submit', async event => {
     if (!window.MediaRecorder || !canvas.captureStream || !window.AudioContext) throw new Error('Este navegador no permite exportar el clip. Prueba con Chrome o Edge actualizado.');
     const videoTrim = visual.kind === 'image' ? null : trimmed('v');
     const soundTrim = mode === 'video' ? videoTrim : trimmed('a');
+    if(seekTask)await seekTask;
     busy = true;
     clearResult();
     exportJob = new AbortController();
@@ -1080,7 +1105,7 @@ byId('mark-start').onclick = () => {
   const max = Number(byId('ve').max);
   byId('vs').value = Math.min(start, max - .01).toFixed(2);
   if(Number(byId('ve').value)<=Number(byId('vs').value))byId('ve').value=max;
-  clearResult(); sync(); previewFrame(Number(byId('vs').value));
+  clearResult(); sync(); updateTimeline(Number(byId('vs').value)); previewFrame(Number(byId('vs').value));
 };
 byId('mark-end').onclick = () => {
   if (busy || !visual) return;
@@ -1228,14 +1253,20 @@ byId('play-source').onclick = async () => {
   try {
     const v = item.kind === 'image' ? null : trimmed('v');
     const a = mode === 'video' ? v : trimmed('a');
+    const cursor=Number(byId('scrub').value);
+    const offset=v&&cursor>=v.start&&cursor<v.start+v.duration?Math.min(cursor-v.start,Math.max(0,a.duration-.01)):0;
+    const position=v?v.start+offset:0;
     const context = new AudioContext();
     session = {context,item};
     previewSession = session;
     byId('play-source').textContent = '■ Detener';
     await context.resume();
     if (previewSession !== session) return;
-    if (item.kind === 'video') await seek(item.media,v.start);
+    if(seekTask)await seekTask;
     if (previewSession !== session) return;
+    if (item.kind === 'video') await seek(item.media,position);
+    if (previewSession !== session) return;
+    if(v)updateTimeline(position);
     const sound = context.createBufferSource();
     session.sound = sound;
     sound.buffer = audio;
@@ -1243,22 +1274,23 @@ byId('play-source').onclick = async () => {
     if (item.kind === 'video') await item.media.play();
     if (previewSession !== session) { item.media?.pause?.(); return; }
     const start = context.currentTime;
-    sound.start(start,a.start,a.duration);
-    sound.onended = () => { if (previewSession === session) stopSourcePreview(); };
+    sound.start(start,a.start+offset,a.duration-offset);
+    sound.onended = () => { if (previewSession === session) { if(mode==='video'&&v)updateTimeline(v.start+v.duration); stopSourcePreview(); } };
     const loop = mode === 'mix' && byId('motion').value === 'loop';
     const tick = async () => {
       if (previewSession !== session) return;
       try {
-        const elapsed = context.currentTime-start;
+        const elapsed = offset+context.currentTime-start;
         if (item.kind === 'video') {
           if (item.media.currentTime >= v.start+v.duration || item.media.ended) {
             item.media.pause();
             if (loop) { await seek(item.media,v.start); if (previewSession === session) await item.media.play(); }
           }
-          if (previewSession === session) paint(item.media);
+          if (previewSession === session) {paint(item.media);updateTimeline(Math.min(v.start+v.duration,item.media.currentTime));}
         } else if (item.kind === 'gif') {
-          const frame = await gifAt(item,v.start+(loop?elapsed%v.duration:Math.min(elapsed,v.duration-.001)));
-          if (previewSession === session) paint(frame);
+          const time=v.start+(loop?elapsed%v.duration:Math.min(elapsed,v.duration-.001));
+          const frame = await gifAt(item,time);
+          if (previewSession === session) {paint(frame);updateTimeline(time);}
         } else paint(item.media);
         if (previewSession === session) session.raf=requestAnimationFrame(tick);
       } catch (error) { if (previewSession === session) { stopSourcePreview(); status.textContent=error.message; } }

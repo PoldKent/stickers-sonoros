@@ -34,3 +34,5 @@ footer{padding:26px 0 34px;font-size:.82rem}
 #link-status{line-height:1.45}#link-status[data-state=error]{color:#ffb9b9;border-left:2px solid #e77b7b;padding-left:9px}#link-status[data-state=success]{color:#b1e9c4}#link-status[data-state=loading]{color:var(--accent)}
 
 #media-results{margin-top:10px;border-top:1px solid var(--line);padding-top:9px}.media-heading{display:flex;justify-content:space-between;gap:8px;color:var(--text);margin-bottom:6px}.media-heading span{color:var(--muted)}#media-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;max-height:180px;overflow:auto}.media-item{display:grid;text-align:left;gap:3px;min-width:0;overflow:hidden}.media-item small{white-space:nowrap;text-overflow:ellipsis;overflow:hidden;font-size:.72rem}.media-item strong{font-size:.82rem}
+
+#native-bridge{border:1px solid var(--line);padding:12px;border-radius:10px;margin:12px 0}#native-bridge h4{margin:0 0 8px;font-size:.9rem}#native-bridge details{margin-top:10px;font-size:.8rem}#native-bridge p{margin:8px 0}#wa-bookmark{cursor:grab;border:1px dashed var(--accent)}#copy-bookmark{font-size:.78rem}#bridge-status{color:var(--accent)}

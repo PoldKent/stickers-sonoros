@@ -28,12 +28,13 @@ STATIC_FILES = {
     "/index.html": ("index.html", "text/html; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/style.css": ("style.css", "text/css; charset=utf-8"),
+    "/vendor/shirtep/local-send.js": ("vendor/shirtep/local-send.js", "text/javascript; charset=utf-8"),
     "/vendor/shirtep/convert.js": ("vendor/shirtep/convert.js", "text/javascript; charset=utf-8"),
     "/vendor/shirtep/LICENSE.md": ("vendor/shirtep/LICENSE.md", "text/plain; charset=utf-8"),
 }
 MAX_BYTES = 80 * 1024 * 1024
 MAX_DURATION = 600
-SERVICE_VERSION = '2026.11.26.10'
+SERVICE_VERSION = '2026.11.26.11'
 MAX_CLIP_BYTES = 16 * 1024 * 1024
 try:
     DOWNLOADER_VERSION = package_version('yt-dlp')

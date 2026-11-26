@@ -29,6 +29,68 @@ try {
   assert.match(await page.locator('#sticker-state').textContent(),/verificada/);
   const sizes = await page.evaluate(async()=>Promise.all(['webp-file','ogg-file'].map(async id=>(await (await fetch(document.getElementById(id).href)).blob()).size)));
   assert(sizes.every(size=>size>0&&size<=1000000));
+  // Export the actual converted package and execute the bookmarklet against mock WA modules.
+  const [download] = await Promise.all([page.waitForEvent('download'),page.locator('#package-download').click()]);
+  assert.equal(download.suggestedFilename(),'sticker.sonoro.json');
+  const packageBytes=readFileSync(await download.path());
+  const pack=JSON.parse(packageBytes.toString('utf8'));
+  assert.equal(pack.format,'stickers-sonoros/1');
+  assert.equal(pack.info.segundosAudio,2);
+  const bookmarklet=await page.locator('#wa-bookmark').getAttribute('href');
+  assert.match(bookmarklet,/^javascript:/);
+  const wa=await browser.newPage();
+  // This route is completely local; no real account or WhatsApp request is used.
+  await wa.route('https://web.whatsapp.com/**',route=>route.fulfill({status:200,contentType:'text/html',body:'<!doctype html><title>Mock WhatsApp</title><body></body>'}));
+  await wa.goto('https://web.whatsapp.com/');
+  await wa.evaluate(()=>{
+    const chat={name:'Mi chat de prueba'};
+    window.mockCalls={uploads:0,sends:0,confirm:false,enabled:true};
+    window.confirm=()=>window.mockCalls.confirm;
+    const modules={
+      WAWebChatCollection:{ChatCollection:{getActive:()=>chat}},
+      WAWebSoundStickerGating:{isSoundStickerCreationEnabled:()=>window.mockCalls.enabled},
+      WAWebMmsMediaTypes:{MEDIA_TYPES:{AUDIO:'audio'}},
+      WAWebMediaGetUploadOriginForChat:()=>1,
+      WAWebCreateMediaUploadMetrics:()=>({}),
+      WAWebUploadManagerMainThread:{encryptAndUpload:async params=>{
+        window.mockCalls.uploads++;
+        if(params.type!=='audio'||!params.blob.size)throw Error('invalid upload');
+        return {url:'https://example.invalid/audio',directPath:'/audio',mediaKey:new Uint8Array(32),encFilehash:new Uint8Array(32),mediaKeyTimestamp:1};
+      }},
+      WAWebSoundStickerUtils:{isCompleteStickerAudio:a=>a.mimetype==='audio/ogg; codecs=opus'&&a.filehash.length===44},
+      WAWebMediaOpaqueData:{createFromData:async blob=>blob},
+      WAWebMediaPrep:class {
+        constructor(type,data){this.type=type;this.data=data;}
+        async sendToChat({chat:destination,options}){
+          const media=await this.data;
+          if(destination!==chat||this.type!=='sticker'||media.mimetype!=='image/webp'||!options.stickerAudio)throw Error('invalid send');
+          window.mockCalls.sends++;
+          return {messageSendResult:'OK',msg:{stickerAudio:options.stickerAudio,ack:1}};
+        }
+      },
+      WAWebSendMsgResultAction:{SendMsgResult:{OK:'OK'}},
+      WAWebAck:{ACK:{SENT:1}}
+    };
+    window.require=name=>{if(!(name in modules))throw Error('missing '+name);return modules[name];};
+  });
+  await wa.evaluate(code=>{(0,eval)(decodeURIComponent(code.slice('javascript:'.length)));},bookmarklet);
+  const panel=wa.locator('#ss-local-bridge');
+  await panel.waitFor();
+  await panel.locator('input').setInputFiles({name:'sticker.sonoro.json',mimeType:'application/json',buffer:packageBytes});
+  const send=panel.getByRole('button',{name:'Confirmar y enviar al chat abierto'});
+  await wa.waitForFunction(()=>!document.querySelector('#ss-local-bridge button').disabled);
+  await send.click();
+  assert.equal(await wa.evaluate(()=>window.mockCalls.uploads),0);
+  await wa.evaluate(()=>{window.mockCalls.confirm=true;window.mockCalls.enabled=false;});
+  await send.click();
+  assert.match(await panel.locator('[role=status]').textContent(),/no está habilitada/);
+  assert.equal(await wa.evaluate(()=>window.mockCalls.uploads),0);
+  await wa.evaluate(()=>{window.mockCalls.enabled=true;});
+  await send.click();
+  await panel.getByText('WhatsApp confirmó el envío.',{exact:false}).waitFor();
+  assert.deepEqual(await wa.evaluate(()=>[window.mockCalls.uploads,window.mockCalls.sends]),[1,1]);
+  assert.equal(await send.isDisabled(),true);
+  await wa.close();
   assert.deepEqual(errors,[]);
   await page.locator('[data-mode="video"]').click();
   assert.equal(await page.locator('#downloads').isVisible(),false);
@@ -62,7 +124,7 @@ try {
     const backend='https://stickers-sonoros.onrender.com';
     await pages.route(origin+'/**',route=>{
       const path=new URL(route.request().url()).pathname.replace(/^\/stickers-sonoros\//,'')||'index.html';
-      if (!['index.html','app.js','style.css','vendor/shirtep/convert.js'].includes(path)) return route.abort();
+      if (!['index.html','app.js','style.css','vendor/shirtep/convert.js','vendor/shirtep/local-send.js'].includes(path)) return route.abort();
       const type=path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':'text/html';
       return route.fulfill({status:200,contentType:type,body:readFileSync(path)});
     });
@@ -87,7 +149,7 @@ try {
   const staticOrigin='https://poldkent.github.io';
   await staticPage.route(staticOrigin+'/**',route=>{
     const path=new URL(route.request().url()).pathname.replace(/^\/stickers-sonoros\//,'')||'index.html';
-    if (!['index.html','app.js','style.css','vendor/shirtep/convert.js'].includes(path)) return route.abort();
+    if (!['index.html','app.js','style.css','vendor/shirtep/convert.js','vendor/shirtep/local-send.js'].includes(path)) return route.abort();
     const type=path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':'text/html';
     const body=path==='index.html'?readFileSync(path,'utf8').replace('<meta name="sticker-import-endpoint" content="https://stickers-sonoros.onrender.com">','<meta name="sticker-import-endpoint" content="">'):readFileSync(path);
     return route.fulfill({status:200,contentType:type,body});

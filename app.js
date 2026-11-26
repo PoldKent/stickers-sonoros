@@ -81,6 +81,8 @@ function sync() {
   byId('scrub-row').hidden = !visual || visual.kind === 'image';
   byId('source-preview').hidden = !visual || !audio || loadingVisual || loadingAudio || busy || importing || !!result;
   byId('play-source').disabled = busy || importing;
+  byId('use-frame').hidden = !visual || visual.kind === 'image' || !audio;
+  byId('use-frame').disabled = busy || importing || loadingVisual || loadingAudio;
   byId('trim-actions').hidden = byId('scrub-row').hidden;
   // Hidden trim fields must not block form submission.
   for (const [ids,hidden] of [[['vs','ve'],byId('visual-trim').hidden],[['as','ae'],byId('audio-trim').hidden]]) for (const id of ids) { byId(id).required = !hidden; byId(id).disabled = hidden || busy; }
@@ -526,7 +528,7 @@ let lastLink = '';
 function switchToVideo() {
   if (mode !== 'video') modes.find(button => button.dataset.mode === 'video').click();
 }
-function cancelImport() { clearTimeout(linkTimer); importController?.abort(); lastLink = ''; }
+function cancelImport() { if (mediaModeChange) return; clearTimeout(linkTimer); importController?.abort(); lastLink = ''; }
 byId('cancel-link').onclick = cancelImport;
 byId('visual').addEventListener('change', cancelImport, { capture: true });
 drop.addEventListener('drop', cancelImport, { capture: true });
@@ -536,18 +538,33 @@ function httpsUrl(value) {
   if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Introduce una URL HTTPS válida.');
   return url;
 }
-async function downloadVideo(response, signal) {
-  if (!response.ok) {
-    let message = 'Error de descarga (' + response.status + ').';
-    if ((response.headers.get('content-type') || '').includes('application/json')) {
-      try { message = (await response.json()).error || message; } catch {}
-    }
-    throw new Error(message);
+const mediaExtensions = {
+  mp4:'video/mp4', m4v:'video/mp4', webm:'video/webm', mov:'video/quicktime',
+  mp3:'audio/mpeg', wav:'audio/wav', m4a:'audio/mp4', ogg:'audio/ogg', opus:'audio/ogg', aac:'audio/aac', flac:'audio/flac',
+  jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', webp:'image/webp', gif:'image/gif', avif:'image/avif'
+};
+const mediaKind = type => /^(video|audio|image)\//.exec(type)?.[1];
+function inferredType(url) {
+  try { return mediaExtensions[new URL(url).pathname.split('.').pop().toLowerCase()] || ''; }
+  catch { return ''; }
+}
+function detectedType(response, hint = '') {
+  const declared = (response.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+  if (mediaKind(declared)) return declared;
+  if (declared === 'application/octet-stream' || !declared) return (hint.endsWith('/unknown') ? '' : hint) || inferredType(response.url);
+  return declared;
+}
+async function checkResponse(response) {
+  if (response.ok) return;
+  let message = 'Error de descarga (' + response.status + ').';
+  if ((response.headers.get('content-type') || '').includes('application/json')) {
+    try { message = (await response.json()).error || message; } catch {}
   }
-  const type = (response.headers.get('content-type') || '').split(';')[0];
-  if (type && !type.startsWith('video/') && type !== 'application/octet-stream') throw new Error('El enlace no devolvió un archivo de video.');
+  throw new Error(message);
+}
+async function readBounded(response, signal, maximum, report = false) {
   const total = Number(response.headers.get('content-length')) || 0;
-  if (total > maxImportBytes) throw new Error('El video supera 80 MB.');
+  if (total > maximum) throw new Error('El archivo supera el límite permitido.');
   if (!response.body) throw new Error('El navegador no permite leer esta descarga.');
   const reader = response.body.getReader(), chunks = [];
   let bytes = 0;
@@ -557,13 +574,132 @@ async function downloadVideo(response, signal) {
       if (signal.aborted) throw new DOMException('Cancelado','AbortError');
       if (done) break;
       bytes += value.byteLength;
-      if (bytes > maxImportBytes) throw new Error('El video supera 80 MB.');
+      if (bytes > maximum) throw new Error('El archivo supera el límite permitido.');
       chunks.push(value);
-      linkStatus.textContent = 'Descargando… ' + (total ? Math.min(100,Math.round(100*bytes/total)) + '%' : (bytes/1048576).toFixed(1) + ' MB');
+      if (report) showLinkState('Cargando… ' + (total ? Math.min(100,Math.round(100*bytes/total)) + '%' : (bytes/1048576).toFixed(1) + ' MB'),'loading');
     }
   } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
-  if (!bytes) throw new Error('El video está vacío.');
-  return new File(chunks, type === 'video/webm' ? 'video-importado.webm' : 'video-importado.mp4', {type: type.startsWith('video/') ? type : 'video/mp4'});
+  if (!bytes) throw new Error('El archivo está vacío.');
+  return chunks;
+}
+async function readMedia(response, signal, hint = '') {
+  await checkResponse(response);
+  const type = detectedType(response,hint), kind = mediaKind(type);
+  if (!kind || type === 'image/svg+xml') throw new Error('El recurso no devolvió un video, imagen o audio compatible.');
+  const chunks = await readBounded(response,signal,maxImportBytes,true);
+  const ext = Object.keys(mediaExtensions).find(key => mediaExtensions[key] === type) || kind;
+  return new File(chunks,kind+'-importado.'+ext,{type});
+}
+function findMedia(markup, pageUrl) {
+  const template = document.createElement('template');
+  template.innerHTML = markup;
+  const found = new Map();
+  function add(value, hint = '') {
+    if (!value || found.size >= 60) return;
+    try {
+      const url = new URL(value,pageUrl);
+      if (url.protocol !== 'https:' || url.username || url.password) return;
+      const type = inferredType(url.href) || hint;
+      const kind = mediaKind(type);
+      if (!kind || type === 'image/svg+xml') return;
+      if (!found.has(url.href)) found.set(url.href,{url:url.href,type,kind});
+    } catch {}
+  }
+  const attr = (el, name) => el.getAttribute(name);
+  for (const el of template.content.querySelectorAll('video,audio,video source,audio source,img,picture source,a[href],meta[property],meta[name]')) {
+    const tag = el.tagName.toLowerCase();
+    if (tag === 'meta') {
+      const key = (attr(el,'property') || attr(el,'name') || '').toLowerCase();
+      if (/^(og:image(?::url|:secure_url)?|twitter:image(?::src)?)$/.test(key)) add(attr(el,'content'),'image/unknown');
+      if (/^og:video(?::url|:secure_url)?$/.test(key)) add(attr(el,'content'),'video/unknown');
+      if (/^og:audio(?::url|:secure_url)?$/.test(key)) add(attr(el,'content'),'audio/unknown');
+    } else if (tag === 'a') add(attr(el,'href'));
+    else {
+      const parent = el.parentElement?.tagName.toLowerCase();
+      const kind = tag === 'video' || parent === 'video' ? 'video' : tag === 'audio' || parent === 'audio' ? 'audio' : 'image';
+      const hint = attr(el,'type') || kind+'/unknown';
+      for (const key of ['src','data-src','data-original']) add(attr(el,key),hint);
+      if (tag === 'video') add(attr(el,'poster'),'image/unknown');
+    }
+  }
+  return [...found.values()];
+}
+function clearMediaResults() {
+  byId('media-results').hidden = true;
+  byId('media-list').replaceChildren();
+}
+function showMediaResults(items) {
+  clearMediaResults();
+  byId('media-count').textContent = String(items.length);
+  for (const item of items) {
+    const row = document.createElement('button');
+    row.type = 'button'; row.className = 'media-item';
+    const label = document.createElement('strong');
+    label.textContent = ({video:'▶ Video',image:'▧ Imagen',audio:'♫ Audio'})[item.kind];
+    const detail = document.createElement('small');
+    const url = new URL(item.url);
+    detail.textContent = url.hostname + ' · ' + (url.pathname.split('/').pop() || item.kind).slice(0,70);
+    row.append(label,detail);
+    row.addEventListener('click',()=>loadDetected(item));
+    byId('media-list').append(row);
+  }
+  byId('media-results').hidden = !items.length;
+}
+let mediaModeChange = false;
+function selectMediaMode(next, keepVisual = false, keepAudio = false) {
+  if (mode === next) return;
+  const oldVisual = visual, oldAudio = audio;
+  if (keepVisual) visual = undefined;
+  mediaModeChange = true;
+  try { modes.find(button=>button.dataset.mode===next).click(); }
+  finally { mediaModeChange = false; }
+  if (keepVisual) visual = oldVisual;
+  if (keepAudio && oldAudio) { audio = oldAudio; range('a',audio.duration); }
+  sync();
+}
+async function openMedia(file) {
+  const kind = mediaKind(file.type);
+  if (kind === 'audio') {
+    if (mode === 'video') selectMediaMode(visual ? 'mix' : 'image',!!visual);
+    await chooseAudio(file);
+    return !!audio ? (visual ? 'Audio cargado. Ajusta el tramo.' : 'Audio cargado. Selecciona una imagen o GIF para acompañarlo.') : '';
+  }
+  if (kind === 'image') {
+    selectMediaMode(file.type === 'image/gif' ? 'mix' : 'image',false,!!audio);
+    return await chooseVisual(file) ? (audio ? 'Imagen cargada. Ajusta el encuadre.' : 'Imagen cargada. Añade una pista de audio.') : '';
+  }
+  selectMediaMode(audio && mode !== 'video' ? 'mix' : 'video',false,!!audio && mode!=='video');
+  let loaded = await chooseVisual(file);
+  if (!loaded && visual && mode==='video' && !audio) {
+    selectMediaMode('mix',true);
+    return 'Video cargado sin pista de audio compatible. Añade un audio.';
+  }
+  return loaded ? 'Video listo. Ajusta el tramo y el encuadre en la vista previa.' : '';
+}
+async function loadDetected(item) {
+  if (busy || importing) return;
+  const controller = new AbortController();
+  importController = controller; importing = true;
+  byId('load-link').hidden = true; byId('cancel-link').hidden = false;
+  const timer = setTimeout(()=>controller.abort(),120000);
+  sync();
+  try {
+    showLinkState('Cargando recurso seleccionado…','loading');
+    const response = await fetch(item.url,{signal:controller.signal,credentials:'omit',referrerPolicy:'no-referrer'});
+    const file = await readMedia(response,controller.signal,item.type);
+    if (controller.signal.aborted) return;
+    const message = await openMedia(file);
+    showLinkState(message || status.textContent || 'No se pudo abrir el recurso.',message?'success':'error');
+  } catch(error) {
+    showLinkState(error.name==='AbortError'?'Importación cancelada.':error instanceof TypeError?'El sitio no permite acceder al archivo desde esta web (CORS). Si tienes permiso, importa el archivo original.':error.message,'error');
+  } finally {
+    clearTimeout(timer);
+    if (importController===controller) {
+      importController=undefined; importing=false;
+      byId('load-link').hidden=false; byId('cancel-link').hidden=true;
+      sync();
+    }
+  }
 }
 const linkInput = byId('link-input');
 function queueImport() {
@@ -617,7 +753,8 @@ async function importLink(force) {
     }
     importController?.abort();
     stopSourcePreview();
-    switchToVideo();
+    clearMediaResults();
+    if (social) switchToVideo();
     controller = new AbortController();
     importController = controller;
     importing = true;
@@ -634,16 +771,28 @@ async function importLink(force) {
       showLinkState('Obteniendo video y audio…','loading');
     }
     const response = await fetch(request, {...options, signal:controller.signal, credentials:'omit', referrerPolicy:'no-referrer', cache:'no-store'});
-    const file = await downloadVideo(response, controller.signal);
+    await checkResponse(response);
+    const type = detectedType(response,inferredType(url.href));
+    if (!social && (type === 'text/html' || type === 'application/xhtml+xml')) {
+      const chunks = await readBounded(response,controller.signal,2*1024*1024);
+      const markup = await new Blob(chunks).text();
+      const items = findMedia(markup,response.url || url.href);
+      if (controller.signal.aborted || importController!==controller) return;
+      showMediaResults(items);
+      showLinkState(items.length ? 'Selecciona el video, imagen o audio que quieras utilizar.' : 'No se encontraron archivos multimedia directos en el HTML accesible.',items.length?'success':'error');
+      return;
+    }
+    const file = await readMedia(response, controller.signal,social?'video/mp4':inferredType(url.href));
     if (controller.signal.aborted || busy || importController !== controller) return;
     linkStatus.textContent = 'Cargando en el editor…';
-    const loaded = await chooseVisual(file);
+    const message = await openMedia(file);
+    const loaded = !!message;
     if (!controller.signal.aborted && importController === controller) {
-      showLinkState(loaded ? 'Video listo. Ajusta el tramo y el encuadre en la vista previa.' : 'No se pudo abrir el video: ' + status.textContent, loaded ? 'success' : 'error');
+      showLinkState(message || 'No se pudo abrir el recurso: ' + status.textContent, loaded ? 'success' : 'error');
       if (loaded && matchMedia('(max-width:740px)').matches) byId('preview-title').scrollIntoView({behavior:'smooth',block:'start'});
     }
   } catch (error) {
-    if (!controller || importController === controller) showLinkState(error.name === 'AbortError' ? 'Importación cancelada o tiempo agotado.' : error instanceof TypeError ? 'No se pudo conectar con la fuente del video. Comprueba tu conexión o vuelve a intentarlo.' : error.message, 'error');
+    if (!controller || importController === controller) showLinkState(error.name === 'AbortError' ? 'Importación cancelada o tiempo agotado.' : error instanceof TypeError ? 'No se pudo acceder al enlace. La página puede bloquear el acceso desde otras webs (CORS) o estar desconectada.' : error.message, 'error');
   } finally {
     clearTimeout(timer);
     if (controller && importController === controller) {
@@ -838,4 +987,29 @@ byId('play-source').onclick = async () => {
 
 // Set only after every handler has been registered.
 document.documentElement.dataset.editorReady = 'true';
-showLinkState(importEndpoint ? 'Pega un enlace para comenzar.' : 'Importa un archivo de video mediante un enlace directo. YouTube, TikTok e Instagram requieren el servidor de descarga, todavía sin conectar.');
+showLinkState(importEndpoint ? 'Pega un enlace para detectar video, imagen o audio.' : 'Importa un archivo de video mediante un enlace directo. YouTube, TikTok e Instagram requieren el servidor de descarga, todavía sin conectar.');
+
+byId('use-frame').onclick = async () => {
+  if (busy || importing || !visual || visual.kind==='image' || !audio) return;
+  stopSourcePreview();
+  try {
+    const cut = mode==='video' ? trimmed('v') : trimmed('a');
+    const original = visual;
+    const at = Math.max(0,Math.min(original.duration-.01,Number(byId('scrub').value)||0));
+    await previewFrame(at);
+    if (visual!==original) return;
+    const blob = await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+    if (!blob || visual!==original) return;
+    selectMediaMode('image',false,true);
+    byId('fit').value='contain';
+    byId('zoom').value=100;
+    byId('pan-x').value=byId('pan-y').value=0;
+    const loaded = await chooseVisual(new File([blob],'fotograma.png',{type:'image/png'}));
+    if (loaded && audio) {
+      byId('as').value=cut.start.toFixed(2);
+      byId('ae').value=(cut.start+cut.duration).toFixed(2);
+      sync();
+      status.textContent='Fotograma seleccionado con el audio original. Puedes ajustar el tramo sonoro.';
+    }
+  } catch (error) { status.textContent=error.message; }
+};

@@ -98,5 +98,26 @@ try {
   await staticPage.waitForFunction(()=>document.querySelector('#link-status').dataset.state==='error');
   assert.match(await staticPage.locator('#link-status').textContent(),/servidor de descarga todavía no está conectado/);
   await staticPage.close();
+  // Detect public HTML resources and combine a selected image with audio.
+  const finder=await browser.newPage();
+  const site='https://media.example';
+  const cors={'Access-Control-Allow-Origin':'*'};
+  await finder.route(site+'/page',route=>route.fulfill({status:200,headers:cors,contentType:'text/html',body:'<meta property="og:image" content="/picture.png"><img src="/picture.png"><audio src="/tone.wav"></audio><video src="/clip.webm"></video><script>throw new Error("remote script must not run")</script>'}));
+  await finder.route(site+'/picture.png',route=>route.fulfill({status:200,headers:cors,contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aK1sAAAAASUVORK5CYII=','base64')}));
+  const wav=Buffer.alloc(44+48000*2);wav.write('RIFF',0);wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(48000,24);wav.writeUInt32LE(96000,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(wav.length-44,40);
+  for(let i=0;i<48000;i++)wav.writeInt16LE(Math.round(Math.sin(2*Math.PI*440*i/48000)*5000),44+i*2);
+  await finder.route(site+'/tone.wav',route=>route.fulfill({status:200,headers:cors,contentType:'audio/wav',body:wav}));
+  await finder.goto('http://127.0.0.1:8000');
+  await finder.locator('#link-input').fill(site+'/page');
+  await finder.locator('#load-link').click();
+  await finder.locator('#media-results').waitFor({state:'visible'});
+  assert.equal(await finder.locator('.media-item').count(),3);
+  await finder.locator('.media-item').filter({hasText:'Imagen'}).click();
+  await finder.waitForFunction(()=>document.querySelector('#link-status').textContent.includes('Imagen cargada'));
+  await finder.locator('.media-item').filter({hasText:'Audio'}).click();
+  await finder.waitForFunction(()=>!document.querySelector('#export').disabled);
+  assert.equal(await finder.locator('[data-mode="image"]').getAttribute('aria-pressed'),'true');
+  assert.match(await finder.locator('#selection-info').textContent(),/1\.00 s/);
+  await finder.close();
   console.log('OK: ejemplo, exportación, WebP/Ogg, vínculo de audio y limpieza al cambiar fuente.');
 } finally { await browser.close(); }

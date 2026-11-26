@@ -6,9 +6,9 @@
 <meta name="description" content="Crea stickers sonoros de hasta 10 segundos para WhatsApp desde un video, imagen o GIF.">
 <title>Stickers Sonoros · Editor web</title>
 <meta name="sticker-import-endpoint" content="https://stickers-sonoros.onrender.com">
-<link rel="stylesheet" href="./style.css?v=2026.11.26.7">
-<script defer src="./vendor/shirtep/convert.js?v=2026.11.26.7"></script>
-<script type="module" src="./app.js?v=2026.11.26.7"></script>
+<link rel="stylesheet" href="./style.css?v=2026.11.26.8">
+<script defer src="./vendor/shirtep/convert.js?v=2026.11.26.8"></script>
+<script type="module" src="./app.js?v=2026.11.26.8"></script>
 </head>
 <body>
 <header><div class="brand"><span class="logo" aria-hidden="true">◖≋</span> Stickers Sonoros</div><span class="privacy"><i></i> Edición local</span></header>
@@ -22,7 +22,7 @@
 <button type="button" data-mode="image" aria-pressed="false">Imagen + audio</button>
 <button type="button" data-mode="mix" aria-pressed="false">Video o GIF + audio</button>
 </div>
-<section id="links"><label for="link-input">Pega el enlace de un video</label><div class="linkbar"><input id="link-input" type="url" placeholder="TikTok, Instagram, YouTube o MP4" autocomplete="off" spellcheck="false"><button id="load-link" type="button" title="Importar o reintentar" aria-label="Importar video">Importar</button><button id="cancel-link" type="button" hidden>Cancelar</button></div><p id="link-status" role="status" aria-live="polite">Iniciando el editor…</p><noscript><p>Activa JavaScript para importar y editar videos.</p></noscript></section>
+<section id="links"><label for="link-input">Pega un enlace multimedia</label><div class="linkbar"><input id="link-input" type="url" placeholder="Página web, video, imagen o audio" autocomplete="off" spellcheck="false"><button id="load-link" type="button" title="Importar o reintentar" aria-label="Detectar contenido multimedia">Detectar</button><button id="cancel-link" type="button" hidden>Cancelar</button></div><p id="link-status" role="status" aria-live="polite">Iniciando el editor…</p><div id="media-results" hidden><div class="media-heading"><strong>Contenido encontrado</strong><span id="media-count"></span></div><div id="media-list"></div></div><noscript><p>Activa JavaScript para importar y editar videos.</p></noscript></section>
 <form id="project">
 <label class="drop" id="drop"><input type="file" id="visual" accept="video/*"><span class="upload" aria-hidden="true">↑</span><strong id="visual-label">Selecciona o arrastra un video</strong><small id="visual-hint">MP4, WebM u otro video compatible</small></label>
 <label id="sound-row" hidden>Pista de audio <input id="sound" type="file" accept="audio/*,video/*"></label>
@@ -47,15 +47,15 @@
 </section>
 <section class="panel preview" aria-labelledby="preview-title">
 <div class="heading"><h2 id="preview-title">Vista previa</h2><span>512 × 512</span></div>
-<div class="stage"><canvas id="canvas" width="512" height="512" aria-label="Encuadre del clip"></canvas><video id="output" controls playsinline hidden></video><div id="empty"><div class="waves" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div><strong>Pega un enlace o elige un video</strong></div></div>
-<div id="source-preview" hidden><button id="play-source" type="button">▶ Reproducir tramo</button><small>Revisa el video con su sonido antes de generar.</small></div><div id="downloads" hidden><a id="download" class="primary">Guardar para WhatsApp ↓</a><button id="share" type="button" hidden>Compartir archivo de video</button><small id="format-note"></small></div>
+<div class="stage"><canvas id="canvas" width="512" height="512" aria-label="Encuadre del clip"></canvas><video id="output" controls playsinline hidden></video><div id="empty"><div class="waves" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div><strong>Pega un enlace o elige un archivo</strong></div></div>
+<div id="source-preview" hidden><button id="play-source" type="button">▶ Reproducir tramo</button><button id="use-frame" type="button" hidden>Usar fotograma + audio</button><small>Revisa el video con su sonido antes de generar.</small></div><div id="downloads" hidden><a id="download" class="primary">Guardar para WhatsApp ↓</a><button id="share" type="button" hidden>Compartir archivo de video</button><small id="format-note"></small></div>
 <section id="components" hidden><h3>Archivos del sticker sonoro</h3><p id="sticker-state" role="status" aria-live="polite"></p><progress id="sticker-progress" max="1" value="0" hidden></progress><button type="button" id="prepare-sticker" hidden>Reintentar conversión</button><button type="button" id="cancel-sticker" hidden>Cancelar conversión</button><div id="sticker-files" hidden><div class="sticker-preview"><img id="sticker-image" alt="Sticker generado"><div><strong id="sticker-info"></strong><audio id="sticker-audio" controls preload="metadata"></audio></div></div><div class="file-actions"><a download="sticker.webp" id="webp-file">Animación WebP ↓</a><a download="sonido.ogg" id="ogg-file">Audio Ogg ↓</a></div></div><small>Los archivos WebP y Ogg están vinculados mediante metadatos. Adjuntarlos a un chat como archivos no los convierte en un mensaje de sticker con sonido.</small></section>
 <details id="native" hidden open><summary>Enviar como sticker sonoro en WhatsApp</summary><ol><li>Pulsa <b>Guardar para WhatsApp</b> y guarda el vídeo en la galería del teléfono (si estás en PC, transfiérelo al teléfono).</li><li>Abre el chat de WhatsApp en Android o iPhone. Entra en Stickers → Crear sticker y selecciona el vídeo.</li><li>En el editor de WhatsApp toca el icono de audio, elige el sonido original y confirma el envío.</li></ol><a href="https://wa.me/" target="_blank" rel="noopener noreferrer">Abrir WhatsApp</a><p>Si no aparece el botón de audio, tu cuenta todavía no tiene habilitada esta función. Compartir el vídeo no lo envía como sticker. La web no tiene acceso a tus chats ni inicia sesión en tu nombre.</p></details>
 <p class="note">Edición y conversión locales. La creación del mensaje de sticker sonoro se completa en WhatsApp si la cuenta es compatible.</p>
 </section>
 </div>
 </main>
-<footer>Conversor de <a href="https://github.com/Shirtep/WA-audio-stickers">Stickers con sonido, de Shirtep</a> · <a href="./vendor/shirtep/LICENSE.md">Licencia de uso no comercial</a>. · Versión 2026.11.26.7</footer>
+<footer>Conversor de <a href="https://github.com/Shirtep/WA-audio-stickers">Stickers con sonido, de Shirtep</a> · <a href="./vendor/shirtep/LICENSE.md">Licencia de uso no comercial</a>. · Versión 2026.11.26.8</footer>
 <script>
 (function () {
   var status = document.getElementById('link-status');

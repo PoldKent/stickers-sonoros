@@ -2,11 +2,11 @@
 (() => {
   const pairs = [
     ["Stickers Sonoros · Editor web","Stickers Sonoros · Web editor"],
-    ["Crea stickers sonoros de hasta 3 minutos para WhatsApp desde un video, imagen o GIF.","Create sound stickers up to 3 minutes long from video, images or GIFs for WhatsApp."],
+    ["Crea stickers sonoros sin duración fija para WhatsApp desde un video, imagen o GIF.","Create sound stickers without a fixed duration from video, images or GIFs for WhatsApp."],
     ["Edición local","Local editing"],
     ["Dale sonido","Add sound"],
     ["a tu sticker.","to your sticker."],
-    ["Recorta hasta 3 minutos, ajusta el encuadre y prepara tu sticker con sonido.","Trim up to 3 minutes, adjust the frame and create your sticker with sound."],
+    ["Usa el video completo o recorta con las barras. La duración final depende del peso y la memoria.","Use the full video or trim with sliders. Final duration depends on size and memory."],
     ["Tu proyecto","Your project"],
     ["Tipo de proyecto","Project type"],
     ["Video","Video"],
@@ -285,9 +285,11 @@
   pairs.push(...[["Firma del creador (opcional)","Creator signature (optional)"],["Tu nombre o alias","Your name or nickname"],["La firma se incluye en los datos del sticker. Todos incluyen la atribución y el enlace de la app. No se añade texto sobre la imagen.","The signature is included in sticker metadata. All stickers include the app credit and link. No text is added over the image."],["Metadatos del sticker no válidos.","Invalid sticker metadata."],["No se pudo verificar la firma del sticker.","Could not verify the sticker signature."]]);
   pairs.push(["El tramo no cabe en 1 MB con al menos 9 FPS y 192 px. Acórtalo o cambia el modo de calidad.","The selection does not fit within 1 MB at 9 FPS or more and 192 px or more. Shorten it or change quality mode."]);
   pairs.push(...[["Límite de tamaño","Size limit"],["Compatible (imagen hasta 1 MB)","Compatible (image up to 1 MB)"],["Calidad ampliada (hasta 4 MB con audio)","Extended quality (up to 4 MB including audio)"],["WhatsApp podría rechazar imágenes de más de 1 MB. Si sucede, usa Compatible. Para enviar archivos grandes, sustituye el favorito de WhatsApp por el nuevo.","WhatsApp may reject images larger than 1 MB. If that happens, use Compatible. Replace your WhatsApp bookmark to send larger files."],["Este sticker supera 1 MB de imagen. Prueba el envío en tu propio chat. Si falla, usa Compatible.","This sticker exceeds 1 MB of image data. Test in your own chat. If it fails, use Compatible."],["La animación puede reducir su calidad para respetar el tamaño elegido.","Animation quality may be reduced to fit the selected size."],["Máxima nitidez: mínimo 9 FPS y 192 px en animaciones. Si no cabe en el tamaño elegido, reduce la duración o cambia de modo.","Maximum sharpness: at least 9 FPS and 192 px for animations. If it does not fit the selected size, shorten it or change mode."],["El tramo no cabe en 4 MB con al menos 9 FPS y 192 px. Acórtalo o cambia el modo de calidad.","The selection does not fit within 4 MB at 9 FPS or more and 192 px or more. Shorten it or change quality mode."]]);
-  pairs.push(["Selecciona un tramo válido de hasta 180 segundos.","Choose a valid selection of up to 180 seconds."],["Si ya tienes el favorito de esta versión, salta este paso. Sustituye los favoritos anteriores para enviar stickers de más de 60 segundos.","If you already have this version of the bookmark, skip this step. Replace older bookmarks to send stickers longer than 60 seconds."]);
+  pairs.push(["Selecciona un tramo válido de hasta 180 segundos.","Choose a valid selection of up to 180 seconds."],["Si ya tienes el favorito de esta versión, salta este paso. Sustituye los favoritos anteriores para enviar stickers sin límite fijo de duración.","If you already have this version of the bookmark, skip this step. Replace older bookmarks to send stickers without a fixed duration."]);
+  pairs.push(...[["Video: recorte","Video: trim"],["Audio: recorte","Audio: trim"],["Video: inicio","Video: start"],["Video: final","Video: end"],["Audio: inicio","Audio: start"],["Audio: final","Audio: end"],["Inicio","Start"],["Final","End"],["Usar completo","Use full length"],["Tramo seleccionado","Selected range"],["Selecciona un archivo con audio.","Choose a file with audio."],["Selecciona un tramo válido con duración positiva.","Choose a valid positive duration."],["El tramo supera la memoria de captura para esta calidad. Acórtalo o cambia el modo de calidad.","The selection exceeds capture memory for this quality. Shorten it or change quality mode."],["El audio no cabe en 1 MB con la compresión disponible. Acorta el tramo.","Audio does not fit in 1 MB with available compression. Shorten the selection."],["Descarga tu archivo con el nombre original y la extensión .sonoro.json. No lo abras ni lo adjuntes al chat.","Download the file with its original name and .sonoro.json extension. Do not open it or attach it to the chat."]]);
   const exact = new Map(pairs);
   const fragments = [
+    [/^Duración seleccionada: ([\d.]+) s\./,"Selected duration: $1 s."],
     [/^Duración: ([\d.]+) s de (\d+) s permitidos\./, "Duration: $1 s of $2 s allowed."],
     [/^Cargando… /, "Loading… "],
     [/^Error de descarga \((\d+)\)\./, "Download error ($1)."],

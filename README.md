@@ -14,7 +14,7 @@ El conversor local de WebP y Ogg/Opus procede de [Shirtep, revisión 25f7909](ht
 
 La captura de pestañas se ha eliminado. El editor descarga URLs de video HTTPS que permiten CORS directamente. Para TikTok, Instagram Reels y YouTube Shorts, la interfaz usa un servicio propio con yt-dlp y FFmpeg: GitHub Pages no ejecuta Python ni puede resolver esos enlaces por sí solo.
 
-**Estado:** el código del servicio está incluido, pero necesita alojamiento HTTPS independiente. No hay una instancia pública preconfigurada. No es necesario instalar una extensión ni programa en el equipo de quien utiliza el editor.
+**Estado:** la URL pública asignada por Render es https://stickers-sonoros.onrender.com. GitHub Pages está configurado para utilizar ese servidor. La disponibilidad real y la descarga desde redes sociales requieren verificación. No es necesario instalar una extensión ni programa en el equipo de quien utiliza el editor.
 
 ### Despliegue unificado (administrador)
 
@@ -22,7 +22,7 @@ El editor tiene una sola entrada de URL y comienza a importar automáticamente a
 
 - Render: importa el repositorio como Blueprint (archivo `render.yaml` en la raíz). El plan gratuito se propone para pruebas, no garantiza rendimiento suficiente. El servicio utiliza el Dockerfile de la raíz y proporciona HTTPS. Abre la URL asignada al servicio para utilizar el editor completo.
 - Docker local: `docker build -t stickers-sonoros . && docker run --rm -p 8080:8080 stickers-sonoros`. Abre `http://localhost:8080`.
-- GitHub Pages: sigue funcionando para archivos locales y enlaces directos con CORS. Una vez que el administrador tenga la URL HTTPS real del servidor, puede rellenar el atributo `content` de `meta[name=sticker-import-endpoint]` en `index.html` para habilitar la importación social también desde Pages. No hay una instancia desplegada por este cambio.
+- GitHub Pages: utiliza la URL de Render configurada en el atributo `content` de `meta[name=sticker-import-endpoint]` en `index.html`. El sitio servido por Render utiliza su propio origen. Comprueba `/health` y una importación autorizada antes de considerar el servicio operativo.
 - Las pruebas de integración del importador utilizan una respuesta de vídeo simulada; comprobar cada red social contra el servicio real es una prueba distinta.
 
 

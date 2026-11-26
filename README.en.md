@@ -3,7 +3,7 @@
 ![Stickers Sonoros — brand identity](docs/images/brand.svg)
 
 **Create sound stickers for WhatsApp from your browser.**  
-Video, image or GIF + audio · up to 60 seconds · Español / English.
+Video, image or GIF + audio · up to 3 minutes · Español / English.
 
 [**Open app**](https://poldkent.github.io/stickers-sonoros/) · [Render server](https://stickers-sonoros.onrender.com/) · [README en español](README.md) · [❤️ Support the project](SUPPORT.md#english)
 
@@ -18,7 +18,7 @@ Video, image or GIF + audio · up to 60 seconds · Español / English.
 ![Workflow: import, edit, create and send](docs/images/workflow.svg)
 
 1. Paste a public HTTPS media link or choose a local file.
-2. Preview the selection, set start and end (up to 60 seconds), and adjust framing, position or zoom.
+2. Preview the selection, set start and end (up to 3 minutes), and adjust framing, position or zoom.
 3. Select **Create sound sticker**. The editor locally creates a package containing linked WebP and Ogg/Opus files when the browser supports the required codecs.
 4. Follow the four sending steps under the preview. The editor's only download is `sticker.sonoro.json`.
 
@@ -32,9 +32,11 @@ Position controls use pixels of the 512 × 512 canvas, with 0.1 px steps; zoom u
 
 ## Sticker quality
 
+Maximum duration is 180 s. Size and capture-memory limits remain; audio bitrate may be reduced to fit. Real WhatsApp acceptance of 180 s is unverified. Update the bookmark before testing.
+
 **Extended quality:** allows up to 4,000,000 combined WebP and Ogg bytes (audio up to 1 MB), with higher initial quality and capture FPS for short clips. Compatible remains the default and limits each component to 1 MB. WhatsApp acceptance of images over 1 MB is unverified; the upstream converter warns of HTTP 413. Replace the bookmark to try larger packages, first in your own chat. If rejected, use Compatible. Base64 JSON is larger than the original media.
 
-The default **Maximum sharpness** mode prioritizes resolution (192 px minimum for animation; 512 px target), with a minimum **9 FPS** sampling and encoding rate for animations, including long clips. Static or low-motion sources do not gain artificial distinct frames. If both constraints cannot be met, sharp mode does not export the sticker. **Balanced** and **Maximum smoothness** offer other tradeoffs. Output depends on content and the selected size limit; HD is not guaranteed for every 60-second clip. Shorten the selection or use frame + audio if needed. Actual resolution and FPS appear in the result.
+The default **Maximum sharpness** mode prioritizes resolution (192 px minimum for animation; 512 px target), with a minimum **9 FPS** sampling and encoding rate for animations, including long clips. Static or low-motion sources do not gain artificial distinct frames. If both constraints cannot be met, sharp mode does not export the sticker. **Balanced** and **Maximum smoothness** offer other tradeoffs. Output depends on content and the selected size limit; HD is not guaranteed for every 180-second clip. Shorten the selection or use frame + audio if needed. Actual resolution and FPS appear in the result.
 
 If TikTok import fails, [SnapTik](https://snaptik.fi/) is offered as an external manual alternative: download authorized content only, then select the local file. Links are not automatically sent to that service and its API is not integrated.
 
@@ -43,7 +45,7 @@ If TikTok import fails, [SnapTik](https://snaptik.fi/) is offered as an external
 - Direct video, image and audio imports; public media detection on supported pages.
 - Self-hosted yt-dlp importer and a fallback for public TikTok download addresses.
 - Square 512 × 512 editor, playback preview, frame extraction and image/GIF with sound.
-- Initial selection up to 30 seconds; maximum 60 seconds. Quality adapts to the converter's compatible 1 MB per component or extended 4 MB combined limit.
+- Initial selection up to 30 seconds; maximum 180 seconds (3 minutes). Quality adapts to the converter's compatible 1 MB per component or extended 4 MB combined limit.
 - Responsive phone, tablet and desktop layouts with a persistent Spanish/English setting.
 - Local editing and generation without installing applications or browser extensions.
 
@@ -68,7 +70,7 @@ Import, edit and save the `.sonoro.json` file in a supported mobile browser. Tra
 |---|---|
 | Native sound sticker to own chat | User-confirmed real send in .12 |
 | TikTok import | User-confirmed 27.14-second clip in .18 |
-| 60-second package and send | Actual package generation and simulated send in CI; real 60-second send unverified |
+| 180-second package and send | Image + audio generation and mock send tests in CI; real 180-second sending and long animations unverified |
 | Mobile layout and language | Chromium tests at 320, 390, 740 and 1024 px; not physical device tests |
 | Universal social media import | Not guaranteed; depends on source |
 | Sending to every WhatsApp account | Not guaranteed; depends on client and server |

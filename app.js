@@ -15,6 +15,7 @@ let visual;
 let audio;
 let result;
 let resultUrl;
+let compatibleClip, compatibleUrl, mp4Job;
 let visualRequest = 0;
 let audioRequest = 0;
 let loadingVisual = false;
@@ -40,6 +41,12 @@ function closeVisual(item) {
 let stickerJob;
 let clipDuration;
 function clearResult() {
+  mp4Job?.abort(); mp4Job = undefined;
+  if (compatibleUrl) URL.revokeObjectURL(compatibleUrl);
+  compatibleClip = compatibleUrl = undefined;
+  byId('convert-mp4').hidden = true;
+  byId('convert-mp4').disabled = false;
+  byId('mp4-consent').hidden = true;
   stopSourcePreview();
   stickerJob?.abort();
   stickerJob = undefined;
@@ -461,6 +468,8 @@ byId('project').addEventListener('submit', async event => {
     download.download = result.name;
     download.textContent = 'Guardar para WhatsApp (' + extension.toUpperCase() + ') ↓';
     byId('format-note').textContent = extension === 'mp4' ? 'Vídeo MP4 listo para guardar en la galería.' : 'Este navegador exportó WebM. Si tu galería no lo admite, utiliza un navegador compatible con exportación MP4.';
+    byId('convert-mp4').hidden = extension==='mp4' || !importEndpoint;
+    byId('mp4-consent').hidden = byId('convert-mp4').hidden;
     try { byId('share').hidden = !navigator.canShare?.({ files: [result] }); } catch { byId('share').hidden = true; }
     byId('downloads').hidden = false;
     status.textContent = 'Vídeo preparado. Generando los archivos del sticker sonoro…';
@@ -482,7 +491,7 @@ byId('cancel-export').onclick = () => exportJob?.abort();
 byId('share').addEventListener('click', async () => {
   if (!result) return;
   try {
-    await navigator.share({ files: [result] });
+    await navigator.share({ files: [compatibleClip || result] });
     status.textContent = 'Archivo compartido como vídeo, no como sticker. Usa Crear sticker en WhatsApp para añadir el sonido.';
   } catch (error) {
     if (error.name !== 'AbortError') status.textContent = 'El navegador no pudo compartir el archivo. Puedes descargarlo.';
@@ -742,6 +751,7 @@ linkInput.addEventListener('keydown', event => {
 });
 byId('load-link').onclick = () => { clearTimeout(linkTimer); importLink(true); };
 async function importLink(force) {
+  byId('source-alternatives').hidden = true;
   if (busy) { showLinkState('Espera a que termine la generación antes de importar.','error'); return; }
   const text = linkInput.value.trim();
   if (!force && text === lastLink) return;
@@ -811,7 +821,10 @@ async function importLink(force) {
       if (loaded && matchMedia('(max-width:740px)').matches) byId('preview-title').scrollIntoView({behavior:'smooth',block:'start'});
     }
   } catch (error) {
-    if (!controller || importController === controller) showLinkState(error.name === 'AbortError' ? 'Importación cancelada o tiempo agotado.' : error instanceof TypeError ? 'No se pudo acceder al enlace. La página puede bloquear el acceso desde otras webs (CORS) o estar desconectada.' : error.message, 'error');
+    if (!controller || importController === controller) {
+      showLinkState(error.name === 'AbortError' ? 'Importación cancelada o tiempo agotado.' : error instanceof TypeError ? 'No se pudo acceder al enlace. La página puede bloquear el acceso desde otras webs (CORS) o estar desconectada.' : error.message, 'error');
+      if (error.name !== 'AbortError') { try { const host=new URL(text).hostname; byId('source-alternatives').hidden = !/(^|\.)youtube\.com$|^youtu\.be$/i.test(host); } catch {} }
+    }
   } finally {
     clearTimeout(timer);
     if (controller && importController === controller) {
@@ -1031,4 +1044,42 @@ byId('use-frame').onclick = async () => {
       status.textContent='Fotograma seleccionado con el audio original. Puedes ajustar el tramo sonoro.';
     }
   } catch (error) { status.textContent=error.message; }
+};
+
+byId('choose-original').onclick = () => {
+  switchToVideo();
+  byId('visual').click();
+};
+byId('convert-mp4').onclick = async () => {
+  if (!result || result.type !== 'video/webm' || mp4Job || busy || importing || !importEndpoint) return;
+  const original = result, controller = new AbortController(), button = byId('convert-mp4');
+  mp4Job = controller;
+  button.disabled = true;
+  const timer = setTimeout(()=>controller.abort(),120000);
+  byId('format-note').textContent='Preparando MP4 con sonido…';
+  try {
+    const endpoint=new URL(importEndpoint);
+    const response=await fetch(endpoint.href.replace(/\/$/,'')+'/api/clip-mp4',{
+      method:'POST',body:original,headers:{'Content-Type':'video/webm'},signal:controller.signal,
+      credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store'
+    });
+    await checkResponse(response);
+    if (detectedType(response)!=='video/mp4') throw new Error('El servidor no devolvió un MP4.');
+    const chunks=await readBounded(response,controller.signal,16*1024*1024);
+    if (controller.signal.aborted || result!==original) return;
+    compatibleClip=new File(chunks,'sticker-sonoro.mp4',{type:'video/mp4'});
+    compatibleUrl=URL.createObjectURL(compatibleClip);
+    const link=byId('download');
+    link.href=compatibleUrl; link.download=compatibleClip.name;
+    link.textContent='Guardar MP4 para WhatsApp ↓';
+    byId('format-note').textContent='MP4 preparado. En WhatsApp, usa Crear sticker y conserva el audio si la función está disponible.';
+    button.hidden=true;
+    byId('mp4-consent').hidden=true;
+    try { byId('share').hidden=!navigator.canShare?.({files:[compatibleClip]}); } catch { byId('share').hidden=true; }
+  } catch(error) {
+    if (mp4Job===controller) byId('format-note').textContent=(error.name==='AbortError'?'Conversión cancelada o agotada.':error.message)+' Puedes seguir descargando el clip original.';
+  } finally {
+    clearTimeout(timer);
+    if(mp4Job===controller) { mp4Job=undefined;button.disabled=false; }
+  }
 };

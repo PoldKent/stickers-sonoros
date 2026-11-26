@@ -62,7 +62,7 @@ This is an unofficial integration adapted from Shirtep; sessions remain in the b
 
 ### Android and iPhone
 
-The editor works in compatible mobile browsers. Save the package on screen 4 and open [Prepare package for mobile WhatsApp](https://poldkent.github.io/stickers-sonoros/mobile.html). The tool validates JSON locally and exports WebP, Ogg, PNG, WAV or prepares a video for WhatsApp's official editor if supported by the browser. It does not send JSON directly or guarantee native duration, attribution or acceptance. WhatsApp Web sending remains available to preserve the original format. See the [mobile guide](docs/MOBILE.md#english).
+The editor works in compatible mobile browsers. Save the package on screen 4 and open [Prepare package for mobile WhatsApp](https://poldkent.github.io/stickers-sonoros/mobile.html). The tool validates JSON locally and exports WebP, Ogg, PNG, WAV or prepares a video for WhatsApp's official editor if supported by the browser. After saving the media, Open WhatsApp attempts to launch the app; select the downloaded file in Stickers → Create, not as a chat document. It does not send JSON directly or guarantee native duration, attribution or acceptance. WhatsApp Web sending remains available to preserve the original format. See the [mobile guide](docs/MOBILE.md#english).
 
 ## Verification and compatibility
 

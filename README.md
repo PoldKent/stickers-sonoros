@@ -62,7 +62,7 @@ Es una integración no oficial adaptada de Shirtep; la sesión permanece en el n
 
 ### Android y iPhone
 
-El editor funciona en navegadores móviles compatibles. Guarda el paquete en la pantalla 4 y abre [Preparar paquete para WhatsApp móvil](https://poldkent.github.io/stickers-sonoros/mobile.html). La herramienta valida el JSON localmente y permite guardar WebP, Ogg, PNG, WAV o preparar un video compatible con el editor oficial de WhatsApp, si el navegador lo admite. No envía directamente el JSON ni garantiza duración, atribución o aceptación por WhatsApp. Para conservar el formato original, sigue disponible el envío por WhatsApp Web. Consulta la [guía móvil](docs/MOBILE.md#español).
+El editor funciona en navegadores móviles compatibles. Guarda el paquete en la pantalla 4 y abre [Preparar paquete para WhatsApp móvil](https://poldkent.github.io/stickers-sonoros/mobile.html). La herramienta valida el JSON localmente y permite guardar WebP, Ogg, PNG, WAV o preparar un video compatible con el editor oficial de WhatsApp, si el navegador lo admite. Tras guardar los medios, el botón Abrir WhatsApp intenta abrir la app; selecciona el archivo en Stickers → Crear, no como documento del chat. No envía directamente el JSON ni garantiza duración, atribución o aceptación por WhatsApp. Para conservar el formato original, sigue disponible el envío por WhatsApp Web. Consulta la [guía móvil](docs/MOBILE.md#español).
 
 ## Verificación y compatibilidad
 

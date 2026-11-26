@@ -100,3 +100,7 @@ Removed the redundant MediaRecorder/canvas.captureStream intermediate path, its 
 ### 2026.11.26.41 — Mobile package handoff (experimental)
 
 Public Android/iOS sticker-pack contracts do not expose linked audio import. Added local mobile.html, bilingual native-browser package verification and media exports for the official phone editor, with explicit compatibility limits. No WhatsApp private API, session, credentials, or direct JSON send. Original desktop path unchanged. Added actual generated package fixture and invalid linkage tests. Video preparation uses a separate optional browser recording for compatibility, never the sticker-generation pipeline. Physical WhatsApp acceptance and CI/deployment pending.
+
+### 2026.11.26.42 — Mobile handoff usability
+
+.41 browser CI and Pages succeeded. User confirmed JSON reading and preparation on phone but WhatsApp did not recognize the JSON. Added actual prepared-video preview, format warning, explicit save → open WhatsApp workflow (URL scheme launch attempt, manual fallback), and native editor guidance. No claim of direct JSON or sound sticker import. Extended browser regression to download the prepared media and verify audio/video streams with ffprobe. Native app launch and sound sticker creation remain physical-device checks.

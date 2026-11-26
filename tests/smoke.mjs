@@ -88,6 +88,15 @@ try {
     await mobileBridge.locator('#mobile-result').waitFor({state:'visible'});
     const saved=await mobileBridge.evaluate(async()=>{const p=await SonoroMobile.validate(document.querySelector('#mobile-package').files[0]);const image=await SonoroMobile.png(p),audio=await SonoroMobile.wav(p);return {side:p.side,seconds:p.seconds,image:image.type,audio:audio.type,audioHeader:new TextDecoder().decode((new Uint8Array(await audio.arrayBuffer())).subarray(0,4))}});
     assert.equal(saved.seconds,2);assert.equal(saved.image,'image/png');assert.equal(saved.audio,'audio/wav');assert.equal(saved.audioHeader,'RIFF');
+    await mobileBridge.locator('#prepare-video').click();
+    await mobileBridge.waitForFunction(()=>!document.querySelector('#mobile-video-ready').hidden || !document.querySelector('#prepare-video').disabled,{},{timeout:30000});
+    assert.equal(await mobileBridge.locator('#mobile-video-ready').isVisible(),true,await mobileBridge.locator('#mobile-status').textContent());
+    const [prepared]=await Promise.all([mobileBridge.waitForEvent('download'),mobileBridge.locator('#save-video').click()]);
+    assert.match(prepared.suggestedFilename(),/\.(mp4|webm)$/);
+    const streams=JSON.parse(execFileSync('ffprobe',['-v','error','-show_streams','-of','json',await prepared.path()],{encoding:'utf8'})).streams;
+    assert(streams.some(s=>s.codec_type==='video')&&streams.some(s=>s.codec_type==='audio'),'prepared media must contain both video and audio');
+    assert.equal(await mobileBridge.locator('#open-whatsapp').isVisible(),true);
+    assert.equal(await mobileBridge.locator('#open-whatsapp').getAttribute('href'),'whatsapp://send');
     await mobileBridge.locator('#mobile-language').selectOption('en');
     assert.match(await mobileBridge.locator('h1').textContent(),/Prepare for mobile WhatsApp/);
     assert(await mobileBridge.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));

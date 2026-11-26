@@ -1147,7 +1147,7 @@ byId('package-download').onclick=async()=>{
     const url=URL.createObjectURL(blob), link=document.createElement('a');
     link.href=url;link.download='sticker.sonoro.json';document.body.append(link);link.click();link.remove();
     setTimeout(()=>URL.revokeObjectURL(url),30000);
-    byId('bridge-status').textContent='Paquete preparado. Selecciónalo con el marcador en WhatsApp Web.';
+    byId('bridge-status').textContent='Sticker guardado. Abre WhatsApp Web y usa el marcador para enviarlo.';
   }catch(e){byId('bridge-status').textContent=e.message||'No se pudo guardar el paquete.';}
   finally{button.disabled=false;}
 };
@@ -1165,7 +1165,7 @@ if(window.StickersSonorosBridge){
   };
 }else{
   bookmark.removeAttribute('href');byId('copy-bookmark').disabled=true;
-  byId('bridge-status').textContent='No se cargó el puente. Recarga el editor.';
+  byId('bridge-status').textContent='No se cargó la opción de envío. Recarga la página.';
 }
 
 byId('check-service').onclick = async () => {

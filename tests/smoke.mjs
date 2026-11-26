@@ -292,6 +292,8 @@ try {
     await phone.waitForFunction(()=>document.querySelector('#link-status').textContent.includes('Paste a video link first.'));
     await phone.locator('#demo').click();
     await phone.waitForFunction(()=>!document.querySelector('#export').disabled);
+    assert.equal(await phone.locator('#link-status').textContent(),'');
+    assert.equal(await phone.locator('#native-bridge details').evaluate(el=>el.open),width>740);
     await phone.waitForFunction(()=>document.querySelector('#selection-info').textContent.includes('Duration: 2.00 s of 60 s allowed.'));
     assert(await phone.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
     await phone.locator('#language').selectOption('es');

@@ -14,7 +14,7 @@ CMD ["python", "importer/server.py"]
 
 # Optional full editor for local development only.
 FROM service AS local-editor
-COPY index.html app.js i18n.js style.css ./
+COPY index.html app.js i18n.js style.css mobile.html mobile.js mobile.css ./
 COPY assets/ ./assets/
 COPY vendor/shirtep/ ./vendor/shirtep/
 ENV API_ONLY=0

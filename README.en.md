@@ -62,7 +62,7 @@ This is an unofficial integration adapted from Shirtep; sessions remain in the b
 
 ### Android and iPhone
 
-The editor works in compatible mobile browsers. Save the package on screen 4 and transfer it to a computer for WhatsApp Web sending. Some WhatsApp accounts have a native sound sticker editor; direct import of this project's JSON is not verified. See the [mobile guide](docs/MOBILE.md#english).
+The editor works in compatible mobile browsers. Save the package on screen 4 and open [Prepare package for mobile WhatsApp](https://poldkent.github.io/stickers-sonoros/mobile.html). The tool validates JSON locally and exports WebP, Ogg, PNG, WAV or prepares a video for WhatsApp's official editor if supported by the browser. It does not send JSON directly or guarantee native duration, attribution or acceptance. WhatsApp Web sending remains available to preserve the original format. See the [mobile guide](docs/MOBILE.md#english).
 
 ## Verification and compatibility
 

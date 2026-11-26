@@ -96,3 +96,7 @@ Removed the redundant MediaRecorder/canvas.captureStream intermediate path, its 
 ### 2026.11.26.40 — Direct image decoder correction
 
 .39 Pages deployed, but browser CI timed out generating the example sticker; production diagnostic skipped. Local Chromium reproduced InvalidStateError for createImageBitmap(File SVG). Added native HTMLImageElement.decode + canvas fallback with scoped object URL, retaining direct conversion. Improved CI failure diagnostics for the example. This fixes a reproduced incompatibility, but full CI and production synchronization must still pass.
+
+### 2026.11.26.41 — Mobile package handoff (experimental)
+
+Public Android/iOS sticker-pack contracts do not expose linked audio import. Added local mobile.html, bilingual native-browser package verification and media exports for the official phone editor, with explicit compatibility limits. No WhatsApp private API, session, credentials, or direct JSON send. Original desktop path unchanged. Added actual generated package fixture and invalid linkage tests. Video preparation uses a separate optional browser recording for compatibility, never the sticker-generation pipeline. Physical WhatsApp acceptance and CI/deployment pending.

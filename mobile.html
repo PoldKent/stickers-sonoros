@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#130f1b"><meta name="robots" content="noindex, follow">
+<title>Stickers Sonoros · Preparar para WhatsApp móvil</title>
+<link rel="canonical" href="https://poldkent.github.io/stickers-sonoros/mobile.html">
+<link rel="icon" href="./assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./style.css?v=2026.11.26.41">
+<link rel="stylesheet" href="./mobile.css?v=2026.11.26.41">
+<script defer src="./mobile.js?v=2026.11.26.41"></script>
+</head>
+<body class="mobile-handoff">
+<header><a class="brand" href="./"><img class="logo" src="./assets/logo.svg" alt="">Stickers Sonoros</a><label class="language-picker"><span class="sr-only" data-msg="language">Idioma</span><select id="mobile-language" aria-label="Idioma"><option value="es">Español</option><option value="en">English</option></select></label></header>
+<main>
+<section class="intro"><h1 data-msg="title">Preparar para WhatsApp móvil</h1><p data-msg="intro">Abre tu paquete sonoro guardado y prepara sus medios para el editor oficial de stickers de WhatsApp. No se sube ningún archivo.</p></section>
+<section class="panel handoff-panel">
+<label class="handoff-file"><strong data-msg="choose">Seleccionar archivo .sonoro.json</strong><input id="mobile-package" type="file" accept=".json,application/json"></label>
+<p id="mobile-status" role="status" aria-live="polite"></p>
+<div id="mobile-result" hidden>
+<div class="handoff-preview"><img id="mobile-image" alt="Sticker"><div><p id="mobile-info"></p><audio id="mobile-audio" controls preload="metadata"></audio></div></div>
+<div class="handoff-actions">
+<button id="save-visual" type="button" data-msg="visual">Guardar imagen WebP original</button>
+<button id="save-audio" type="button" data-msg="audio">Guardar audio Ogg original</button>
+<button id="save-png" type="button" data-msg="png">Guardar fotograma PNG</button>
+<button id="save-wav" type="button" data-msg="wav">Preparar audio WAV</button>
+<button id="prepare-video" type="button" class="primary" data-msg="video">Preparar video para el editor móvil</button>
+<button id="cancel-video" type="button" hidden data-msg="cancel">Cancelar preparación</button>
+<progress id="mobile-progress" max="1" value="0" hidden></progress>
+<button id="save-video" type="button" hidden data-msg="saveVideo">Guardar video preparado</button>
+</div>
+<p class="note" data-msg="videoNote">El video es un medio de entrada para el editor oficial, no un sticker enviado. La preparación conserva el tramo completo; WhatsApp puede recortarlo o recomprimirlo. MP4 depende del navegador; WebM puede no ser aceptado en el teléfono.</p>
+</div>
+</section>
+<section class="panel handoff-panel"><h2 data-msg="steps">Enviar desde la aplicación oficial</h2>
+<ol><li data-msg="step1">Guarda el video preparado o el fotograma PNG y el audio.</li><li data-msg="step2">Abre WhatsApp en tu teléfono, entra a tu propio chat, abre stickers y pulsa Crear.</li><li data-msg="step3">Selecciona el video o la imagen guardada. Si aparece el botón de audio, conserva el audio del video o elige la pista guardada desde Archivos.</li><li data-msg="step4">Revisa el resultado y envíalo desde WhatsApp. Comprueba que se muestra como sticker y reproduce el sonido.</li></ol>
+<p class="note" data-msg="limits">El editor sonoro móvil se está desplegando gradualmente. No hay un contrato público de importación directa de .sonoro.json. El resultado nativo puede tener otros límites, perder la atribución original o no estar disponible en tu cuenta. No adjuntes el JSON al chat esperando un sticker.</p>
+<a href="./" data-msg="back">Volver al editor</a> · <a href="https://github.com/PoldKent/stickers-sonoros/blob/main/docs/MOBILE.md" id="mobile-guide" data-msg="guide">Guía móvil</a></section>
+</main>
+<footer>Stickers Sonoros · <a href="./">Web oficial / Official app</a> · 2026.11.26.41</footer>
+</body></html>

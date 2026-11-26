@@ -1,6 +1,9 @@
 /* Spanish/English presentation layer; does not change media or sending logic. */
 (() => {
   const pairs = [
+    ["Abrir paquete sonoro para WhatsApp móvil","Open sound package for mobile WhatsApp"],
+    ["Para usar el editor oficial de WhatsApp en el celular, guarda el paquete y abre la herramienta móvil. No envía directamente el JSON.","To use the official WhatsApp editor on your phone, save the package and open the mobile tool. It does not send the JSON directly."],
+    ["Preparar paquete para WhatsApp móvil","Prepare package for mobile WhatsApp"],
     ["Selecciona nuevamente los archivos originales.","Select the original files again."],
     ["Ejemplo preparado. Pulsa Siguiente.","Example ready. Select Next."],
     ["Imagen fija","Still image"],

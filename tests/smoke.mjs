@@ -80,6 +80,22 @@ try {
   const pack=JSON.parse(packageBytes.toString('utf8'));
   assert.equal(pack.format,'stickers-sonoros/1');
   assert.equal(pack.info.segundosAudio,2);
+  // Real generated JSON, mobile handoff and invalid linkage; no WhatsApp device claim.
+  const mobileBridge=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});
+  try{
+    await mobileBridge.goto('http://127.0.0.1:8000/mobile.html');
+    await mobileBridge.locator('#mobile-package').setInputFiles({name:'ejemplo.sonoro.json',mimeType:'application/json',buffer:packageBytes});
+    await mobileBridge.locator('#mobile-result').waitFor({state:'visible'});
+    const saved=await mobileBridge.evaluate(async()=>{const p=await SonoroMobile.validate(document.querySelector('#mobile-package').files[0]);const image=await SonoroMobile.png(p),audio=await SonoroMobile.wav(p);return {side:p.side,seconds:p.seconds,image:image.type,audio:audio.type,audioHeader:new TextDecoder().decode((new Uint8Array(await audio.arrayBuffer())).subarray(0,4))}});
+    assert.equal(saved.seconds,2);assert.equal(saved.image,'image/png');assert.equal(saved.audio,'audio/wav');assert.equal(saved.audioHeader,'RIFF');
+    await mobileBridge.locator('#mobile-language').selectOption('en');
+    assert.match(await mobileBridge.locator('h1').textContent(),/Prepare for mobile WhatsApp/);
+    assert(await mobileBridge.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+    await mobileBridge.screenshot({path:'artifacts/screenshots/mobile-handoff-en.png',fullPage:true});
+    await mobileBridge.locator('#mobile-package').setInputFiles({name:'bad.sonoro.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...pack,info:{...pack.info,soundSha256:'invalid'}}))});
+    await mobileBridge.waitForFunction(()=>document.querySelector('#mobile-status').textContent.includes('Invalid or damaged'));
+    assert.equal(await mobileBridge.locator('#mobile-result').isVisible(),false);
+  }finally{await mobileBridge.close();}
   const appUrl='https://poldkent.github.io/stickers-sonoros/';
   assert.match(readFileSync('index.html','utf8'), /<link rel="canonical" href="https:\/\/poldkent\.github\.io\/stickers-sonoros\/">/);
   assert.equal(pack.info.packName,'Creado en Stickers Sonoros');

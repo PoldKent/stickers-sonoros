@@ -6,9 +6,9 @@
 <meta name="description" content="Crea stickers sonoros de hasta 10 segundos para WhatsApp desde un video, imagen o GIF.">
 <title>Stickers Sonoros · Editor web</title>
 <meta name="sticker-import-endpoint" content="">
-<link rel="stylesheet" href="./style.css?v=2026.11.26.4">
-<script defer src="./vendor/shirtep/convert.js?v=2026.11.26.4"></script>
-<script type="module" src="./app.js?v=2026.11.26.4"></script>
+<link rel="stylesheet" href="./style.css?v=2026.11.26.5">
+<script defer src="./vendor/shirtep/convert.js?v=2026.11.26.5"></script>
+<script type="module" src="./app.js?v=2026.11.26.5"></script>
 </head>
 <body>
 <header><div class="brand"><span class="logo" aria-hidden="true">◖≋</span> Stickers Sonoros</div><span class="privacy"><i></i> Edición local</span></header>
@@ -22,7 +22,7 @@
 <button type="button" data-mode="image" aria-pressed="false">Imagen + audio</button>
 <button type="button" data-mode="mix" aria-pressed="false">Video o GIF + audio</button>
 </div>
-<section id="links"><label for="link-input">Pega el enlace de un video</label><div class="linkbar"><input id="link-input" type="url" placeholder="TikTok, Instagram, YouTube o MP4" autocomplete="off" spellcheck="false"><button id="load-link" type="button" title="Importar o reintentar" aria-label="Importar video">Importar</button><button id="cancel-link" type="button" hidden>Cancelar</button></div><p id="link-status" role="status" aria-live="polite"></p></section>
+<section id="links"><label for="link-input">Pega el enlace de un video</label><div class="linkbar"><input id="link-input" type="url" placeholder="TikTok, Instagram, YouTube o MP4" autocomplete="off" spellcheck="false"><button id="load-link" type="button" title="Importar o reintentar" aria-label="Importar video">Importar</button><button id="cancel-link" type="button" hidden>Cancelar</button></div><p id="link-status" role="status" aria-live="polite">Iniciando el editor…</p><noscript><p>Activa JavaScript para importar y editar videos.</p></noscript></section>
 <form id="project">
 <label class="drop" id="drop"><input type="file" id="visual" accept="video/*"><span class="upload" aria-hidden="true">↑</span><strong id="visual-label">Selecciona o arrastra un video</strong><small id="visual-hint">MP4, WebM u otro video compatible</small></label>
 <label id="sound-row" hidden>Pista de audio <input id="sound" type="file" accept="audio/*,video/*"></label>
@@ -55,6 +55,21 @@
 </section>
 </div>
 </main>
-<footer>Conversor de <a href="https://github.com/Shirtep/WA-audio-stickers">Stickers con sonido, de Shirtep</a> · <a href="./vendor/shirtep/LICENSE.md">Licencia de uso no comercial</a>. · Versión 2026.11.26.4</footer>
+<footer>Conversor de <a href="https://github.com/Shirtep/WA-audio-stickers">Stickers con sonido, de Shirtep</a> · <a href="./vendor/shirtep/LICENSE.md">Licencia de uso no comercial</a>. · Versión 2026.11.26.5</footer>
+<script>
+(function () {
+  var status = document.getElementById('link-status');
+  var button = document.getElementById('load-link');
+  function failed() {
+    if (document.documentElement.dataset.editorReady === 'true') return;
+    status.dataset.state = 'error';
+    status.textContent = 'El editor no se inició. Recarga la página con Ctrl + F5 y comprueba que JavaScript esté habilitado.';
+  }
+  button.addEventListener('click', function () {
+    if (document.documentElement.dataset.editorReady !== 'true') failed();
+  });
+  window.addEventListener('load', function () { setTimeout(failed, 1000); });
+})();
+</script>
 </body>
 </html>

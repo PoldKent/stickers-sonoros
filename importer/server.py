@@ -40,7 +40,7 @@ MAX_DURATION = 600
 # Sort by the short edge; vertical videos must not be filtered by height.
 FORMAT_SELECTOR = "bv*+ba/b"
 FORMAT_SORT = "res:480,vcodec:h264,acodec:aac"
-SERVICE_VERSION = '2026.11.26.31'
+SERVICE_VERSION = '2026.11.26.32'
 try:
     DOWNLOADER_VERSION = package_version('yt-dlp')
 except PackageNotFoundError:

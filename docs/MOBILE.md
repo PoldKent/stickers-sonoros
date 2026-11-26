@@ -27,3 +27,13 @@ No se modificarán permisos de cuenta, no se extraerán sesiones ni se añadirá
 ## English summary
 
 The goal is a real sound sticker sent from the official mobile app, not a video attachment. Public Android/iOS sticker-pack samples do not document the audio linkage. Test the official phone editor on actual devices first; investigate an authorized handoff or documented native sound-sticker import if available. Validate 2–60-second clips, size, playback and receiving-account compatibility before shipping. No session extraction, server-side unofficial client, or automatic sending. Existing desktop sending remains unchanged.
+
+## Actualización / Update — 2026-11-26
+
+WABetaInfo informó el 25 de noviembre del despliegue gradual de creación nativa de stickers sonoros en [Android beta 2.26.47.1](https://wabetainfo.com/whatsapp-is-rolling-out-new-sound-sticker-messages-on-android/) y [iOS beta 26.46.10.70](https://wabetainfo.com/whatsapp-is-rolling-out-sticker-messages-with-audio-on-ios/). Algunas cuentas iOS estables también pueden tener acceso. Desde el teclado de stickers: Crear, seleccionar vídeo, pulsar audio, conservar audio original o elegir un archivo, y enviar. La disponibilidad depende de la cuenta. No se ha verificado la importación de nuestro JSON ni el máximo admitido por ese editor. La [API pública de paquetes Android](https://github.com/WhatsApp/stickers/tree/main/Android) no documenta audio; sus límites de stickers convencionales no deben extrapolarse al formato sonoro. Recomendamos el editor oficial cuando aparezca el botón de audio; no desarrollar un cliente no oficial ni prometer envío móvil directo del JSON.
+
+WABetaInfo reported gradual native sound sticker creation rollout on November 25 for Android beta 2.26.47.1 and iOS beta 26.46.10.70; some stable iOS accounts may have access. In the sticker keyboard, choose Create, select a video, tap audio, keep original sound or select a file, then send. Availability is account-dependent. Importing our JSON and native editor limits are not verified. The public Android sticker pack contract does not document audio. Prefer the official editor when available; do not promise direct mobile JSON sending.
+
+### Acceptance matrix / Matriz de aceptación
+
+Record device, WhatsApp version, actual duration, combined WebP+Ogg bytes, encoded FPS, send/receive/play/forward result and any error. Test own chat first; then a consenting recipient. Test 2, 30, 61 and 240 seconds, and a package near 4 MB. Mark unsupported or rejected cases explicitly. No credentials, QR codes or session exports in reports.

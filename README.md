@@ -129,3 +129,5 @@ Consulta [envío móvil sin WhatsApp Web](docs/MOBILE.md). El envío directo con
 ### Línea de tiempo
 
 La barra bajo la vista previa muestra la posición actual y duración total. Permite explorar fotogramas, reproducir desde el cursor dentro del tramo y marcar el inicio y final.
+
+**Novedad móvil (26/11/2026):** algunas cuentas ya disponen del editor sonoro nativo de WhatsApp. Consulta [la guía móvil y su matriz de pruebas](docs/MOBILE.md); la importación directa de `.sonoro.json` sigue sin estar verificada.

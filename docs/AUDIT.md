@@ -60,3 +60,7 @@ GitHub Pages es el único frontend público. Render conserva las rutas de import
 ### 2026.11.26.33
 
 Pages .32 deployed; browser CI failed at 320px after generating a rotated sticker. Corrected intrinsic grid widths, native select sizing and result wrapping; retained the overflow assertion with diagnostic details. Moved the timeline under the preview, enabled full-source initial selection and cursor-based playback. Updated ES/EN docs and tests. Render remains API-only; actual deployment, real WhatsApp send and physical devices require separate verification.
+
+### 2026.11.26.34
+
+CI .33 passed the previously failing 320px crop check but failed a strict 61s fixture assertion (browser decoding/rounding). The updated test asserts full selection against the actual max and explicitly selects 60.5s. Added early ES/EN desktop and mobile screenshot capture, a 240s image/audio conversion and mock send test, native mobile research update and post-CI production diagnostics. No real WhatsApp send or Render production result is asserted here.

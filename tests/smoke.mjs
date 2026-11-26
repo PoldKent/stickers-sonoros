@@ -45,6 +45,17 @@ try {
   assert.equal(await page.locator('#share').count(),0);
   assert.equal(await page.locator('#wa-bookmark').isVisible(),true);
   await page.screenshot({path:'artifacts/screenshots/desktop-es.png',fullPage:true});
+  await page.locator('#language').selectOption('en');
+  await page.screenshot({path:'artifacts/screenshots/desktop-en.png',fullPage:true});
+  await page.locator('#language').selectOption('es');
+  const visualAudit=await browser.newPage({viewport:{width:320,height:800},isMobile:true,hasTouch:true});
+  await visualAudit.goto('http://127.0.0.1:8000');
+  await visualAudit.locator('#demo').click();
+  await visualAudit.waitForFunction(()=>!document.querySelector('#export').disabled);
+  await visualAudit.screenshot({path:'artifacts/screenshots/mobile-editor-es.png',fullPage:true});
+  await visualAudit.locator('#language').selectOption('en');
+  await visualAudit.screenshot({path:'artifacts/screenshots/mobile-editor-en.png',fullPage:true});
+  await visualAudit.close();
   const sizes = await page.evaluate(async()=>Promise.all(['sticker-image','sticker-audio'].map(async id=>(await (await fetch(document.getElementById(id).src)).blob()).size)));
   assert(sizes.every(size=>size>0)&&sizes.reduce((a,b)=>a+b,0)<=4000000);
   // Export the actual converted package and execute the bookmarklet against mock WA modules.
@@ -132,27 +143,26 @@ try {
   assert.deepEqual(await wa.evaluate(()=>[window.mockCalls.uploads,window.mockCalls.sends]),[1,1]);
   assert.equal(await send.isDisabled(),true);
   assert.equal(await wa.evaluate(()=>window.require('WAWebSoundStickerGating').isSoundStickerCreationEnabled()),false);
-  // A real 61-second image+audio package, produced by the shipped converter.
+  // A real 240-second image+audio package, produced by the shipped converter.
   const longPack=await page.evaluate(async()=>{
     const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
     const ctx=canvas.getContext('2d');ctx.fillStyle='#5845a3';ctx.fillRect(0,0,128,128);
     const image=new File([await new Promise(r=>canvas.toBlob(r,'image/png'))],'long.png',{type:'image/png'});
-    const samples=61*48000, bytes=new ArrayBuffer(44+samples*2), d=new DataView(bytes);
+    const samples=240*48000, bytes=new ArrayBuffer(44+samples*2), d=new DataView(bytes);
     const ascii=(at,s)=>{for(let i=0;i<s.length;i++)d.setUint8(at+i,s.charCodeAt(i));};
     ascii(0,'RIFF');d.setUint32(4,bytes.byteLength-8,true);ascii(8,'WAVE');ascii(12,'fmt ');
     d.setUint32(16,16,true);d.setUint16(20,1,true);d.setUint16(22,1,true);d.setUint32(24,48000,true);d.setUint32(28,96000,true);d.setUint16(32,2,true);d.setUint16(34,16,true);ascii(36,'data');d.setUint32(40,samples*2,true);
     for(let i=0;i<samples;i++)d.setInt16(44+i*2,Math.round(Math.sin(2*Math.PI*440*i/48000)*3000),true);
     const audio=new File([bytes],'long.wav',{type:'audio/wav'});
-    const out=await window.WAAS.convert({visual:{kind:'image',file:image,start:0,dur:61},audio:{file:audio,start:0,dur:61},fit:'repetir'});
+    const out=await window.WAAS.convert({visual:{kind:'image',file:image,start:0,dur:240},audio:{file:audio,start:0,dur:240},fit:'repetir',extended:true});
     const encode=async blob=>{const u=new Uint8Array(await blob.arrayBuffer());let s='';for(let i=0;i<u.length;i+=16384)s+=String.fromCharCode(...u.subarray(i,i+16384));return btoa(s);};
     return {format:'stickers-sonoros/1',webp:await encode(out.webp),ogg:await encode(out.ogg),info:out.info};
   });
-  assert.equal(longPack.info.segundosAudio,61);
+  assert.equal(longPack.info.segundosAudio,240);
   assert.equal(longPack.info.lado,512);
-  assert(Buffer.from(longPack.webp,'base64').length<=1000000);
-  assert(Buffer.from(longPack.ogg,'base64').length<=1000000);
+  assert(Buffer.from(longPack.webp,'base64').length+Buffer.from(longPack.ogg,'base64').length<=4000000);
   await panel.locator('input[type=file]').setInputFiles({name:'long.sonoro.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(longPack))});
-  await wa.waitForFunction(()=>document.querySelector('#ss-local-bridge [role=status]').textContent.includes('61 s'));
+  await wa.waitForFunction(()=>document.querySelector('#ss-local-bridge [role=status]').textContent.includes('240 s'));
   await wa.evaluate(()=>{window.mockCalls.enabled=true;});
   await send.click();
   await panel.getByText('WhatsApp confirmó el envío.',{exact:false}).waitFor();
@@ -469,20 +479,21 @@ try {
     await durations.goto('http://127.0.0.1:8000');
     await durations.locator('#visual').setInputFiles(path);
     await durations.waitForFunction(()=>!document.querySelector('#export').disabled);
-    assert(Number(await durations.locator('#ve').inputValue())>=61);
+    const full=Number(await durations.locator('#ve').inputValue());
+    assert(full>60 && full===Number(await durations.locator('#ve').getAttribute('max')),`Full source selection: ${full}`);
     assert.equal(await durations.locator('#scrub-row').evaluate(e=>e.parentElement.id),'preview-media');
     await durations.locator('#ve').fill('60');
     await durations.locator('#ve').dispatchEvent('change');
     await durations.waitForFunction(()=>!document.querySelector('#export').disabled);
     assert.match(await durations.locator('#selection-info').textContent(),/60\.00 s/);
-    await durations.locator('#ve').fill('61');
+    await durations.locator('#ve').fill('60.5');
     await durations.locator('#ve').dispatchEvent('change');
     await durations.waitForFunction(()=>!document.querySelector('#export').disabled);
-    assert.match(await durations.locator('#selection-info').textContent(),/61\.00 s/);
+    assert.match(await durations.locator('#selection-info').textContent(),/60\.50 s/);
     await durations.locator('#ve-slider').fill('45');
     assert.equal(Number(await durations.locator('#ve').inputValue()),45);
     await durations.locator('#scrub').fill('10');
-    assert.match(await durations.locator('#scrub-time').textContent(),/10\.00 \/ 61/);
+    assert.match(await durations.locator('#scrub-time').textContent(),/10\.00 \/ (60|61)\./);
     await durations.locator('#mark-start').click();
     assert.equal(Number(await durations.locator('#vs').inputValue()),10);
   }finally{await durations.close();rmSync(temp,{recursive:true,force:true});}

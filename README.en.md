@@ -129,3 +129,5 @@ See [mobile sending without WhatsApp Web](docs/MOBILE.md). Direct sound sticker 
 ### Timeline
 
 The bar under the preview shows current position and total duration. Inspect frames, play from the cursor inside the selection and mark its start and end.
+
+**Mobile update (2026-11-26):** some accounts now have WhatsApp's native sound sticker editor. See [mobile research and acceptance matrix](docs/MOBILE.md); direct `.sonoro.json` import is still unverified.

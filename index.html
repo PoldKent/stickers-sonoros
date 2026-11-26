@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Crea un clip cuadrado con sonido desde un video, imagen o GIF.">
+<title>Stickers Sonoros · Editor web</title>
+<link rel="stylesheet" href="./style.css">
+<script type="module" src="./app.js"></script>
+</head>
+<body>
+<header><div class="brand"><span class="logo" aria-hidden="true">◖≋</span> Stickers Sonoros</div><span class="privacy"><i></i> Procesamiento local</span></header>
+<main>
+<section class="intro"><h1>Dale sonido <em>a tu sticker.</em></h1><p>Recorta una escena, combina imagen y audio y crea un clip cuadrado para compartir.</p></section>
+<div class="workspace">
+<section class="panel editor" aria-labelledby="editor">
+<h2 id="editor">Tu proyecto</h2>
+<div class="modes" role="group" aria-label="Tipo de proyecto">
+<button type="button" data-mode="video" aria-pressed="true">Video</button>
+<button type="button" data-mode="image" aria-pressed="false">Imagen + audio</button>
+<button type="button" data-mode="mix" aria-pressed="false">Video o GIF + audio</button>
+</div>
+<form id="project">
+<label class="drop" id="drop"><input type="file" id="visual" accept="video/*"><span class="upload" aria-hidden="true">↑</span><strong id="visual-label">Selecciona o arrastra un video</strong><small id="visual-hint">MP4, WebM u otro video compatible</small></label>
+<label id="sound-row" hidden>Pista de audio <input id="sound" type="file" accept="audio/*,video/*"></label>
+<div id="visual-trim" class="row" hidden>
+<label>Video desde (s)<input id="vs" type="number" min="0" step=".01" value="0" required></label>
+<label>Video hasta (s)<input id="ve" type="number" min=".01" step=".01" value="1" required></label>
+</div>
+<div id="audio-trim" class="row" hidden>
+<label>Audio desde (s)<input id="as" type="number" min="0" step=".01" value="0" required></label>
+<label>Audio hasta (s)<input id="ae" type="number" min=".01" step=".01" value="1" required></label>
+</div>
+<div class="row">
+<label>Encuadre<select id="fit"><option value="contain">Ajustar</option><option value="cover">Rellenar</option></select></label>
+<label id="motion-row" hidden>Al terminar la animación<select id="motion"><option value="freeze">Mantener último cuadro</option><option value="loop">Repetir</option></select></label>
+</div>
+<button class="primary" id="export" disabled>Crear clip con sonido <span aria-hidden="true">↗</span></button>
+<progress id="progress" max="1" value="0" hidden></progress>
+<p id="status" role="status" aria-live="polite"></p>
+</form>
+</section>
+<section class="panel preview" aria-labelledby="preview-title">
+<div class="heading"><h2 id="preview-title">Vista previa</h2><span>512 × 512</span></div>
+<div class="stage"><canvas id="canvas" width="512" height="512" aria-label="Encuadre del clip"></canvas><video id="output" controls playsinline hidden></video><div id="empty"><div class="waves" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div><strong>Tu clip aparecerá aquí</strong></div></div>
+<div id="downloads" hidden><a id="download" class="primary">Descargar video ↓</a><button id="share" type="button" hidden>Compartir archivo</button></div>
+<p class="note">Puedes enviar el archivo como video en WhatsApp. Para enviarlo como sticker nativo con sonido, usa la <a href="https://github.com/Shirtep/WA-audio-stickers/releases">extensión original</a>.</p>
+</section>
+</div>
+</main>
+<footer>Inspirado en <a href="https://github.com/Shirtep/WA-audio-stickers">Stickers con sonido, de Shirtep</a>.</footer>
+</body>
+</html>

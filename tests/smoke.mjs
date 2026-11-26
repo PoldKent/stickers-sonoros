@@ -458,9 +458,9 @@ try {
     assert.equal(await crop.locator('#center-crop').textContent(),'Center');
     assert.equal(await crop.locator('#pan-x-value').getAttribute('aria-label'),'Horizontal position in pixels');
     await crop.setViewportSize({width:320,height:800});
-    assert(await crop.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
+    assert(await crop.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth),JSON.stringify(await crop.evaluate(()=>[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1).map(e=>({id:e.id,tag:e.tagName,right:e.getBoundingClientRect().right})).slice(0,15))));
   }finally{await crop.close();}
-  // The editor permits a 30-second default, manual selection beyond 60 seconds.
+  // The editor selects the full source, and permits manual selection beyond 60 seconds.
   const durations=await browser.newPage();
   const temp=mkdtempSync(join(tmpdir(),'sticker-duration-'));
   try{
@@ -469,7 +469,8 @@ try {
     await durations.goto('http://127.0.0.1:8000');
     await durations.locator('#visual').setInputFiles(path);
     await durations.waitForFunction(()=>!document.querySelector('#export').disabled);
-    assert.equal(Number(await durations.locator('#ve').inputValue()),30);
+    assert(Number(await durations.locator('#ve').inputValue())>=61);
+    assert.equal(await durations.locator('#scrub-row').evaluate(e=>e.parentElement.id),'preview-media');
     await durations.locator('#ve').fill('60');
     await durations.locator('#ve').dispatchEvent('change');
     await durations.waitForFunction(()=>!document.querySelector('#export').disabled);
@@ -480,6 +481,10 @@ try {
     assert.match(await durations.locator('#selection-info').textContent(),/61\.00 s/);
     await durations.locator('#ve-slider').fill('45');
     assert.equal(Number(await durations.locator('#ve').inputValue()),45);
+    await durations.locator('#scrub').fill('10');
+    assert.match(await durations.locator('#scrub-time').textContent(),/10\.00 \/ 61/);
+    await durations.locator('#mark-start').click();
+    assert.equal(Number(await durations.locator('#vs').inputValue()),10);
   }finally{await durations.close();rmSync(temp,{recursive:true,force:true});}
   // Mobile layout and language switch preserve the active media and project.
   for(const width of [320,390,740,1024]){

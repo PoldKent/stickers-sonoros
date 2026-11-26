@@ -10,7 +10,6 @@ const labels = {
   mix: ['Selecciona o arrastra un video o GIF', 'MP4, WebM o GIF animado', 'video/*,image/gif']
 };
 const maxLocalBytes = 80 * 1024 * 1024;
-const defaultTrim = 30;
 let mode = 'video';
 let visual;
 let audio;
@@ -80,7 +79,7 @@ function clearResult() {
 }
 
 function sync() {
-  byId('export').disabled = busy || importing || loadingVisual || loadingAudio || !visual || !audio;
+  byId('export').disabled = busy || importing || loadingVisual || loadingAudio || !!stickerJob || !visual || !audio;
   byId('quality').disabled = busy || importing || !!stickerJob;
   byId('signature').disabled = busy || importing || !!stickerJob;
   byId('size-budget').disabled = busy || importing || !!stickerJob;
@@ -92,12 +91,14 @@ function sync() {
   byId('position').hidden = !visual;
   for (const id of ['pan-x','pan-y','zoom','pan-x-value','pan-y-value','zoom-value','center-crop','rotation','rotate-left','rotate-right','rotate-half']) byId(id).disabled = busy || importing || !!stickerJob || !visual;
   if (!visual) hideCropGuides();
-  byId('scrub-row').hidden = !visual || visual.kind === 'image';
+  byId('scrub-row').hidden = !visual || visual.kind === 'image' || !!result;
+  byId('scrub').disabled = busy || importing || loadingVisual || loadingAudio || !!stickerJob || !!result;
   byId('source-preview').hidden = !visual || !audio || loadingVisual || loadingAudio || busy || importing || !!result;
   byId('play-source').disabled = busy || importing;
   byId('use-frame').hidden = !visual || visual.kind === 'image' || !audio;
   byId('use-frame').disabled = busy || importing || loadingVisual || loadingAudio;
   byId('trim-actions').hidden = byId('scrub-row').hidden;
+  updateTimeline();
   // Hidden trim fields must not block form submission.
   for (const [ids,hidden] of [[['vs','ve'],byId('visual-trim').hidden],[['as','ae'],byId('audio-trim').hidden]]) for (const id of ids) { byId(id).required = !hidden; byId(id).disabled = hidden || busy; }
   for (const id of ['mark-start','mark-end','demo']) byId(id).disabled = busy || importing;
@@ -205,7 +206,7 @@ function range(prefix, duration) {
   byId(prefix + 's').max = max;
   byId(prefix + 's').value = 0;
   byId(prefix + 'e').max = max;
-  byId(prefix + 'e').value = Math.min(defaultTrim, max);
+  byId(prefix + 'e').value = max;
   if (prefix === 'v') { byId('scrub').max = max; byId('scrub').value = 0; byId('scrub-time').textContent = '0.00 s'; }
 }
 
@@ -439,10 +440,11 @@ async function drawPreviewFrame(at) {
 byId('fit').addEventListener('change', () => { if (visual) { paint(visual.frame || visual.media); } previewFrame(byId('scrub').valueAsNumber); });
 byId('vs').addEventListener('change', () => { clearResult(); byId('scrub').value = byId('vs').value; updateScrub(); });
 for (const id of ['ve','as','ae','motion','fit']) byId(id).addEventListener('change', clearResult);
-function updateScrub() { byId('scrub-time').textContent = Number(byId('scrub').value).toFixed(2) + ' s'; previewFrame(byId('scrub').valueAsNumber); }
+function updateTimeline() { const slider=byId('scrub'); byId('scrub-time').textContent = Number(slider.value).toFixed(2) + ' / ' + Number(slider.max).toFixed(2) + ' s'; }
+function updateScrub() { updateTimeline(); previewFrame(byId('scrub').valueAsNumber); }
 byId('scrub').addEventListener('change', updateScrub);
 let scrubFrame = 0;
-byId('scrub').addEventListener('input', () => { byId('scrub-time').textContent = Number(byId('scrub').value).toFixed(2) + ' s'; cancelAnimationFrame(scrubFrame); scrubFrame = requestAnimationFrame(() => previewFrame(byId('scrub').valueAsNumber)); });
+byId('scrub').addEventListener('input', () => { updateTimeline(); cancelAnimationFrame(scrubFrame); scrubFrame = requestAnimationFrame(() => previewFrame(byId('scrub').valueAsNumber)); });
 
 function trimmed(prefix) {
   const start = byId(prefix + 's').valueAsNumber;
@@ -1218,14 +1220,15 @@ byId('play-source').onclick = async () => {
   try {
     const v = item.kind === 'image' ? null : trimmed('v');
     const a = mode === 'video' ? v : trimmed('a');
-
+    const cursor=byId('scrub').valueAsNumber;
+    const offset=v&&cursor>=v.start&&cursor<v.start+v.duration?Math.min(cursor-v.start,Math.max(0,a.duration-.01)):0;
     const context = new AudioContext();
     session = {context,item};
     previewSession = session;
     byId('play-source').textContent = '■ Detener';
     await context.resume();
     if (previewSession !== session) return;
-    if (item.kind === 'video') await seek(item.media,v.start);
+    if (item.kind === 'video') await seek(item.media,v.start+offset);
     if (previewSession !== session) return;
     const sound = context.createBufferSource();
     session.sound = sound;
@@ -1234,22 +1237,22 @@ byId('play-source').onclick = async () => {
     if (item.kind === 'video') await item.media.play();
     if (previewSession !== session) { item.media?.pause?.(); return; }
     const start = context.currentTime;
-    sound.start(start,a.start,a.duration);
+    sound.start(start,a.start+offset,a.duration-offset);
     sound.onended = () => { if (previewSession === session) stopSourcePreview(); };
     const loop = mode === 'mix' && byId('motion').value === 'loop';
     const tick = async () => {
       if (previewSession !== session) return;
       try {
-        const elapsed = context.currentTime-start;
+        const elapsed = context.currentTime-start+offset;
         if (item.kind === 'video') {
           if (item.media.currentTime >= v.start+v.duration || item.media.ended) {
             item.media.pause();
             if (loop) { await seek(item.media,v.start); if (previewSession === session) await item.media.play(); }
           }
-          if (previewSession === session) paint(item.media);
+          if (previewSession === session) { paint(item.media); byId('scrub').value=item.media.currentTime; updateTimeline(); }
         } else if (item.kind === 'gif') {
           const frame = await gifAt(item,v.start+(loop?elapsed%v.duration:Math.min(elapsed,v.duration-.001)));
-          if (previewSession === session) paint(frame);
+          if (previewSession === session) { paint(frame); byId('scrub').value=v.start+(loop?elapsed%v.duration:Math.min(elapsed,v.duration)); updateTimeline(); }
         } else paint(item.media);
         if (previewSession === session) session.raf=requestAnimationFrame(tick);
       } catch (error) { if (previewSession === session) { stopSourcePreview(); status.textContent=error.message; } }

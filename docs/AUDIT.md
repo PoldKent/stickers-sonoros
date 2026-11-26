@@ -56,3 +56,7 @@ Se actualizan diagramas y README, nombre de descarga basado en el original, cont
 ### 2026.11.26.32 — Web oficial única / Single official website
 
 GitHub Pages es el único frontend público. Render conserva las rutas de importación y salud; la raíz y las rutas históricas del editor redirigen con HTTP 308, los antiguos activos devuelven 404 y las respuestas incluyen `X-Robots-Tag: noindex, nofollow`. La imagen Docker de producción no contiene el editor; el target `local-editor` conserva el flujo de desarrollo. Se añade URL canónica y pruebas HTTP de redirección, HEAD, CORS, importación y ausencia de activos. / GitHub Pages is the sole public frontend; Render is API-only with permanent redirects, noindex headers, and no production frontend assets. Local editor target retained. Live deployment must be verified separately.
+
+### 2026.11.26.33
+
+Pages .32 deployed; browser CI failed at 320px after generating a rotated sticker. Corrected intrinsic grid widths, native select sizing and result wrapping; retained the overflow assertion with diagnostic details. Moved the timeline under the preview, enabled full-source initial selection and cursor-based playback. Updated ES/EN docs and tests. Render remains API-only; actual deployment, real WhatsApp send and physical devices require separate verification.

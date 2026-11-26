@@ -43,7 +43,7 @@ Si falla una importación de TikTok, se ofrece [SnapTik](https://snaptik.fi/) co
 - Importación directa de video, imagen y audio; detección de recursos públicos en páginas compatibles.
 - Importador propio con yt-dlp y alternativa para direcciones públicas de descarga de TikTok.
 - Editor cuadrado de 512 × 512, reproducción previa, selección de fotograma, imagen o GIF con audio.
-- Recorte inicial de hasta 30 segundos, sin duración máxima fija. Calidad ajustada para los límites del conversor: 1 MB por componente en Compatible, o 4 MB combinados en Calidad ampliada.
+- Selección inicial del archivo completo y recorte ajustable, sin duración máxima fija. Calidad ajustada para los límites del conversor: 1 MB por componente en Compatible, o 4 MB combinados en Calidad ampliada.
 - Interfaz adaptable a celulares, tablets y computadoras. Selector Español/English persistente.
 - Edición y generación locales; no se requiere instalar programas ni extensiones.
 
@@ -125,3 +125,7 @@ El conversor y el mecanismo de publicación adaptado proceden de [Shirtep/WA-aud
 ## Investigación móvil
 
 Consulta [envío móvil sin WhatsApp Web](docs/MOBILE.md). El envío directo con sonido desde Android/iOS aún no está implementado; se mantiene el flujo verificado de escritorio.
+
+### Línea de tiempo
+
+La barra bajo la vista previa muestra la posición actual y duración total. Permite explorar fotogramas, reproducir desde el cursor dentro del tramo y marcar el inicio y final.

@@ -43,7 +43,7 @@ If TikTok import fails, [SnapTik](https://snaptik.fi/) is offered as an external
 - Direct video, image and audio imports; public media detection on supported pages.
 - Self-hosted yt-dlp importer and a fallback for public TikTok download addresses.
 - Square 512 × 512 editor, playback preview, frame extraction and image/GIF with sound.
-- Initial selection up to 30 seconds; no fixed duration limit. Quality adapts to the converter's compatible 1 MB per component or extended 4 MB combined limit.
+- Full source selected initially; adjustable trimming with no fixed duration limit. Quality adapts to the converter's compatible 1 MB per component or extended 4 MB combined limit.
 - Responsive phone, tablet and desktop layouts with a persistent Spanish/English setting.
 - Local editing and generation without installing applications or browser extensions.
 
@@ -125,3 +125,7 @@ The converter and adapted publishing mechanism come from [Shirtep/WA-audio-stick
 ## Mobile research
 
 See [mobile sending without WhatsApp Web](docs/MOBILE.md). Direct sound sticker sending from Android/iOS is not implemented; the verified desktop flow remains available.
+
+### Timeline
+
+The bar under the preview shows current position and total duration. Inspect frames, play from the cursor inside the selection and mark its start and end.

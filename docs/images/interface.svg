@@ -12,7 +12,7 @@
 <g font-size="12"><rect x="70" y="237" width="70" height="28" rx="6" fill="#533667"/><text x="88" y="255">Video</text><rect x="146" y="237" width="107" height="28" rx="6" fill="#241b31"/><text x="154" y="255">Image + audio</text><rect x="259" y="237" width="148" height="28" rx="6" fill="#241b31"/><text x="269" y="255">Video or GIF + audio</text></g>
 <text x="70" y="289" font-size="12" fill="#c0afcf">Paste a media link</text><rect x="70" y="299" width="337" height="30" rx="7" fill="#130f1b" stroke="#665079"/><text x="80" y="318" font-size="12" fill="#c0afcf">https://…</text>
 <rect x="70" y="342" width="337" height="44" rx="8" fill="#251a36" stroke="#79519a" stroke-dasharray="4 4"/><text x="238" y="369" text-anchor="middle" font-size="13">Choose a file</text>
-<text x="70" y="412" font-size="12" fill="#c0afcf">Start 0 s</text><text x="407" y="412" text-anchor="end" font-size="12" fill="#c0afcf">End 30 s</text><path d="M80 430H397" stroke="#63516f" stroke-width="5" stroke-linecap="round"/><path d="M80 430H245" stroke="#ddb5ff" stroke-width="5" stroke-linecap="round"/><circle cx="245" cy="430" r="8" fill="#ddb5ff"/>
+<text x="70" y="412" font-size="12" fill="#c0afcf">Start 0 s</text><text x="407" y="412" text-anchor="end" font-size="12" fill="#c0afcf">End / total</text><path d="M80 430H397" stroke="#63516f" stroke-width="5" stroke-linecap="round"/><path d="M80 430H245" stroke="#ddb5ff" stroke-width="5" stroke-linecap="round"/><circle cx="245" cy="430" r="8" fill="#ddb5ff"/>
 <rect x="70" y="474" width="337" height="38" rx="8" fill="#ddb5ff"/><text x="238" y="498" fill="#241331" font-weight="bold" text-anchor="middle" font-size="15">Create sound sticker</text>
 <rect x="438" y="199" width="346" height="330" rx="13" fill="#1d1729" stroke="#3b304c"/><text x="454" y="224" font-size="16" font-weight="bold">Preview</text><text x="769" y="224" font-size="12" text-anchor="end" fill="#c0afcf">512 × 512</text>
 <rect x="494" y="240" width="236" height="236" rx="12" fill="#120e1a"/>
@@ -24,7 +24,7 @@
 <rect x="860" y="250" width="239" height="34" rx="7" fill="#38264b"/><text x="979" y="271" font-size="12" text-anchor="middle">Seleccionar archivo</text>
 <rect x="904" y="297" width="150" height="150" rx="12" fill="#120e1a"/>
 <g fill="#ddb5ff"><rect x="946" y="363" width="7" height="18" rx="3"/><rect x="959" y="353" width="7" height="38" rx="3"/><rect x="972" y="340" width="7" height="64" rx="3"/><rect x="985" y="353" width="7" height="38" rx="3"/><rect x="998" y="363" width="7" height="18" rx="3"/></g>
-<text x="860" y="469" font-size="12" fill="#c0afcf">0 – 30 s</text><path d="M912 465H1094" stroke="#ddb5ff" stroke-width="4" stroke-linecap="round"/><circle cx="1000" cy="465" r="7" fill="#ddb5ff"/>
+<text x="860" y="469" font-size="12" fill="#c0afcf">0 – total</text><path d="M912 465H1094" stroke="#ddb5ff" stroke-width="4" stroke-linecap="round"/><circle cx="1000" cy="465" r="7" fill="#ddb5ff"/>
 <rect x="860" y="489" width="239" height="39" rx="8" fill="#ddb5ff"/><text x="979" y="514" font-size="13" text-anchor="middle" font-weight="bold" fill="#241331">Crear sticker sonoro</text>
 <text x="34" y="579" font-size="12" fill="#c0afcf">Illustrative interface / Esquema ilustrativo · Not a screenshot / No es una captura</text>
 </g></svg>

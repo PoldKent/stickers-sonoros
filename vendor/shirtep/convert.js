@@ -15,7 +15,7 @@
     return extended ? MAX_TOTAL_BYTES - audioBytes : MAX_STICKER_BYTES;
   }
   function estimatedAudioBytes(dur) {
-    return Math.min(MAX_AUDIO_BYTES, Math.ceil(dur * 32000 / 8 * 1.2 + 4096));
+    return Math.min(MAX_TOTAL_BYTES - 65536, Math.ceil(dur * 32000 / 8 * 1.2 + 4096));
   }
   const SAMPLE_RATE = 48000;
   const CAPTURE_MEM_BYTES = 320e6;     // memoria máxima para los cuadros capturados (10 s a 30 fps caben a 512 px)
@@ -968,7 +968,8 @@
     profile = profileOf(profile);
     const an = await analyze({ file, start, duration, mode, visual, audio, fit, profile, extended, onProgress, signal });
     try {
-      const cells = rankedCells(an.cells, profile, an.visual.kind === "image")
+      const eligible = an.cells.some(c=>c.estado==='ok'||c.estado==='baja') ? an.cells : an.cells.map(c=>c.estado==='no'?{...c,estado:'baja'}:c);
+      const cells = rankedCells(eligible, profile, an.visual.kind === "image")
         .filter(c => (side === "auto" || c.side === +side) && (fps === "auto" || c.fps === +fps));
       const sharpMotion = profile === "sharp" && an.visual.kind !== "image";
       const sharpLimitMessage = "El tramo no cabe en el presupuesto de tamaño con al menos 9 FPS. Acórtalo o cambia el modo de calidad.";

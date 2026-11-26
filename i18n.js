@@ -1,6 +1,7 @@
 /* Spanish/English presentation layer; does not change media or sending logic. */
 (() => {
   const pairs = [
+    ["Línea de tiempo","Timeline"],
     ["El tramo supera la memoria de captura disponible. Reduce la resolución del archivo original o acorta el tramo.","The selection exceeds available capture memory. Reduce the source resolution or shorten the selection."],
     ["Inicio del video","Video start"],
     ["Final del video","Video end"],

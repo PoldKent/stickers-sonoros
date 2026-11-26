@@ -1,6 +1,9 @@
 import unittest
 from unittest.mock import patch
-from public_media import public_target, PublicFetchError
+from public_media import public_target, PublicFetchError, fetch_public
+from tempfile import TemporaryDirectory
+from pathlib import Path
+from unittest.mock import MagicMock
 
 class PublicTargets(unittest.TestCase):
     @patch("public_media.socket.getaddrinfo", return_value=[(2,1,6,"",("93.184.216.34",443))])
@@ -20,3 +23,29 @@ class PublicTargets(unittest.TestCase):
     def test_mixed_dns(self, dns):
         with self.assertRaises(PublicFetchError):
             public_target("https://example.org/")
+
+class FetchTests(unittest.TestCase):
+    @patch("public_media.PinnedHTTPS")
+    @patch("public_media.socket.getaddrinfo", return_value=[(2,1,6,"",("93.184.216.34",443))])
+    def test_redirect_to_private(self, dns, connection):
+        response=connection.return_value.getresponse.return_value
+        response.status=302
+        response.getheader.return_value="https://127.0.0.1/secret"
+        with TemporaryDirectory() as d, self.assertRaises(PublicFetchError):
+            fetch_public("https://example.org/",Path(d)/"result")
+        self.assertEqual(connection.call_count,1)
+
+    @patch("public_media.PinnedHTTPS")
+    @patch("public_media.socket.getaddrinfo", return_value=[(2,1,6,"",("93.184.216.34",443))])
+    def test_media_download(self, dns, connection):
+        response=connection.return_value.getresponse.return_value
+        response.status=200
+        headers={"Content-Type":"image/png","Content-Length":"4"}
+        response.getheader.side_effect=lambda name,default=None: headers.get(name,default)
+        response.read1.side_effect=[b"test",b""]
+        with TemporaryDirectory() as d:
+            path=Path(d)/"result"
+            kind,url=fetch_public("https://example.org/image.png",path)
+            self.assertEqual(kind,"image/png")
+            self.assertEqual(path.read_bytes(),b"test")
+            self.assertEqual(url,"https://example.org/image.png")

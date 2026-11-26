@@ -127,3 +127,7 @@ The converter and adapted publishing mechanism come from [Shirtep/WA-audio-stick
 ## Mobile research
 
 See [mobile sending without WhatsApp Web](docs/MOBILE.md). Direct sound sticker sending from Android/iOS is not implemented; the verified desktop flow remains available.
+
+## Editing timeline
+
+Below the preview, the timeline displays the current position and full duration of the video or GIF, to hundredths of a second. Drag it to inspect frames; the indicator follows selection playback. If the cursor is within the selected range, playback starts there. Mark start/end applies the trim at that position. The generated clip retains its own player controls.

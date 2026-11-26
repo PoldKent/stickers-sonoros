@@ -31,6 +31,9 @@ def public_target(value):
         host = host.encode("idna").decode("ascii")
         if host.endswith("."):
             host = host[:-1]
+        # Restricted platforms use their own importer, not this fallback.
+        if any(host.lower() == site or host.lower().endswith("."+site) for site in ("youtube.com","youtu.be","instagram.com","tiktok.com")):
+            raise PublicFetchError("Esta plataforma requiere su importador específico.")
         # Do not accept bare IPs or internal hostnames.
         if "." not in host or ":" in host:
             raise ValueError()

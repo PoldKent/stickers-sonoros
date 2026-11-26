@@ -37,7 +37,7 @@
   function rankedCells(cells, profile, isImage = false) {
     const p = PROFILES[profileOf(profile)];
     return cells.filter(c => (c.estado === "ok" || c.estado === "baja") &&
-      (isImage || (c.side >= p.minSide && c.fps >= p.minFps)))
+      (c.side >= p.minSide && (isImage || c.fps >= p.minFps)))
       .sort((a,b) => (score(b.side,b.fps,profile) - (b.estado==="baja"?20:0)) -
                      (score(a.side,a.fps,profile) - (a.estado==="baja"?20:0)));
   }

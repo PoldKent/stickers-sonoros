@@ -9,7 +9,7 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - name: Comprobar servidor y acceso público
         shell: bash
@@ -38,5 +38,13 @@ jobs:
           else
             echo "Importación no verificada: HTTP $status" | tee -a "$GITHUB_STEP_SUMMARY"
             if grep -iq '^content-type: application/json' "$tmp/media-headers"; then head -c 1000 "$tmp/media"; fi
+          fi
+          echo 'Comprobación TikTok de la publicación indicada por el usuario'
+          status=$(curl -sS --max-time 180 --max-filesize 83886080 -o "$tmp/tiktok" -D "$tmp/tiktok-headers" -w '%{http_code}' -H "Origin: $origin" -H 'Content-Type: application/json' --data '{"url":"https://www.tiktok.com/@ssillazul/video/7653976843833330952"}' "$base/api/import")
+          echo "TikTok HTTP $status"
+          if [[ "$status" == 200 ]] && grep -iq '^content-type: video/mp4' "$tmp/tiktok-headers"; then
+            echo "TikTok MP4 recibido: $(wc -c < "$tmp/tiktok") bytes" | tee -a "$GITHUB_STEP_SUMMARY"
+          elif grep -iq '^content-type: application/json' "$tmp/tiktok-headers"; then
+            head -c 1000 "$tmp/tiktok"
           fi
           exit 0

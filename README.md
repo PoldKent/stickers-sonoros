@@ -68,3 +68,7 @@ El editor comprueba /health antes de recurrir a /api/media. Distingue servidor i
 ## Textos de envío (2026.11.26.15)
 
 Se simplifican las instrucciones y los avisos del marcador para usuarios finales, sin modificar la validación del archivo, la confirmación del destinatario, la compatibilidad temporal ni el envío. La interfaz conserva una nota sobre la integración no oficial. Para ver los textos nuevos, reemplaza el marcador guardado anteriormente; los paquetes sonoros existentes siguen siendo compatibles.
+
+## Formatos verticales (2026.11.26.16)
+
+Se elimina el filtro estricto de altura de 480 px. yt-dlp prioriza la dimensión menor con `res:480`, admite formatos combinados o separados y FFmpeg conserva o convierte los códecs según sea necesario. Se mantienen los límites de descarga, tiempo y duración. La selección no garantiza acceso a publicaciones restringidas. Se prueba con formatos verticales simulados y con el selector real de yt-dlp sobre metadatos locales. El diagnóstico público consulta también la publicación de TikTok indicada por el usuario, cuando el servidor tiene soporte de importación.

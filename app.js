@@ -9,7 +9,7 @@ const labels = {
   image: ['Selecciona o arrastra una imagen', 'PNG, JPEG, WebP u otra imagen compatible', 'image/*'],
   mix: ['Selecciona o arrastra un video o GIF', 'MP4, WebM o GIF animado', 'video/*,image/gif']
 };
-const limit = 30;
+const limit = 10;
 let mode = 'video';
 let visual;
 let audio;
@@ -20,6 +20,7 @@ let audioRequest = 0;
 let loadingVisual = false;
 let loadingAudio = false;
 let busy = false;
+let exportJob;
 let importController;
 let importing = false;
 
@@ -39,6 +40,14 @@ let stickerJob;
 let clipDuration;
 function clearResult() {
   stickerJob?.abort();
+  stickerJob = undefined;
+  byId('sticker-image').removeAttribute('src');
+  byId('sticker-audio').pause();
+  byId('sticker-audio').removeAttribute('src');
+  byId('sticker-audio').load();
+  byId('sticker-progress').hidden = true;
+  byId('cancel-sticker').hidden = true;
+  byId('prepare-sticker').hidden = true;
   byId('components').hidden = true;
   byId('prepare-sticker').disabled = false;
   byId('sticker-state').textContent = '';
@@ -54,6 +63,7 @@ function clearResult() {
   output.hidden = true;
   byId('native').hidden = true;
   byId('downloads').hidden = true;
+  byId('download').removeAttribute('href');
   if (resultUrl) URL.revokeObjectURL(resultUrl);
   result = resultUrl = undefined;
 }
@@ -67,6 +77,11 @@ function sync() {
   byId('empty').hidden = !!visual;
   byId('position').hidden = !visual;
   byId('scrub-row').hidden = !visual || visual.kind === 'image';
+  byId('trim-actions').hidden = byId('scrub-row').hidden;
+  // Hidden trim fields must not block form submission.
+  for (const [ids,hidden] of [[['vs','ve'],byId('visual-trim').hidden],[['as','ae'],byId('audio-trim').hidden]]) for (const id of ids) { byId(id).required = !hidden; byId(id).disabled = hidden || busy; }
+  for (const id of ['mark-start','mark-end','demo']) byId(id).disabled = busy || importing;
+  selectionInfo();
   canvas.classList.toggle('ready', !!visual);
 }
 
@@ -197,8 +212,7 @@ async function chooseVisual(file) {
   }
 }
 
-byId('sound').addEventListener('change', async event => {
-  const file = event.target.files[0];
+async function chooseAudio(file) {
   if (!file || busy) return;
   const request = ++audioRequest;
   clearResult();
@@ -220,7 +234,8 @@ byId('sound').addEventListener('change', async event => {
       sync();
     }
   }
-});
+}
+byId('sound').addEventListener('change', event => chooseAudio(event.target.files[0]));
 
 for (const button of modes) {
   button.addEventListener('click', () => {
@@ -301,7 +316,8 @@ byId('scrub').addEventListener('input', () => { byId('scrub-time').textContent =
 function trimmed(prefix) {
   const start = byId(prefix + 's').valueAsNumber;
   const end = byId(prefix + 'e').valueAsNumber;
-  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) throw new Error('El final del tramo debe ser posterior al inicio.');
+  const max = Number(byId(prefix + 'e').max);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end > max + .0001 || end <= start) throw new Error('Selecciona un tramo válido dentro de la duración del archivo.');
   return { start, duration: end - start };
 }
 
@@ -322,7 +338,7 @@ function record(stream) {
   return { recorder, blob };
 }
 
-async function render(context, videoTrim, soundTrim) {
+async function render(context, videoTrim, soundTrim, signal) {
   const item = visual;
   const video = item.kind === 'video' ? item.media : null;
   const sound = context.createBufferSource();
@@ -335,21 +351,29 @@ async function render(context, videoTrim, soundTrim) {
   let interval;
   let failure;
   let updating = false;
+  let watchdog;
+  let pendingUpdate;
+  let abortRender;
+  const interrupted = new Promise((_, reject) => { abortRender = () => reject(new DOMException('Generación cancelada','AbortError')); });
+  interrupted.catch(() => {});
+  signal.addEventListener('abort', abortRender, {once:true});
   const loop = mode === 'mix' && byId('motion').value === 'loop';
   const end = videoTrim && videoTrim.start + videoTrim.duration;
   try {
     if (video) await seek(video, videoTrim.start);
     paint(item.kind === 'gif' ? await gifAt(item, videoTrim.start) : item.media);
     encoding = record(stream);
+    if (signal.aborted) throw new DOMException('Generación cancelada','AbortError');
     if (video) await video.play();
+    if (signal.aborted) throw new DOMException('Generación cancelada','AbortError');
     encoding.recorder.start();
     const started = context.currentTime;
     const ended = new Promise(resolve => sound.addEventListener('ended', resolve, { once: true }));
     sound.start(started, soundTrim.start, soundTrim.duration);
-    interval = setInterval(async () => {
+    interval = setInterval(() => {
       if (updating || failure) return;
       updating = true;
-      try {
+      pendingUpdate = (async () => { try {
         const elapsed = context.currentTime - started;
         byId('progress').value = Math.min(1, elapsed / soundTrim.duration);
         if (video) {
@@ -367,13 +391,15 @@ async function render(context, videoTrim, soundTrim) {
         }
       } catch (error) {
         failure = error;
-        sound.stop();
+        try { sound.stop(); } catch {}
       } finally {
         updating = false;
-      }
+      } })();
     }, 33);
-    await Promise.race([ended, encoding.blob]);
+    const timeout = new Promise((_, reject) => { watchdog = setTimeout(() => reject(new Error('La generación tardó demasiado. Mantén la pestaña visible y vuelve a intentar.')), (soundTrim.duration + 15) * 1000); });
+    await Promise.race([ended, encoding.blob, interrupted, timeout]);
     clearInterval(interval);
+    await pendingUpdate;
     if (encoding.recorder.state !== 'inactive') encoding.recorder.stop();
     const blob = await encoding.blob;
     if (failure) throw failure;
@@ -381,8 +407,12 @@ async function render(context, videoTrim, soundTrim) {
     return blob;
   } finally {
     clearInterval(interval);
+    clearTimeout(watchdog);
+    signal.removeEventListener('abort', abortRender);
+    try { sound.stop(); } catch {}
+    await pendingUpdate;
     video?.pause();
-    if (encoding?.recorder.state === 'recording') encoding.recorder.stop();
+    if (encoding && encoding.recorder.state !== 'inactive') encoding.recorder.stop();
     for (const track of stream.getTracks()) track.stop();
   }
 }
@@ -395,9 +425,11 @@ byId('project').addEventListener('submit', async event => {
     if (!window.MediaRecorder || !canvas.captureStream || !window.AudioContext) throw new Error('Este navegador no permite exportar el clip. Prueba con Chrome o Edge actualizado.');
     const videoTrim = visual.kind === 'image' ? null : trimmed('v');
     const soundTrim = mode === 'video' ? videoTrim : trimmed('a');
-    if (soundTrim.duration > limit + .0001) throw new Error('Selecciona un tramo de audio de hasta 30 segundos.');
+    if (soundTrim.duration > limit + .0001) throw new Error('Selecciona un tramo de audio de hasta 10 segundos para WhatsApp.');
     busy = true;
     clearResult();
+    exportJob = new AbortController();
+    byId('cancel-export').hidden = false;
     for (const field of document.querySelectorAll('input, select, .modes button')) field.disabled = true;
     sync();
     const progress = byId('progress');
@@ -406,7 +438,8 @@ byId('project').addEventListener('submit', async event => {
     status.textContent = 'Creando el clip. Mantén esta pestaña abierta…';
     context = new AudioContext();
     await context.resume();
-    const blob = await render(context, videoTrim, soundTrim);
+    const blob = await render(context, videoTrim, soundTrim, exportJob.signal);
+    if (exportJob.signal.aborted) throw new DOMException('Generación cancelada','AbortError');
     const type = blob.type.split(';')[0];
     const extension = type === 'video/mp4' ? 'mp4' : 'webm';
     result = new File([blob], 'sticker-sonoro.' + extension, { type });
@@ -419,25 +452,31 @@ byId('project').addEventListener('submit', async event => {
     const download = byId('download');
     download.href = resultUrl;
     download.download = result.name;
-    download.textContent = 'Descargar ' + extension.toUpperCase() + ' ↓';
-    byId('share').hidden = !navigator.canShare?.({ files: [result] });
+    download.textContent = 'Guardar para WhatsApp (' + extension.toUpperCase() + ') ↓';
+    byId('format-note').textContent = extension === 'mp4' ? 'Vídeo MP4 listo para guardar en la galería.' : 'Este navegador exportó WebM. Si tu galería no lo admite, utiliza un navegador compatible con exportación MP4.';
+    try { byId('share').hidden = !navigator.canShare?.({ files: [result] }); } catch { byId('share').hidden = true; }
     byId('downloads').hidden = false;
-    status.textContent = 'Clip listo para reproducir o descargar.';
+    status.textContent = 'Vídeo preparado. Generando los archivos del sticker sonoro…';
   } catch (error) {
-    status.textContent = error.message || 'No pude crear el clip.';
+    status.textContent = error.name === 'AbortError' ? 'Generación cancelada.' : error.message || 'No pude crear el clip.';
   } finally {
-    if (context) await context.close();
+    if (context) await context.close().catch(() => {});
+    exportJob = undefined;
+    byId('cancel-export').hidden = true;
     busy = false;
     byId('progress').hidden = true;
     for (const field of document.querySelectorAll('input, select, .modes button')) field.disabled = false;
     sync();
   }
+  if (result) { status.textContent = 'Vídeo preparado para el editor de stickers de WhatsApp.'; await prepareSticker(); }
 });
+byId('cancel-export').onclick = () => exportJob?.abort();
 
 byId('share').addEventListener('click', async () => {
   if (!result) return;
   try {
     await navigator.share({ files: [result] });
+    status.textContent = 'Archivo compartido como vídeo, no como sticker. Usa Crear sticker en WhatsApp para añadir el sonido.';
   } catch (error) {
     if (error.name !== 'AbortError') status.textContent = 'El navegador no pudo compartir el archivo. Puedes descargarlo.';
   }
@@ -565,32 +604,123 @@ byId('load-link').onclick = async () => {
   }
 };
 
-byId('prepare-sticker').addEventListener('click', async () => {
-  if (!result) return;
-  const button = byId('prepare-sticker');
-  const state = byId('sticker-state');
+function selectionInfo() {
+  const info = byId('selection-info');
+  if (!visual || !audio) { info.textContent = 'Selecciona un archivo con audio. Máximo 10 segundos por sticker.'; return; }
+  try {
+    const t = mode === 'video' ? trimmed('v') : trimmed('a');
+    info.textContent = 'Duración: ' + t.duration.toFixed(2) + ' s de ' + limit + ' s permitidos.';
+    if (t.duration > limit + .0001) info.textContent += ' Reduce el tramo antes de generar.';
+    if (visual.kind !== 'image' && mode !== 'video') trimmed('v');
+    if (t.duration > limit + .0001) byId('export').disabled = true;
+  } catch (error) { info.textContent = error.message; byId('export').disabled = true; }
+}
+for (const id of ['vs','ve','as','ae']) byId(id).addEventListener('input', () => { clearResult(); sync(); });
+byId('mark-start').onclick = () => {
+  if (busy || !visual) return;
+  const start = byId('scrub').valueAsNumber;
+  const max = Number(byId('ve').max);
+  byId('vs').value = Math.min(start, max - .01).toFixed(2);
+  byId('ve').value = Math.min(max, Number(byId('vs').value) + limit).toFixed(2);
+  clearResult(); sync(); previewFrame(Number(byId('vs').value));
+};
+byId('mark-end').onclick = () => {
+  if (busy || !visual) return;
+  const end = byId('scrub').valueAsNumber;
+  const start = byId('vs').valueAsNumber;
+  if (end <= start) { status.textContent = 'El final debe estar después del inicio.'; return; }
+  byId('ve').value = end.toFixed(2);
+  if (mode === 'video' && end - start > limit) byId('vs').value = (end - limit).toFixed(2);
+  clearResult(); sync();
+};
+async function verifySticker(files) {
+  if (!files.webp?.size || !files.ogg?.size || files.webp.size > 1000000 || files.ogg.size > 1000000) throw new Error('Los archivos superan el límite del conversor o están vacíos.');
+  const webp = new Uint8Array(await files.webp.arrayBuffer());
+  const ogg = new Uint8Array(await files.ogg.arrayBuffer());
+  const read = (b,i,n) => String.fromCharCode(...b.subarray(i,i+n));
+  if (read(webp,0,4) !== 'RIFF' || read(webp,8,4) !== 'WEBP' || read(ogg,0,4) !== 'OggS') throw new Error('El formato generado no es válido.');
+  const hash = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.digest('SHA-256',ogg))));
+  // Check the actual EXIF chunk rather than assuming a successful converter implies correct linkage.
+  const dv = new DataView(webp.buffer);
+  let valid = false;
+  for (let offset = 12; offset + 8 <= webp.length;) {
+    const size = dv.getUint32(offset+4,true), end = offset+8+size;
+    if (end > webp.length) throw new Error('WebP incompleto.');
+    if (read(webp,offset,4) === 'EXIF') {
+      const metadata = new TextDecoder().decode(webp.subarray(offset+8,end));
+      valid = metadata.includes('"sound-sha256"') && metadata.includes(hash);
+    }
+    offset = end + (size % 2);
+  }
+  if (!valid || files.info?.soundSha256 !== hash) throw new Error('No se pudo verificar la vinculación del sonido.');
+  return files.info;
+}
+async function prepareSticker() {
+  if (!result || stickerJob) return;
+  const source = result, duration = clipDuration;
+  const button = byId('prepare-sticker'), state = byId('sticker-state'), progress = byId('sticker-progress');
   const controller = new AbortController();
   stickerJob = controller;
+  button.hidden = true;
   button.disabled = true;
+  byId('cancel-sticker').hidden = false;
+  progress.hidden = false; progress.value = 0;
+  state.textContent = 'Comprobando compatibilidad del navegador…';
   try {
+    if (!window.WAAS) throw new Error('No se cargó el conversor. Recarga la página.');
     const caps = await window.WAAS.capabilities();
-    if (caps.opus !== true || caps.webpEncode !== 'image/webp') {
-      throw new Error('Este navegador necesita compatibilidad con WebP y Opus. Prueba Chrome o Edge actualizado.');
-    }
+    if (caps.opus !== true || caps.webpEncode !== 'image/webp') throw new Error('Este navegador no puede codificar WebP y Opus. Prueba Chrome o Edge actualizado. El vídeo para WhatsApp sigue disponible.');
     if (controller.signal.aborted) return;
     const files = await window.WAAS.convert({
-      file: result, duration: clipDuration, signal: controller.signal,
-      onProgress(message) { if (!controller.signal.aborted) state.textContent = message; }
+      file: source, duration, signal: controller.signal,
+      onProgress(message, fraction) { if (!controller.signal.aborted) { state.textContent = message; if (Number.isFinite(fraction)) progress.value = Math.max(0, Math.min(1, fraction)); } }
     });
-    if (controller.signal.aborted) return;
-    byId('webp-file').href = URL.createObjectURL(files.webp);
-    byId('ogg-file').href = URL.createObjectURL(files.ogg);
+    const info = await verifySticker(files);
+    if (controller.signal.aborted || result !== source) return;
+    const webpUrl = URL.createObjectURL(files.webp), oggUrl = URL.createObjectURL(files.ogg);
+    byId('webp-file').href = byId('sticker-image').src = webpUrl;
+    byId('ogg-file').href = byId('sticker-audio').src = oggUrl;
+    byId('sticker-info').textContent = (info.lado || '?') + ' px · ' + (info.fps || 1) + ' FPS · ' + Math.round(files.webp.size/1024) + ' KB + ' + Math.round(files.ogg.size/1024) + ' KB de audio';
     byId('sticker-files').hidden = false;
-    state.textContent = 'Sticker preparado. Puedes guardar la animación y el sonido.';
+    state.textContent = 'Animación y audio generados. Vinculación SHA-256 verificada.';
   } catch (error) {
-    if (!controller.signal.aborted) {
-      state.textContent = error.message;
+    if (stickerJob === controller) {
+      state.textContent = controller.signal.aborted ? 'Conversión cancelada. El vídeo sigue disponible.' : (error.message || 'No se pudo generar el sticker.') + ' Puedes guardar el vídeo y crearlo dentro de WhatsApp.';
+      button.hidden = false;
+    }
+  } finally {
+    if (stickerJob === controller) {
+      stickerJob = undefined;
+      progress.hidden = true;
+      byId('cancel-sticker').hidden = true;
       button.disabled = false;
+      if (controller.signal.aborted) { button.hidden = false; state.textContent = 'Conversión cancelada. El vídeo sigue disponible.'; }
     }
   }
-});
+}
+byId('prepare-sticker').onclick = prepareSticker;
+byId('cancel-sticker').onclick = () => stickerJob?.abort();
+
+function demoAudio() {
+  const rate = 48000, count = rate * 2, buffer = new ArrayBuffer(44 + count * 2), view = new DataView(buffer);
+  function ascii(offset, text) { for (let i=0;i<text.length;i++) view.setUint8(offset+i,text.charCodeAt(i)); }
+  ascii(0,'RIFF'); view.setUint32(4,36+count*2,true); ascii(8,'WAVE'); ascii(12,'fmt ');
+  view.setUint32(16,16,true); view.setUint16(20,1,true); view.setUint16(22,1,true);
+  view.setUint32(24,rate,true); view.setUint32(28,rate*2,true); view.setUint16(32,2,true); view.setUint16(34,16,true);
+  ascii(36,'data'); view.setUint32(40,count*2,true);
+  for(let i=0;i<count;i++){
+    const t=i/rate, part=t<.5?t:t<1?t-.5:t-1, frequency=t<.5?440:t<1?554.37:659.25;
+    const fade=Math.max(0,Math.min(1,part/.025,(.45-part)/.08));
+    view.setInt16(44+2*i,Math.round(9500*fade*Math.sin(2*Math.PI*frequency*part)),true);
+  }
+  return new File([buffer],'ejemplo.wav',{type:'audio/wav'});
+}
+byId('demo').onclick = async () => {
+  if (busy || importing) return;
+  modes.find(button=>button.dataset.mode==='image').click();
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="#211832"/><circle cx="256" cy="220" r="140" fill="#ddb5ff"/><path d="M178 190h40l50-44v148l-50-44h-40zM290 188q45 32 0 64m25-91q78 59 0 118" fill="none" stroke="#241331" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/><text x="256" y="420" text-anchor="middle" font-family="sans-serif" font-size="48" font-weight="bold" fill="#f7f0ff">¡Suena!</text></svg>';
+  const selected = chooseVisual(new File([svg],'ejemplo.svg',{type:'image/svg+xml'}));
+  const track = chooseAudio(demoAudio());
+  await Promise.all([selected,track]);
+  if (mode==='image' && visual && audio) status.textContent='Ejemplo preparado. Pulsa Crear sticker sonoro.';
+};

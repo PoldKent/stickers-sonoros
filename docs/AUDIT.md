@@ -108,3 +108,7 @@ Public Android/iOS sticker-pack contracts do not expose linked audio import. Add
 ### 2026.11.26.43 — 2 MB compatibility trial / Prueba de compatibilidad de 2 MB
 
 User reported that 4 MB stickers do not work. Reduced the new-generation combined WebP + Ogg budget to 2,000,000 bytes, preserving the 9 FPS animation floor, no fixed duration cap and compatible mode (1 MB per component). Existing bookmark and mobile readers still validate legacy packages up to 4 MB; acceptance by WhatsApp is not implied. Updated ES/EN labels, diagrams, docs and conversion size assertions. Actual 2 MB WhatsApp acceptance requires a real send test; mobile JSON import remains unsupported. CI and deployment pending.
+
+### 2026.11.26.44 — Mobile-only private trial
+
+Previous real-package adapter CI passed. Added an optional bearer-protected one-shot service and mobile UI in both Send and saved-package reader; fixed secondary/receiver numbers configured only by the operator, explicit confirmation, ephemeral session, no inbox access, separate Docker deployment, no real account linkage. The official editor and public importer are not provisioned with this bridge. Browser and policy tests pending; dependency installation and real WhatsApp pairing/delivery not verified.

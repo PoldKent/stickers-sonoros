@@ -1225,16 +1225,20 @@ function bytesToBase64(bytes) {
   for(let offset=0;offset<bytes.length;offset+=16384)raw+=String.fromCharCode(...bytes.subarray(offset,offset+16384));
   return btoa(raw);
 }
+async function packageBlob(files){
+  const webp=bytesToBase64(new Uint8Array(await files.webp.arrayBuffer()));
+  const ogg=bytesToBase64(new Uint8Array(await files.ogg.arrayBuffer()));
+  const {lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl,fps,cuadros,duracion,fpsEfectivos}=files.info;
+  return new Blob([JSON.stringify({format:'stickers-sonoros/1',webp,ogg,info:{lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl,fps,cuadros,duracion,fpsEfectivos}})],{type:'application/json'});
+}
+window.SonoroPrivateMobile?.mount(byId('private-mobile-bridge'),async()=>{const files=nativePackage;if(!files)return null;const blob=await packageBlob(files);return nativePackage===files?blob:null});
 byId('package-download').onclick=async()=>{
   const files=nativePackage;
   if(!files)return;
   const button=byId('package-download');button.disabled=true;
   try{
-    const webp=bytesToBase64(new Uint8Array(await files.webp.arrayBuffer()));
-    const ogg=bytesToBase64(new Uint8Array(await files.ogg.arrayBuffer()));
+    const blob=await packageBlob(files);
     if(nativePackage!==files)return;
-    const {lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl,fps,cuadros,duracion,fpsEfectivos}=files.info;
-    const blob=new Blob([JSON.stringify({format:'stickers-sonoros/1',webp,ogg,info:{lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl,fps,cuadros,duracion,fpsEfectivos}})],{type:'application/json'});
     const url=URL.createObjectURL(blob), link=document.createElement('a');
     const name=(visual?.name || 'sticker').replace(/\.[^.]+$/,'').replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/g,'_').trim().slice(0,120) || 'sticker';
     link.href=url;link.download=name+'.sonoro.json';document.body.append(link);link.click();link.remove();

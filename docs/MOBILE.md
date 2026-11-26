@@ -61,3 +61,9 @@ Play the video preview, save the prepared video, then open WhatsApp. The button 
 Los paquetes nuevos usan hasta 2 MB combinados (WebP + Ogg); los lectores siguen aceptando paquetes anteriores de hasta 4 MB. Esto no habilita el envío nativo de JSON ni garantiza que WhatsApp acepte 2 MB.
 
 New packages use up to 2 MB combined (WebP + Ogg); readers still accept older packages up to 4 MB. This does not enable native JSON sending or guarantee WhatsApp acceptance at 2 MB.
+
+### Prueba de envío privado desde la web / Private web delivery trial (.44)
+
+El panel experimental de la etapa Enviar y del lector móvil permite conectar un puente privado separado por código de vinculación, sin ordenador. Requiere que el propietario despliegue y configure el servicio, una cuenta secundaria propia y una prueba real. No es una importación nativa oficial. [Configuración y riesgos](../experiments/mobile-bridge/README.md#prueba-web-móvil--mobile-web-trial).
+
+The experimental Send-stage and mobile-reader panel can connect a separately deployed private bridge by pairing code, without a computer. Requires operator deployment, an owned secondary account and real acceptance testing. Not official native import. [Setup and risks](../experiments/mobile-bridge/README.md#prueba-web-móvil--mobile-web-trial).

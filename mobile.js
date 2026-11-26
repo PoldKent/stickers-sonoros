@@ -79,5 +79,6 @@ async function video(p,signal,onProgress){
 $('prepare-video').onclick=async()=>{const p=current;if(!p||job)return;const controller=new AbortController();job=controller;clearVideo();$('prepare-video').disabled=true;$('mobile-package').disabled=true;$('cancel-video').hidden=false;$('mobile-progress').hidden=false;$('mobile-progress').value=0;status('working');try{const blob=await video(p,controller.signal,x=>$('mobile-progress').value=x);if(current!==p||controller.signal.aborted)return;videoFile=blob;videoUrl=URL.createObjectURL(blob);$('mobile-video-preview').src=videoUrl;$('mobile-video-format').textContent=t(blob.type.includes('mp4')?'mp4Ready':'webmReady');$('mobile-video-ready').hidden=false;status('videoReady')}catch(e){if(current===p)status(messages[e.message]?e.message:'decode')}finally{if(job===controller){job=null;$('prepare-video').disabled=false;$('mobile-package').disabled=false;$('cancel-video').hidden=true;$('mobile-progress').hidden=true;}}};
 $('cancel-video').onclick=()=>job?.abort();$('save-video').onclick=()=>{if(current&&videoFile){save(videoFile,current.name+(videoFile.type.includes('mp4')?'.mp4':'.webm'));nextStep()}};
 window.SonoroMobile={validate,png,wav};
+window.SonoroPrivateMobile?.mount($('private-mobile-bridge'),()=>current?$('mobile-package').files[0]:null);
 applyLanguage();
 })();

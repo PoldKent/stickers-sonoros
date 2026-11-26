@@ -20,6 +20,8 @@
 <button type="button" data-mode="image" aria-pressed="false">Imagen + audio</button>
 <button type="button" data-mode="mix" aria-pressed="false">Video o GIF + audio</button>
 </div>
+<section id="links"><label for="link-input">Enlace de TikTok, Reel, Short o video directo</label><div class="linkbar"><input id="link-input" type="url" placeholder="https://…" autocomplete="off"><button id="load-link">Abrir enlace</button></div>
+<div id="social" hidden><a id="original" target="_blank" rel="noopener noreferrer">Abrir publicación en otra pestaña ↗</a><p>Abre la publicación, pulsa Capturar y selecciona su pestaña con el audio activado. Reproduce el tramo y termina la captura para editarlo.</p><button id="capture">Capturar pestaña</button><button id="finish" hidden>Terminar e importar</button></div><p id="link-status" role="status"></p></section>
 <form id="project">
 <label class="drop" id="drop"><input type="file" id="visual" accept="video/*"><span class="upload" aria-hidden="true">↑</span><strong id="visual-label">Selecciona o arrastra un video</strong><small id="visual-hint">MP4, WebM u otro video compatible</small></label>
 <label id="sound-row" hidden>Pista de audio <input id="sound" type="file" accept="audio/*,video/*"></label>
@@ -35,6 +37,7 @@
 <label>Encuadre<select id="fit"><option value="contain">Ajustar</option><option value="cover">Rellenar</option></select></label>
 <label id="motion-row" hidden>Al terminar la animación<select id="motion"><option value="freeze">Mantener último cuadro</option><option value="loop">Repetir</option></select></label>
 </div>
+<fieldset id="position" hidden><legend>Posición y zoom</legend><label>Horizontal <input type="range" id="pan-x" min="-100" max="100" value="0"></label><label>Vertical <input type="range" id="pan-y" min="-100" max="100" value="0"></label><label>Zoom <input type="range" id="zoom" min="100" max="300" value="100"></label><small>También puedes arrastrar la imagen en la vista previa.</small></fieldset>
 <button class="primary" id="export" disabled>Crear clip con sonido <span aria-hidden="true">↗</span></button>
 <progress id="progress" max="1" value="0" hidden></progress>
 <p id="status" role="status" aria-live="polite"></p>
@@ -44,6 +47,7 @@
 <div class="heading"><h2 id="preview-title">Vista previa</h2><span>512 × 512</span></div>
 <div class="stage"><canvas id="canvas" width="512" height="512" aria-label="Encuadre del clip"></canvas><video id="output" controls playsinline hidden></video><div id="empty"><div class="waves" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div><strong>Tu clip aparecerá aquí</strong></div></div>
 <div id="downloads" hidden><a id="download" class="primary">Descargar video ↓</a><button id="share" type="button" hidden>Compartir archivo</button></div>
+<details id="native" hidden><summary>Enviar como sticker con audio en WhatsApp</summary><ol><li>Descarga el clip con el botón de arriba.</li><li>Abre <a href="https://web.whatsapp.com/" target="_blank" rel="noopener">WhatsApp Web</a> con la <a href="https://github.com/Shirtep/WA-audio-stickers/releases" target="_blank" rel="noopener">extensión de Shirtep instalada</a>.</li><li>En el chat, abre la extensión, elige Video y selecciona el clip descargado. Calcula el formato y pulsa Crear y enviar.</li></ol></details>
 <p class="note">Puedes enviar el archivo como video en WhatsApp. Para enviarlo como sticker nativo con sonido, usa la <a href="https://github.com/Shirtep/WA-audio-stickers/releases">extensión original</a>.</p>
 </section>
 </div>

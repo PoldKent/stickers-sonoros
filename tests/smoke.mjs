@@ -73,7 +73,7 @@ try {
     };
     window.require=name=>{if(!(name in modules))throw Error('missing '+name);return modules[name];};
   });
-  await wa.evaluate(code=>{(0,eval)(code.slice('javascript:'.length));},bookmarklet);
+  await wa.evaluate(code=>{(0,eval)(decodeURIComponent(code.slice('javascript:'.length)));},bookmarklet);
   const panel=wa.locator('#ss-local-bridge');
   await panel.waitFor();
   await panel.locator('input').setInputFiles({name:'sticker.sonoro.json',mimeType:'application/json',buffer:packageBytes});

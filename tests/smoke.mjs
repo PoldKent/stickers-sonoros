@@ -150,6 +150,8 @@ try {
     for(let i=0;i<samples;i++)d.setInt16(44+i*2,Math.round(Math.sin(2*Math.PI*440*i/48000)*3000),true);
     const audio=new File([bytes],'long.wav',{type:'audio/wav'});
     const out=await window.WAAS.convert({visual:{kind:'image',file:image,start:0,dur:180},audio:{file:audio,start:0,dur:180},fit:'repetir'});
+    const decoded=await new OfflineAudioContext(1,48000,48000).decodeAudioData(await out.ogg.arrayBuffer());
+    if(Math.abs(decoded.duration-180)>0.1)throw Error('Unexpected decoded duration: '+decoded.duration);
     const encode=async blob=>{const u=new Uint8Array(await blob.arrayBuffer());let s='';for(let i=0;i<u.length;i+=16384)s+=String.fromCharCode(...u.subarray(i,i+16384));return btoa(s);};
     return {format:'stickers-sonoros/1',webp:await encode(out.webp),ogg:await encode(out.ogg),info:out.info};
   });

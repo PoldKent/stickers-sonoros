@@ -22,6 +22,10 @@ Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
 3. Pulsa **Crear sticker sonoro**. El editor prepara localmente un paquete con WebP y Ogg/Opus vinculados, si el navegador dispone de los códecs necesarios.
 4. Sigue los cuatro pasos de envío que aparecen debajo de la vista previa. La única descarga del editor es `sticker.sonoro.json`.
 
+## Encuadre preciso
+
+Los controles de posición se expresan en píxeles del lienzo de 512 × 512 y admiten pasos de 0,1 px; el zoom admite pasos de 0,01 %. Al arrastrar el vídeo o un deslizador, un imán suave ayuda a alinear el centro o los bordes reales con el lienzo, según el modo de encuadre y el zoom. Sigue arrastrando para liberar el ajuste; también puedes introducir un valor exacto o utilizar las flechas del teclado sin el imán. **Centrar** restablece solo la posición. Las guías visibles son temporales y no aparecen en el sticker.
+
 ## Calidad del sticker
 
 El modo predeterminado **Máxima nitidez** prioriza la resolución (mínimo de salida 192 px para animaciones; objetivo 512 px), con menos FPS para clips largos. **Equilibrado** y **Máxima fluidez** permiten otras combinaciones. La calidad final depende del contenido y del límite de 1 MB; no se garantiza HD en todos los vídeos de 60 s. Si no cabe, reduce la duración o usa fotograma + audio. La vista del resultado indica la resolución y los FPS reales.

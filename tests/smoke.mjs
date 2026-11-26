@@ -297,6 +297,77 @@ try {
     await qualityPage.locator('#quality').selectOption('balanced');
     assert.equal(await qualityPage.locator('#sticker-files').isVisible(),false);
   } finally {await qualityPage.close();rmSync(qualityTemp,{recursive:true,force:true});}
+  // Real preview geometry, magnetic detents, release, fine numeric editing and mouse drag.
+  const crop=await browser.newPage({viewport:{width:1200,height:900}});
+  try {
+    await crop.goto('http://127.0.0.1:8000');
+    await crop.locator('[data-mode="image"]').click();
+    async function loadCropFixture(width,height){
+      const bytes=await crop.evaluate(async({width,height})=>{
+        const c=document.createElement('canvas');c.width=width;c.height=height;
+        const ctx=c.getContext('2d');ctx.fillStyle='#ff0000';ctx.fillRect(0,0,width,height);
+        return Array.from(new Uint8Array(await (await new Promise(r=>c.toBlob(r,'image/png'))).arrayBuffer()));
+      },{width,height});
+      await crop.locator('#visual').setInputFiles({name:'crop.png',mimeType:'image/png',buffer:Buffer.from(bytes)});
+      await crop.waitForFunction(()=>!document.querySelector('#position').hidden&&!document.querySelector('#pan-x').disabled);
+    }
+    await loadCropFixture(800,400);
+    const pan=async(id,n,magnetic=true)=>crop.evaluate(({id,n,magnetic})=>{
+      const el=document.getElementById(id);
+      if(magnetic)el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:1}));
+      el.value=String(n);
+      el.dispatchEvent(new Event('input',{bubbles:true}));
+      if(magnetic)el.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:1}));
+      return Number(el.value);
+    },{id,n,magnetic});
+    assert.equal(await pan('pan-y',126),128);
+    assert.match(await crop.locator('#crop-guide-lines').getAttribute('d'),/M0 510H512/);
+    assert.equal(await crop.locator('#crop-guides').isVisible(),true);
+    assert.equal(await crop.evaluate(()=>document.querySelector('#canvas').getContext('2d').getImageData(256,511,1,1).data[0]),255);
+    assert.equal(await pan('pan-y',-126),-128);
+    assert.equal(await pan('pan-y',1),0);
+    assert.equal(await pan('pan-y',12),12);
+    // While still holding the slider, the magnet must release when movement continues.
+    assert.deepEqual(await crop.evaluate(()=>{
+      const el=document.getElementById('pan-y');
+      el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:1}));
+      const values=[126,129,140].map(n=>{el.value=n;el.dispatchEvent(new Event('input',{bubbles:true}));return Number(el.value);});
+      el.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:1}));
+      return values;
+    }),[128,128,140]);
+    await crop.locator('#pan-y-value').fill('127.3');
+    await crop.locator('#pan-y-value').press('Enter');
+    assert.equal(Number(await crop.locator('#pan-y').inputValue()),127.3);
+    await crop.locator('#center-crop').click();
+    assert.equal(Number(await crop.locator('#pan-y').inputValue()),0);
+    assert.equal(await pan('zoom',199.6),200);
+    assert.match(await crop.locator('#crop-guide-lines').getAttribute('d'),/M0 2H512/);
+    assert.equal(await pan('pan-x',254),256);
+    await crop.locator('#center-crop').click();
+    await pan('zoom',100,false);
+    // Real pointer motion uses canvas coordinates, independent of viewport scale.
+    const rect=await crop.locator('#canvas').boundingBox();
+    await crop.mouse.move(rect.x+rect.width/2,rect.y+rect.height/2);
+    await crop.mouse.down();
+    await crop.mouse.move(rect.x+rect.width/2,rect.y+rect.height/2+126*rect.height/512);
+    assert.equal(Number(await crop.locator('#pan-y').inputValue()),128);
+    await crop.mouse.move(rect.x+rect.width/2,rect.y+rect.height/2+143*rect.height/512);
+    assert(Math.abs(Number(await crop.locator('#pan-y').inputValue())-143)<2);
+    await crop.mouse.up();
+    await crop.locator('#center-crop').click();
+    await crop.locator('#fit').selectOption('cover');
+    assert.equal(await pan('pan-x',-254),-256);
+    await crop.locator('#center-crop').click();
+    await crop.locator('#fit').selectOption('contain');
+    await loadCropFixture(400,800);
+    assert.equal(await pan('pan-x',126),128);
+    await crop.locator('#center-crop').click();
+    await crop.locator('#language').selectOption('en');
+    assert.equal(await crop.locator('#center-crop').textContent(),'Center');
+    assert.equal(await crop.locator('#pan-x-value').getAttribute('aria-label'),'Horizontal position in pixels');
+    await crop.setViewportSize({width:320,height:800});
+    assert(await crop.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
+  }finally{await crop.close();}
   // The editor permits a 30-second default, manual 60 seconds and rejects longer clips.
   const durations=await browser.newPage();
   const temp=mkdtempSync(join(tmpdir(),'sticker-duration-'));

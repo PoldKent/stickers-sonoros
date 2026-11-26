@@ -24,7 +24,7 @@ Video, image or GIF + audio · up to 60 seconds · Español / English.
 
 ## Precision framing
 
-Position controls use pixels of the 512 × 512 canvas, with 0.1 px steps; zoom uses 0.01% steps. Drag the media or slider to softly snap to its center or actual canvas edges, depending on framing mode and zoom. Continue dragging to release the snap, or enter exact numbers or use arrow keys to bypass it. **Center** resets position only. Temporary guides are not part of the sticker.
+Position controls use pixels of the 512 × 512 canvas, with 0.1 px steps; zoom uses 0.01% steps. Drag the media or slider to softly snap to its center or actual canvas edges, depending on framing mode and zoom. Continue dragging to release the snap, or enter exact numbers or use arrow keys to bypass it. **Center** resets position only. Temporary guides are not part of the sticker. Rotate media 90° left or right, 180°, or select 0°, 90°, 180° or 270°. Magnetic alignment adapts to orientation and rotation is applied to the actual exported sticker. Zoom and screen-space position are preserved when rotating; use **Center** as needed.
 
 ## Sticker quality
 

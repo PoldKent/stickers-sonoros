@@ -47,6 +47,7 @@ function clearResult() {
   nativePackage = undefined;
   byId('native-bridge').hidden = true;
   byId('bridge-status').textContent = '';
+  byId('bookmark-status').textContent = '';
   mp4Job?.abort(); mp4Job = undefined;
   if (compatibleUrl) URL.revokeObjectURL(compatibleUrl);
   compatibleClip = compatibleUrl = undefined;
@@ -77,6 +78,8 @@ function clearResult() {
   output.load();
   output.hidden = true;
   byId('native').hidden = true;
+  byId('native').open = false;
+  byId('sticker-advanced').open = false;
   byId('downloads').hidden = true;
   byId('download').removeAttribute('href');
   if (resultUrl) URL.revokeObjectURL(resultUrl);
@@ -495,7 +498,6 @@ byId('project').addEventListener('submit', async event => {
     byId('format-note').textContent = extension === 'mp4' ? 'Vídeo MP4 listo para guardar en la galería.' : 'Este navegador exportó WebM. Si tu galería no lo admite, utiliza un navegador compatible con exportación MP4.';
     byId('convert-mp4').hidden = extension==='mp4' || !importEndpoint;
     byId('mp4-consent').hidden = byId('convert-mp4').hidden;
-    try { byId('share').hidden = !navigator.canShare?.({ files: [result] }); } catch { byId('share').hidden = true; }
     byId('downloads').hidden = false;
     status.textContent = 'Vídeo preparado. Generando los archivos del sticker sonoro…';
   } catch (error) {
@@ -509,19 +511,10 @@ byId('project').addEventListener('submit', async event => {
     for (const field of document.querySelectorAll('input, select, .modes button')) field.disabled = false;
     sync();
   }
-  if (result) { status.textContent = 'Vídeo preparado para el editor de stickers de WhatsApp.'; await prepareSticker(); }
+  if (result) { status.textContent = 'Preparando tu sticker con sonido…'; await prepareSticker(); }
 });
 byId('cancel-export').onclick = () => exportJob?.abort();
 
-byId('share').addEventListener('click', async () => {
-  if (!result) return;
-  try {
-    await navigator.share({ files: [compatibleClip || result] });
-    status.textContent = 'Archivo compartido como vídeo, no como sticker. Usa Crear sticker en WhatsApp para añadir el sonido.';
-  } catch (error) {
-    if (error.name !== 'AbortError') status.textContent = 'El navegador no pudo compartir el archivo. Puedes descargarlo.';
-  }
-});
 sync();
 
 const axes = ['pan-x', 'pan-y'];
@@ -976,10 +969,12 @@ async function prepareSticker() {
     nativePackage = {webp:files.webp,ogg:files.ogg,info};
     byId('native-bridge').hidden = false;
     byId('sticker-files').hidden = false;
-    state.textContent = 'Animación y audio generados. Vinculación SHA-256 verificada.';
+    state.textContent = 'Tu sticker está listo para enviar.';
+    status.textContent = 'Sticker listo. Sigue los pasos para enviarlo a WhatsApp.';
   } catch (error) {
     if (stickerJob === controller) {
-      state.textContent = controller.signal.aborted ? 'Conversión cancelada. El vídeo sigue disponible.' : (error.message || 'No se pudo generar el sticker.') + ' Puedes guardar el vídeo y crearlo dentro de WhatsApp.';
+      state.textContent = controller.signal.aborted ? 'Conversión cancelada. Puedes reintentar.' : (error.message || 'No se pudo generar el sticker.') + ' Puedes reintentar o usar la alternativa para el teléfono.';
+      status.textContent = controller.signal.aborted ? 'Conversión cancelada. Puedes reintentar.' : 'No se pudo preparar el sticker. Revisa el aviso junto a la vista previa.';
       button.hidden = false;
     }
   } finally {
@@ -988,7 +983,7 @@ async function prepareSticker() {
       progress.hidden = true;
       byId('cancel-sticker').hidden = true;
       button.disabled = false;
-      if (controller.signal.aborted) { button.hidden = false; state.textContent = 'Conversión cancelada. El vídeo sigue disponible.'; }
+      if (controller.signal.aborted) { button.hidden = false; state.textContent = 'Conversión cancelada. Puedes reintentar.'; status.textContent = 'Conversión cancelada. Puedes reintentar.'; }
     }
   }
 }
@@ -1136,7 +1131,6 @@ byId('convert-mp4').onclick = async () => {
     byId('format-note').textContent='MP4 preparado. En WhatsApp, usa Crear sticker y conserva el audio si la función está disponible.';
     button.hidden=true;
     byId('mp4-consent').hidden=true;
-    try { byId('share').hidden=!navigator.canShare?.({files:[compatibleClip]}); } catch { byId('share').hidden=true; }
   } catch(error) {
     if (mp4Job===controller) byId('format-note').textContent=(error.name==='AbortError'?'Conversión cancelada o agotada.':error.message)+' Puedes seguir descargando el clip original.';
   } finally {
@@ -1163,7 +1157,7 @@ byId('package-download').onclick=async()=>{
     const url=URL.createObjectURL(blob), link=document.createElement('a');
     link.href=url;link.download='sticker.sonoro.json';document.body.append(link);link.click();link.remove();
     setTimeout(()=>URL.revokeObjectURL(url),30000);
-    byId('bridge-status').textContent='Sticker guardado. Abre WhatsApp Web y usa el marcador para enviarlo.';
+    byId('bridge-status').textContent='Archivo preparado para descargar. Continúa con el paso 2 si es tu primera vez, o con el paso 3 si ya tienes el favorito.';
   }catch(e){byId('bridge-status').textContent=e.message||'No se pudo guardar el paquete.';}
   finally{button.disabled=false;}
 };
@@ -1175,15 +1169,15 @@ if(window.StickersSonorosBridge){
   document.addEventListener('sticker-language',updateBookmark);
   bookmark.addEventListener('click',event=>{
     event.preventDefault();
-    byId('bridge-status').textContent='Arrastra el marcador a tu barra de favoritos. Luego úsalo dentro de WhatsApp Web.';
+    byId('bookmark-status').textContent='Arrastra el marcador a tu barra de favoritos. Luego úsalo dentro de WhatsApp Web.';
   });
   byId('copy-bookmark').onclick=async()=>{
-    try{await navigator.clipboard.writeText(address());byId('bridge-status').textContent='Dirección copiada. Crea un marcador nuevo y pega esta dirección en su campo URL.';}
-    catch{byId('bridge-status').textContent='No se pudo copiar. Arrastra el enlace a la barra de marcadores.';}
+    try{await navigator.clipboard.writeText(address());byId('bookmark-status').textContent='Dirección copiada. Crea un marcador nuevo y pega esta dirección en su campo URL.';}
+    catch{byId('bookmark-status').textContent='No se pudo copiar. Arrastra el enlace a la barra de marcadores.';}
   };
 }else{
   bookmark.removeAttribute('href');byId('copy-bookmark').disabled=true;
-  byId('bridge-status').textContent='No se cargó la opción de envío. Recarga la página.';
+  byId('bookmark-status').textContent='No se cargó la opción de envío. Recarga la página.';
 }
 
 byId('check-service').onclick = async () => {

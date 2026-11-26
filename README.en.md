@@ -20,7 +20,7 @@ Video, image or GIF + audio · up to 60 seconds · Español / English.
 1. Paste a public HTTPS media link or choose a local file.
 2. Preview the selection, set start and end (up to 60 seconds), and adjust framing, position or zoom.
 3. Select **Create sound sticker**. The editor produces a video and, when supported, a package containing linked WebP and Ogg/Opus files.
-4. Save the sound sticker package and use the WhatsApp Web bookmark as described below.
+4. Follow the four sending steps under the preview. The sticker file is `.sonoro.json`, not an MP4 video.
 
 ## Features
 
@@ -30,23 +30,22 @@ Video, image or GIF + audio · up to 60 seconds · Español / English.
 - Initial selection up to 30 seconds; maximum 60 seconds. Quality adapts to the converter's 1 MB WebP and 1 MB Ogg limits.
 - Responsive phone, tablet and desktop layouts with a persistent Spanish/English setting.
 - Local editing and generation without installing applications or browser extensions.
-- MP4 or WebM depending on browser capabilities; optional server-side WebM-to-MP4 conversion.
+- MP4 or WebM as a secondary phone alternative only; optional server-side WebM-to-MP4 conversion.
 
 ## Send to WhatsApp
 
 ### Desktop (WhatsApp Web)
 
-1. Save `sticker.sonoro.json` from the editor.
-2. Once, show the bookmarks bar (Ctrl + Shift + B) and save **Send sound sticker** from the app.
-3. Open WhatsApp Web and sign in. Use your own chat for the first compatibility test.
-4. Click the bookmark, choose the saved file and confirm the recipient.
-5. If sound compatibility is offered, you may enable it temporarily. Check playback in the chat.
+1. **Save your sticker.** Click **Save sound sticker** to download `sticker.sonoro.json`. Do not open it or attach it to a chat.
+2. **Set up the send button (first time only).** Show the bookmarks bar with Ctrl + Shift + B (Mac: ⌘ + Shift + B) and drag the app's **Send sound sticker** link onto it. If dragging is unavailable, click **Copy bookmark address**, create a bookmark named Send sound sticker, and paste the address into its URL field. Skip this step if you already have the bookmark.
+3. **Open the WhatsApp chat.** Click **Open WhatsApp Web**, sign in and open the recipient's chat. For the first test, use your own chat.
+4. **Choose the file and send.** In WhatsApp Web, click the bookmark, choose the file from step 1 and click **Send sticker with sound**. If Enable sound compatibility is offered, check it before sending. Confirm the recipient and check playback.
 
 The bookmark uses an unofficial integration adapted from Shirtep inside your browser session. It does not upload your session to our server or permanently change account settings. Existing packages remain compatible. Replace old bookmarks to receive language and duration updates. **Do not attach the JSON file directly to a chat.**
 
 ### Android and iPhone
 
-Import, edit and generate in a supported browser. Save the video to your gallery and use WhatsApp's sticker editor if your account offers sound. Sharing MP4 alone does not create a sound sticker. Bookmark-based sending is designed for desktop WhatsApp Web; native mobile sending and Safari codec support are not guaranteed.
+Import, edit and generate in a supported browser. Expand **Phone alternative (video)** below the instructions, save the video to your gallery and use WhatsApp's sticker editor if your account offers sound. Sharing MP4 alone does not create a sound sticker. Bookmark-based sending is designed for desktop WhatsApp Web; native mobile sending and Safari codec support are not guaranteed.
 
 ## Status and compatibility
 

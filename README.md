@@ -20,7 +20,7 @@ Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
 1. Pega un enlace multimedia HTTPS o selecciona un archivo de tu dispositivo.
 2. Reproduce el tramo, elige el inicio y el final (hasta 60 s) y ajusta el encuadre, posición o zoom.
 3. Pulsa **Crear sticker sonoro**. El editor prepara un video y, si el navegador dispone de los códecs necesarios, un paquete con WebP y Ogg/Opus vinculados.
-4. Guarda el paquete sonoro y envíalo mediante el marcador de WhatsApp Web siguiendo los pasos de abajo.
+4. Sigue los cuatro pasos de envío que aparecen debajo de la vista previa. El archivo del sticker es `.sonoro.json`, no un vídeo MP4.
 
 ## Funciones
 
@@ -30,23 +30,22 @@ Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
 - Recorte inicial de hasta 30 segundos, máximo de 60 segundos. Calidad ajustada para los límites del conversor: 1 MB para WebP y 1 MB para Ogg.
 - Interfaz adaptable a celulares, tablets y computadoras. Selector Español/English persistente.
 - Edición y generación locales; no se requiere instalar programas ni extensiones.
-- MP4 o WebM según capacidades del navegador; conversión opcional de WebM a MP4 en Render.
+- MP4 o WebM únicamente como alternativa secundaria para el teléfono; conversión opcional de WebM a MP4 en Render.
 
 ## Enviar a WhatsApp
 
 ### Computadora (WhatsApp Web)
 
-1. Guarda `sticker.sonoro.json` desde el editor.
-2. Una sola vez, muestra la barra de marcadores (Ctrl + Shift + B) y guarda **Enviar sticker sonoro** desde la app.
-3. Abre WhatsApp Web e inicia sesión. Abre primero tu propio chat para verificar la compatibilidad.
-4. Pulsa el marcador, elige el archivo guardado y confirma el destinatario.
-5. Si aparece la opción de compatibilidad con sonido, puedes activarla temporalmente. Comprueba que el sticker se reproduce con sonido.
+1. **Guarda tu sticker.** Pulsa **Guardar sticker sonoro** para descargar `sticker.sonoro.json`. No abras el archivo ni lo adjuntes al chat.
+2. **Prepara el botón de envío (solo la primera vez).** Muestra la barra de favoritos con Ctrl + Shift + B (Mac: ⌘ + Shift + B) y arrastra el enlace **Enviar sticker sonoro** de la app a esa barra. Si no puedes arrastrarlo, pulsa **Copiar dirección del marcador**, crea un favorito nuevo llamado Enviar sticker sonoro y pega la dirección en su campo URL. Si ya tienes el favorito, salta este paso.
+3. **Abre el chat de WhatsApp.** Pulsa **Abrir WhatsApp Web**, inicia sesión y abre el chat deseado. Para tu primera prueba, usa tu propio chat.
+4. **Selecciona el archivo y envía.** Dentro de WhatsApp Web, pulsa el favorito, selecciona el archivo del paso 1 y pulsa **Enviar sticker con sonido**. Si se ofrece Activar compatibilidad con sonido, márcala antes de enviar. Confirma el destinatario y comprueba la reproducción.
 
 El marcador usa una integración no oficial basada en Shirtep, dentro de la sesión del navegador. No envía la sesión al servidor ni cambia permanentemente la configuración de la cuenta. Los paquetes anteriores son compatibles. Los marcadores antiguos deben sustituirse para obtener mejoras de idioma o duración. **El archivo JSON no se adjunta directamente a un chat.**
 
 ### Android y iPhone
 
-Puedes importar, editar y generar desde el navegador si admite las funciones multimedia necesarias. Guarda el video en la galería y utiliza el editor de stickers de WhatsApp si tu cuenta permite conservar el sonido. Compartir un MP4 no lo convierte por sí solo en un sticker sonoro. El envío mediante marcador está diseñado para computadora; no se garantiza el envío nativo desde el móvil ni todos los códecs en Safari.
+Puedes importar, editar y generar desde el navegador si admite las funciones multimedia necesarias. Abre **Alternativa para el teléfono (vídeo)** debajo de las instrucciones, guarda el vídeo en la galería y utiliza el editor de stickers de WhatsApp si tu cuenta permite conservar el sonido. Compartir un MP4 no lo convierte por sí solo en un sticker sonoro. El envío mediante marcador está diseñado para computadora; no se garantiza el envío nativo desde el móvil ni todos los códecs en Safari.
 
 ## Estado y compatibilidad
 

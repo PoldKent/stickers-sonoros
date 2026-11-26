@@ -11,7 +11,7 @@ Revisión del árbol de la rama main: editor, CSS, traducciones, adaptador de Wh
 | Nombres de archivo podían confundirse con texto traducible / filename translation | Preservar nombres y detalles externos |
 | Archivos locales sin límite previo de tamaño / local files lacked an early size guard | Límite de entrada 80 MiB |
 | Dockerfile secundario sin módulos nuevos / stale Dockerfile | Alineado con el Dockerfile canónico, contexto raíz |
-| Donación por dirección EVM ambigua / ambiguous EVM donation | Token BBTC, Ethereum mainnet, contrato y advertencias; no transacción automática |
+| Donación por dirección EVM ambigua / ambiguous EVM donation | Tokens USDC y BBTC, Ethereum mainnet, contratos y advertencias; no transacción automática |
 
 ## Riesgos residuales / Remaining risks
 

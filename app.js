@@ -469,7 +469,9 @@ const linkStatus = byId('link-status');
 const endpointField = byId('import-endpoint');
 const maxImportBytes = 80 * 1024 * 1024;
 const socialHosts = /^(?:(?:www|m|vm|vt)\.tiktok\.com|tiktok\.com|(?:www\.)?instagram\.com|(?:www\.|m\.)?youtube\.com|youtu\.be)$/i;
-try { endpointField.value = localStorage.getItem('sticker-import-endpoint') || ''; } catch {}
+const configuredEndpoint = document.querySelector('meta[name="sticker-import-endpoint"]')?.content || '';
+endpointField.value = configuredEndpoint;
+try { endpointField.value = localStorage.getItem('sticker-import-endpoint') || configuredEndpoint; } catch {}
 endpointField.addEventListener('change', () => {
   try { localStorage.setItem('sticker-import-endpoint', endpointField.value.trim()); } catch {}
 });

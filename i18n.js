@@ -134,6 +134,7 @@
     ["No se pudo preparar el MP4 con sonido.","Could not prepare MP4 with sound."],["La preparación del MP4 tardó demasiado.","MP4 preparation timed out."],["No se pudo preparar el MP4.","Could not prepare MP4."]
   ];
   pairs.push(...[["El video no respondió al recorte.","The video did not respond to seeking."],["La reproducción no entregó cuadros","Playback returned no frames"],["La reproducción se detuvo","Playback stopped"],["sin requestVideoFrameCallback","requestVideoFrameCallback unavailable"],["Primero calcula las opciones del tramo","Calculate the selection options first"],["La duración del audio cambió: vuelve a calcular las opciones","Audio duration changed: recalculate the options"],["El navegador no pudo leer el video","The browser could not read the video"],["No se pudo leer el audio. ¿El archivo tiene sonido?","Could not read audio. Does the file contain sound?"],["Generación cancelada","Creation canceled"],["Cancelado","Canceled"],["No se pudo abrir el recurso:","Could not open resource:"],["Enlace no válido.","Invalid link."],["Solo se admiten enlaces HTTPS públicos.","Only public HTTPS links are supported."],["Dominio no permitido para esta descarga.","Domain not allowed for this download."],["Esta plataforma requiere su importador específico.","This platform requires its specific importer."],["Origen o ruta no permitidos.","Origin or route not allowed."],["Origen no permitido.","Origin not allowed."],["Ruta no encontrada.","Route not found."],["Archivo no disponible.","File unavailable."],["El archivo local supera 80 MiB. Selecciona un archivo más pequeño.","The local file exceeds 80 MiB. Choose a smaller file."],["Apoyar el proyecto","Support the project"],["Comprobar servidor","Check server"],["Revisa la red y el token antes de donar.","Check the network and token before donating."]]);
+  pairs.push(["Saltar al editor","Skip to editor"],["Información del proyecto","Project information"],["Guía de uso","User guide"]);
   const exact = new Map(pairs);
   const fragments = [
     [/^Duración: ([\d.]+) s de (\d+) s permitidos\./, "Duration: $1 s of $2 s allowed."],
@@ -157,7 +158,7 @@
     [/^Este navegador no puede generar WebP \(devolvió ([^)]+)\)\. Usa Chrome o Edge\.$/,"This browser cannot generate WebP (returned $1). Use Chrome or Edge."],
     [/^No se pudo leer el audio\. ¿El archivo tiene sonido\? \((.*)\)$/,"Could not read audio. Does the file contain sound? ($1)"],
     [/^Con (\d+) s el audio no cabe en 1 MB \(límite de WhatsApp\)\. Máximo unos (\d+) minutos\.$/,"At $1 s the audio exceeds 1 MB (WhatsApp limit). Maximum about $2 minutes."],
-    [/ KB de audio$/," KB audio"],[/ · Versión /," · Version "]
+    [/ KB de audio$/," KB audio"],[/ · Versión /," · Version "], [/^Versión /,"Version "]
   ];
   const dynamic = new Set(["link-status","status","selection-info","sticker-state","format-note","bridge-status","service-status","sticker-info","download","play-source"]);
   const longPhrases = pairs.filter(([a,b]) => a!==b && a.length>=25).sort((a,b)=>b[0].length-a[0].length);
@@ -182,7 +183,7 @@
     if(!node.parentElement || node.parentElement.closest("script,style,textarea,[data-no-translate]") || !node.data.trim())return;
     const parent=node.parentElement, previous=stored.get(node);
     const raw=previous && node.data===previous.rendered ? previous.raw : node.data;
-    const rendered=language==="en"?english(raw,dynamic.has(parent.id)||parent.tagName==="FOOTER"):raw;
+    const rendered=language==="en"?english(raw,dynamic.has(parent.id)||!!parent.closest("footer")):raw;
     stored.set(node,{raw,rendered});
     if(node.data!==rendered)node.data=rendered;
   }
@@ -210,6 +211,8 @@
     language=next==="en"?"en":"es";
     document.documentElement.lang=language;
     picker.value=language;
+    document.getElementById("guide-link").href="https://github.com/PoldKent/stickers-sonoros/blob/main/"+(language==="en"?"README.en.md":"README.md");
+    document.getElementById("support-link").href="https://github.com/PoldKent/stickers-sonoros/blob/main/SUPPORT.md"+(language==="en"?"#english":"");
     try{localStorage.setItem("stickers.language",language);}catch{}
     scan(document.documentElement);
     document.dispatchEvent(new CustomEvent("sticker-language",{detail:language}));
@@ -233,6 +236,7 @@
     const target=narrow.matches?mobile:desktop;
     if(media.parentElement!==target)target.append(media);
   }
+  if(narrow.matches)document.querySelector("#native-bridge details").open=false;
   narrow.addEventListener?.("change",layout);
   layout();
 })();

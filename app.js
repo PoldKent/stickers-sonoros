@@ -9,7 +9,7 @@ const labels = {
   image: ['Selecciona o arrastra una imagen', 'PNG, JPEG, WebP u otra imagen compatible', 'image/*'],
   mix: ['Selecciona o arrastra un video o GIF', 'MP4, WebM o GIF animado', 'video/*,image/gif']
 };
-const limit = 60;
+const limit = 180;
 const maxLocalBytes = 80 * 1024 * 1024;
 const defaultTrim = 30;
 let mode = 'video';
@@ -542,7 +542,7 @@ byId('project').addEventListener('submit', async event => {
     if (!window.MediaRecorder || !canvas.captureStream || !window.AudioContext) throw new Error('Este navegador no permite exportar el clip. Prueba con Chrome o Edge actualizado.');
     const videoTrim = visual.kind === 'image' ? null : trimmed('v');
     const soundTrim = mode === 'video' ? videoTrim : trimmed('a');
-    if (soundTrim.duration > limit + .0001) throw new Error('Selecciona un tramo de audio de hasta 60 segundos.');
+    if (soundTrim.duration > limit + .0001) throw new Error('Selecciona un tramo de audio de hasta 180 segundos.');
     busy = true;
     clearResult();
     exportJob = new AbortController();
@@ -1028,7 +1028,7 @@ async function importLink(force) {
 
 function selectionInfo() {
   const info = byId('selection-info');
-  if (!visual || !audio) { info.textContent = 'Selecciona un archivo con audio. Máximo 60 segundos por sticker.'; return; }
+  if (!visual || !audio) { info.textContent = 'Selecciona un archivo con audio. Máximo 180 segundos por sticker.'; return; }
   try {
     const t = mode === 'video' ? trimmed('v') : trimmed('a');
     info.textContent = 'Duración: ' + t.duration.toFixed(2) + ' s de ' + limit + ' s permitidos.';
@@ -1194,7 +1194,7 @@ byId('play-source').onclick = async () => {
   try {
     const v = item.kind === 'image' ? null : trimmed('v');
     const a = mode === 'video' ? v : trimmed('a');
-    if (a.duration > limit + .0001) throw new Error('Reduce el tramo a 60 segundos.');
+    if (a.duration > limit + .0001) throw new Error('Reduce el tramo a 180 segundos.');
     const context = new AudioContext();
     session = {context,item};
     previewSession = session;

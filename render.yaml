@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: stickers-sonoros
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: ALLOWED_ORIGIN
+        value: https://poldkent.github.io

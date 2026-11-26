@@ -529,9 +529,6 @@ function showLinkState(message, state = 'info') {
       const url = new URL(linkInput.value.trim());
       if (url.protocol === 'https:' && /^(?:(?:www|m|vm|vt)\.)?tiktok\.com$/i.test(url.hostname)
           && !/cancelada|Espera a que termine/i.test(message)) fallback.hidden = false;
-      // A timeout is also a failed import, unlike an explicit cancellation.
-      if (url.protocol === 'https:' && /^(?:(?:www|m|vm|vt)\.)?tiktok\.com$/i.test(url.hostname)
-          && /tiempo agotado/.test(message)) fallback.hidden = false;
     } catch {}
   }
   linkStatus.dataset.state = state;

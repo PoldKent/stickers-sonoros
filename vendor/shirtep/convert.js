@@ -8,8 +8,15 @@
 
   const SIDE = 512;                    // lado máximo (WhatsApp usa 512; más grande no se ve mejor y pesa 4 veces más)
   const MAX_STICKER_BYTES = 1_000_000; // el servidor de WhatsApp rechaza stickers más pesados (HTTP 413)
-  const SAFE_BYTES = 900_000;          // margen para la estimación (verde = estimado ≤ 900 KB)
+  const MAX_TOTAL_BYTES = 4_000_000; // opt-in, WhatsApp acceptance not verified
+  const SAFE_BYTES = 900_000;
   const MAX_AUDIO_BYTES = 1_000_000;   // límite de WhatsApp Web para el audio del sticker
+  function webpBudget(extended, audioBytes = 0) {
+    return extended ? MAX_TOTAL_BYTES - audioBytes : MAX_STICKER_BYTES;
+  }
+  function estimatedAudioBytes(dur) {
+    return Math.min(MAX_AUDIO_BYTES, Math.ceil(dur * 32000 / 8 * 1.2 + 4096));
+  }
   const SAMPLE_RATE = 48000;
   const CAPTURE_MEM_BYTES = 320e6;     // memoria máxima para los cuadros capturados (10 s a 30 fps caben a 512 px)
   const SIDES = [512, 448, 384, 320, 256, 224, 192, 160, 128, 96, 64];
@@ -29,7 +36,8 @@
     if (profile === "balanced") return side/512*180 + Math.min(20,fps)*7;
     return side/512*480 + Math.min(15,fps)*4;
   }
-  function captureFpsFor(dur, profile = "sharp") {
+  function captureFpsFor(dur, profile = "sharp", extended = false) {
+    if (extended && profile === "sharp") return dur <= 10 ? 30 : dur <= 20 ? 20 : dur <= 30 ? 15 : 9;
     if (profile === "sharp") return dur <= 10 ? 20 : dur <= 20 ? 12 : dur <= 30 ? 10 : 9;
     if (profile === "balanced") return dur <= 10 ? 25 : dur <= 20 ? 20 : dur <= 40 ? 12 : 8;
     return dur <= 10 ? 30 : dur <= 20 ? 25 : dur <= 40 ? 20 : 15;
@@ -508,12 +516,12 @@
 
   // Codifica el sticker para un lado y fps dados. Empieza con la calidad del lado y la baja
   // solo si hace falta para no pasar de 1 MB.
-  async function encodeWebp(an, side, fps, exifMeta, { onProgress, signal, syncMs = 0, still = false }) {
+  async function encodeWebp(an, side, fps, exifMeta, { onProgress, signal, syncMs = 0, still = false, maxBytes = MAX_STICKER_BYTES }) {
     const { frames, dur, captureFps } = an;
     const canvas = new OffscreenCanvas(side, side);
     const ctx = canvas.getContext("2d");
     const p = plan(frames.length, dur, fps, captureFps);
-    const qStart = Q_BY_SIDE[side] || 0.5;
+    const qStart = an.extended ? Math.min(0.95,(Q_BY_SIDE[side] || 0.5)+0.15) : (Q_BY_SIDE[side] || 0.5);
     const qList = [];
     for (let q = qStart; q >= Q_MIN - 1e-9; q -= 0.1) qList.push(+q.toFixed(2));
     if (qList[qList.length - 1] > Q_MIN) qList.push(Q_MIN);
@@ -524,7 +532,7 @@
       // Con la muestra del análisis se salta directo a una calidad que probablemente quepa.
       if (best && an.sampleBytes && i < qList.length - 1) {
         const ratio = sampleAvg(an, side, q) / sampleAvg(an, side, best.q);
-        if (ratio > 0 && best.bytes.length * ratio > MAX_STICKER_BYTES * 0.98) { attempts.push({ q, saltado: true, previsto: Math.round(best.bytes.length * ratio) }); continue; }
+        if (ratio > 0 && best.bytes.length * ratio > maxBytes * 0.98) { attempts.push({ q, saltado: true, previsto: Math.round(best.bytes.length * ratio) }); continue; }
       }
       const cache = new Map();
       const out = [];
@@ -547,11 +555,11 @@
       const bytes = still ? buildStillWebp(out[0], exifWhatsApp(exifMeta), side) : buildAnimatedWebp(out, exifWhatsApp(exifMeta), side);
       attempts.push({ q, bytes: bytes.length, cuadros: out.length });
       best = { bytes, side, fps, q, frames: out.length };
-      if (bytes.length <= MAX_STICKER_BYTES) break;
+      if (bytes.length <= maxBytes) break;
     }
     log("info", "webp:intentos", { side, fps, intentos: attempts });
-    if (!best || best.bytes.length > MAX_STICKER_BYTES) {
-      const error = new Error(`No cabe en 1 MB ni con la calidad mínima (${Math.round(best.bytes.length / 1000)} KB). Elige menos fps o menos resolución.`);
+    if (!best || best.bytes.length > maxBytes) {
+      const error = new Error(`No cabe en el límite de tamaño ni con la calidad mínima (${Math.round(best?.bytes.length / 1000 || 0)} KB). Elige menos fps o menos resolución.`);
       error.code = "STICKER_SIZE"; throw error;
     }
     return best;
@@ -810,7 +818,7 @@
   //   "independiente" cada uno conserva su duración (WhatsApp no exige que coincidan).
   // Si la animación es más larga que el audio, con "repetir"/"congelar" se corta al largo del audio.
   // Una imagen fija siempre dura lo que el audio.
-  async function analyze({ file, start = 0, duration, mode = "ajustar", visual, audio, fit = "repetir", profile = "sharp", onProgress, signal }) {
+  async function analyze({ file, start = 0, duration, mode = "ajustar", visual, audio, fit = "repetir", profile = "sharp", extended = false, onProgress, signal }) {
     profile = profileOf(profile);
     if (!visual) visual = { kind: "video", file, start, dur: duration };
     if (!audio) audio = { file: visual.file, start: visual.start, dur: visual.dur };
@@ -819,7 +827,7 @@
     const vDur = visual.kind === "image" ? audio.dur : visual.dur;
     const dur = visual.kind === "image" || fit !== "independiente" ? audio.dur : vDur; // duración del sticker
     const capDur = Math.min(vDur, dur);                                                // lo que se captura
-    const base = { file: visual.file, start: visual.start || 0, visual, audio, fit, dur, vDur, mode };
+    const base = { file: visual.file, start: visual.start || 0, visual, audio, fit, dur, vDur, mode, extended: extended === true };
 
     if (visual.kind === "image") {
       // Un solo cuadro que dura todo el audio: no hay combinaciones de fps que elegir.
@@ -832,7 +840,7 @@
       return an;
     }
 
-    const captureFps = captureFpsFor(dur, profile);
+    const captureFps = captureFpsFor(dur, profile, base.extended);
     const slots = Math.ceil(capDur * captureFps);
     const captureSide = Math.max(64, Math.min(SIDE, Math.floor(Math.sqrt(CAPTURE_MEM_BYTES / (4 * slots)))));
     log("info", "analizar:parametros", {
@@ -877,6 +885,7 @@
       }
       prog("Calculando opciones…", 0.8 + (0.2 * ++done) / sides.length);
     }
+    const safeBytes = base.extended ? webpBudget(true, estimatedAudioBytes(audio.dur)) * 0.95 : SAFE_BYTES;
     const overhead = 32; // cabecera ANMF + chunk
     const cells = [];
     for (const side of SIDES) for (const fps of FPS_LIST) {
@@ -884,7 +893,7 @@
       const n = distinct[fps];
       const est = (sampleBytes[side][Q_BY_SIDE[side]] + overhead) * n + 400;
       const estMin = (sampleBytes[side][Q_MIN] + overhead) * n + 400;
-      const estado = est <= SAFE_BYTES ? "ok" : estMin <= SAFE_BYTES ? "baja" : "no";
+      const estado = est <= safeBytes ? "ok" : estMin <= safeBytes ? "baja" : "no";
       cells.push({ side, fps, est: Math.round(est), estMin: Math.round(estMin), estado, score: score(side, fps) });
     }
     const auto = rankedCells(cells, profile)[0] || null;
@@ -937,7 +946,7 @@
     if (!oggCheck.ok) throw new Error("El audio generado no se puede reproducir: " + oggCheck.error);
 
     const exifMeta = await stickerMeta({ packName, publisher, soundSha });
-    const w = await encodeWebp(an, side, fps, exifMeta, { onProgress: prog, signal, syncMs, still });
+    const w = await encodeWebp(an, side, fps, exifMeta, { onProgress: prog, signal, syncMs, still, maxBytes: webpBudget(an.extended, ogg.length) });
     const info = {
       tipo: an.visual.kind, ajuste: an.fit,
       duracion: dur, duracionAudio: A.dur, segundosAudio: Math.max(1, Math.round(A.dur)),
@@ -952,14 +961,14 @@
   }
 
   // Atajo (pruebas): analizar + elegir (automático o fijo) + crear.
-  async function convert({ file, start = 0, duration, mode = "ajustar", visual, audio, fit, still = false, syncMs = 0, side = "auto", fps = "auto", profile = "sharp", packName = "", publisher = "", onProgress, signal }) {
+  async function convert({ file, start = 0, duration, mode = "ajustar", visual, audio, fit, still = false, syncMs = 0, side = "auto", fps = "auto", profile = "sharp", extended = false, packName = "", publisher = "", onProgress, signal }) {
     profile = profileOf(profile);
-    const an = await analyze({ file, start, duration, mode, visual, audio, fit, profile, onProgress, signal });
+    const an = await analyze({ file, start, duration, mode, visual, audio, fit, profile, extended, onProgress, signal });
     try {
       const cells = rankedCells(an.cells, profile, an.visual.kind === "image")
         .filter(c => (side === "auto" || c.side === +side) && (fps === "auto" || c.fps === +fps));
       const sharpMotion = profile === "sharp" && an.visual.kind !== "image";
-      const sharpLimitMessage = "El tramo no cabe en 1 MB con al menos 9 FPS y 192 px. Acórtalo o cambia el modo de calidad.";
+      const sharpLimitMessage = extended ? "El tramo no cabe en 4 MB con al menos 9 FPS y 192 px. Acórtalo o cambia el modo de calidad." : "El tramo no cabe en 1 MB con al menos 9 FPS y 192 px. Acórtalo o cambia el modo de calidad.";
       if (!cells.length) throw new Error(sharpMotion ? sharpLimitMessage : "El tramo no cabe con la calidad elegida. Acórtalo, cambia el modo de calidad o usa fotograma + audio.");
       let lastError;
       for (const c of cells.slice(0,4)) {
@@ -1001,6 +1010,6 @@
   WAAS.retagWebp = retagWebp;
   WAAS.create = create;
   WAAS.release = release;
-  WAAS.limits = { SIDE, MAX_STICKER_BYTES, MAX_AUDIO_BYTES, SIDES, FPS_LIST };
-  WAAS._internals = { buildOggOpus, buildAnimatedWebp, buildStillWebp, fitTimeline, exifWhatsApp, readChunks, plan, sha256b64, score, rankedCells, captureFpsFor };
+  WAAS.limits = { SIDE, MAX_STICKER_BYTES, MAX_TOTAL_BYTES, MAX_AUDIO_BYTES, SIDES, FPS_LIST };
+  WAAS._internals = { buildOggOpus, buildAnimatedWebp, buildStillWebp, fitTimeline, exifWhatsApp, readChunks, plan, sha256b64, score, rankedCells, captureFpsFor, webpBudget, estimatedAudioBytes };
 })();

@@ -3,6 +3,8 @@ services:
     name: stickers-sonoros
     runtime: docker
     plan: free
+    branch: main
+    autoDeployTrigger: checksPass
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /health

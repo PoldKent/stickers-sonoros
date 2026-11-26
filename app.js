@@ -126,8 +126,17 @@ function range(prefix, duration) {
 
 function loadVideo(video, url) {
   return new Promise((resolve, reject) => {
-    video.addEventListener('loadeddata', resolve, { once: true });
-    video.addEventListener('error', () => reject(new Error('El navegador no pudo leer el video.')), { once: true });
+    const done = () => settle();
+    const failed = () => settle(new Error('El navegador no pudo leer el video.'));
+    const timer = setTimeout(() => settle(new Error('El video tardó demasiado en abrirse.')), 15000);
+    function settle(error) {
+      clearTimeout(timer);
+      video.removeEventListener('loadeddata', done);
+      video.removeEventListener('error', failed);
+      if (error) reject(error); else resolve();
+    }
+    video.addEventListener('loadeddata', done, { once: true });
+    video.addEventListener('error', failed, { once: true });
     video.src = url;
   });
 }
@@ -190,8 +199,8 @@ async function readVisual(file, selectedMode) {
   }
 }
 
-async function chooseVisual(file) {
-  if (!file || busy) return;
+async function chooseVisual(file, signal) {
+  if (!file || busy || signal?.aborted) return;
   const request = ++visualRequest;
   const selectedMode = mode;
   loadingVisual = true;
@@ -205,13 +214,14 @@ async function chooseVisual(file) {
   let item;
   try {
     item = await readVisual(file, selectedMode);
-    if (request !== visualRequest) return;
+    if (request !== visualRequest || signal?.aborted) return;
     if (item.duration) range('v', item.duration);
+    item.name = file.name;
     visual = item;
     paint(item.frame || item.media);
     if (selectedMode === 'video') {
       const buffer = await readAudio(file);
-      if (request !== visualRequest) return;
+      if (request !== visualRequest || signal?.aborted) return;
       audio = buffer;
       range('v', Math.min(item.duration, audio.duration));
     }
@@ -223,14 +233,15 @@ async function chooseVisual(file) {
   } finally {
     if (item && item !== visual) closeVisual(item);
     if (request === visualRequest) {
+      if (signal?.aborted && visual === item) { closeVisual(visual); visual = undefined; if (selectedMode === 'video') audio = undefined; }
       loadingVisual = false;
       sync();
     }
   }
 }
 
-async function chooseAudio(file) {
-  if (!file || busy) return;
+async function chooseAudio(file, signal) {
+  if (!file || busy || signal?.aborted) return;
   const request = ++audioRequest;
   clearResult();
   audio = undefined;
@@ -239,7 +250,7 @@ async function chooseAudio(file) {
   sync();
   try {
     const buffer = await readAudio(file);
-    if (request !== audioRequest) return;
+    if (request !== audioRequest || signal?.aborted) return;
     range('a', buffer.duration);
     audio = buffer;
     status.textContent = '';
@@ -470,7 +481,7 @@ byId('project').addEventListener('submit', async event => {
     const download = byId('download');
     download.href = resultUrl;
     download.download = result.name;
-    download.textContent = 'Guardar para WhatsApp (' + extension.toUpperCase() + ') ↓';
+    download.textContent = 'Guardar vídeo (' + extension.toUpperCase() + ') ↓';
     byId('format-note').textContent = extension === 'mp4' ? 'Vídeo MP4 listo para guardar en la galería.' : 'Este navegador exportó WebM. Si tu galería no lo admite, utiliza un navegador compatible con exportación MP4.';
     byId('convert-mp4').hidden = extension==='mp4' || !importEndpoint;
     byId('mp4-consent').hidden = byId('convert-mp4').hidden;
@@ -541,7 +552,7 @@ let lastLink = '';
 function switchToVideo() {
   if (mode !== 'video') modes.find(button => button.dataset.mode === 'video').click();
 }
-function cancelImport() { if (mediaModeChange) return; clearTimeout(linkTimer); importController?.abort(); lastLink = ''; }
+function cancelImport() { if (mediaModeChange) return; clearTimeout(linkTimer); if (importController) { importController.abort(); showLinkState('Importación cancelada.'); } lastLink = ''; }
 byId('cancel-link').onclick = cancelImport;
 byId('visual').addEventListener('change', cancelImport, { capture: true });
 drop.addEventListener('drop', cancelImport, { capture: true });
@@ -577,7 +588,7 @@ async function checkResponse(response) {
 }
 async function readBounded(response, signal, maximum, report = false) {
   const total = Number(response.headers.get('content-length')) || 0;
-  if (total > maximum) throw new Error('El archivo supera el límite permitido.');
+  if (total > maximum) { await response.body?.cancel().catch(()=>{}); throw new Error('El archivo supera el límite permitido.'); }
   if (!response.body) throw new Error('El navegador no permite leer esta descarga.');
   const reader = response.body.getReader(), chunks = [];
   let bytes = 0;
@@ -666,23 +677,30 @@ function selectMediaMode(next, keepVisual = false, keepAudio = false) {
   mediaModeChange = true;
   try { modes.find(button=>button.dataset.mode===next).click(); }
   finally { mediaModeChange = false; }
-  if (keepVisual) visual = oldVisual;
+  if (keepVisual) {
+    visual = oldVisual;
+    if (visual?.duration) range('v',visual.duration);
+    byId('visual-label').textContent = visual?.name || 'Contenido seleccionado';
+  }
   if (keepAudio && oldAudio) { audio = oldAudio; range('a',audio.duration); }
   sync();
 }
-async function openMedia(file) {
+async function openMedia(file, signal) {
+  if (signal?.aborted) return '';
   const kind = mediaKind(file.type);
   if (kind === 'audio') {
     if (mode === 'video') selectMediaMode(visual ? 'mix' : 'image',!!visual);
-    await chooseAudio(file);
+    await chooseAudio(file, signal);
+    if (signal?.aborted) return '';
     return !!audio ? (visual ? 'Audio cargado. Ajusta el tramo.' : 'Audio cargado. Selecciona una imagen o GIF para acompañarlo.') : '';
   }
   if (kind === 'image') {
     selectMediaMode(file.type === 'image/gif' ? 'mix' : 'image',false,!!audio);
-    return await chooseVisual(file) ? (audio ? 'Imagen cargada. Ajusta el encuadre.' : 'Imagen cargada. Añade una pista de audio.') : '';
+    return await chooseVisual(file, signal) ? (audio ? 'Imagen cargada. Ajusta el encuadre.' : 'Imagen cargada. Añade una pista de audio.') : '';
   }
   selectMediaMode(audio && mode !== 'video' ? 'mix' : 'video',false,!!audio && mode!=='video');
-  let loaded = await chooseVisual(file);
+  let loaded = await chooseVisual(file, signal);
+  if (signal?.aborted) return '';
   if (!loaded && visual && mode==='video' && !audio) {
     selectMediaMode('mix',true);
     return 'Video cargado sin pista de audio compatible. Añade un audio.';
@@ -717,10 +735,11 @@ async function loadDetected(item) {
     const response = await fetchAccessible(item.url,controller.signal);
     const file = await readMedia(response,controller.signal,item.type);
     if (controller.signal.aborted) return;
-    const message = await openMedia(file);
+    const message = await openMedia(file, controller.signal);
+    if (controller.signal.aborted || importController !== controller) return;
     showLinkState(message || status.textContent || 'No se pudo abrir el recurso.',message?'success':'error');
   } catch(error) {
-    showLinkState(error.name==='AbortError'?'Importación cancelada.':error instanceof TypeError?'El sitio no permite acceder al archivo desde esta web (CORS). Si tienes permiso, importa el archivo original.':error.message,'error');
+    if (importController === controller) showLinkState(error.name==='AbortError'?'Importación cancelada.':error instanceof TypeError?'El sitio no permite acceder al archivo desde esta web (CORS). Si tienes permiso, importa el archivo original.':error.message,'error');
   } finally {
     clearTimeout(timer);
     if (importController===controller) {
@@ -736,7 +755,7 @@ function queueImport() {
   if (busy) { showLinkState('Espera a que termine la generación antes de importar.','error'); return; }
   const text = linkInput.value.trim();
   if (text === lastLink && importing) return;
-  if (importing) importController?.abort();
+  if (importing) cancelImport();
   if (!text) { showLinkState('Pega un enlace HTTPS de un video.'); return; }
   showLinkState('Comprobando enlace…','loading');
   linkTimer = setTimeout(() => importLink(false), 500);
@@ -784,7 +803,7 @@ async function importLink(force) {
     importController?.abort();
     stopSourcePreview();
     clearMediaResults();
-    if (social) switchToVideo();
+    if (social && mode !== 'video') selectMediaMode('video');
     controller = new AbortController();
     importController = controller;
     importing = true;
@@ -818,7 +837,7 @@ async function importLink(force) {
     const file = await readMedia(response, controller.signal,social?'video/mp4':inferredType(url.href));
     if (controller.signal.aborted || busy || importController !== controller) return;
     linkStatus.textContent = 'Cargando en el editor…';
-    const message = await openMedia(file);
+    const message = await openMedia(file, controller.signal);
     const loaded = !!message;
     if (!controller.signal.aborted && importController === controller) {
       showLinkState(message || 'No se pudo abrir el recurso: ' + status.textContent, loaded ? 'success' : 'error');
@@ -832,6 +851,7 @@ async function importLink(force) {
   } finally {
     clearTimeout(timer);
     if (controller && importController === controller) {
+      if (controller.signal.aborted && linkStatus.dataset.state === 'loading') showLinkState('Importación cancelada o tiempo agotado.','error');
       importController = undefined;
       importing = false;
       byId('load-link').hidden = false;
@@ -1023,8 +1043,6 @@ byId('play-source').onclick = async () => {
   } catch (error) { if (previewSession === session) stopSourcePreview(); status.textContent=error.message; }
 };
 
-// Set only after every handler has been registered.
-document.documentElement.dataset.editorReady = 'true';
 showLinkState(importEndpoint ? 'Pega un enlace para detectar video, imagen o audio.' : 'Importa un archivo de video mediante un enlace directo. YouTube, TikTok e Instagram requieren el servidor de descarga, todavía sin conectar.');
 
 byId('use-frame').onclick = async () => {
@@ -1077,7 +1095,7 @@ byId('convert-mp4').onclick = async () => {
     compatibleUrl=URL.createObjectURL(compatibleClip);
     const link=byId('download');
     link.href=compatibleUrl; link.download=compatibleClip.name;
-    link.textContent='Guardar MP4 para WhatsApp ↓';
+    link.textContent='Guardar vídeo MP4 ↓';
     byId('format-note').textContent='MP4 preparado. En WhatsApp, usa Crear sticker y conserva el audio si la función está disponible.';
     button.hidden=true;
     byId('mp4-consent').hidden=true;
@@ -1128,3 +1146,20 @@ if(window.StickersSonorosBridge){
   bookmark.removeAttribute('href');byId('copy-bookmark').disabled=true;
   byId('bridge-status').textContent='No se cargó el puente. Recarga el editor.';
 }
+
+byId('check-service').onclick = async () => {
+  const button=byId('check-service'), note=byId('service-status');
+  button.disabled=true; note.textContent='Comprobando servidor…';
+  const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),90000);
+  try {
+    if(!importEndpoint)throw Error('Servidor no configurado.');
+    const response=await fetch(new URL('/health',importEndpoint),{cache:'no-store',credentials:'omit',signal:controller.signal});
+    if(!response.ok)throw Error('HTTP '+response.status);
+    const info=await response.json();
+    if(!info.ok)throw Error('Servicio no disponible.');
+    const ui=document.documentElement.dataset.version;
+    note.textContent=info.version===ui?'Servidor '+info.version+' · disponible':'Servidor '+(info.version||'sin versión')+' · editor '+ui+'. Actualiza Render si no coinciden.';
+  } catch(error) {note.textContent=error.name==='AbortError'?'El servidor no respondió a tiempo.':error.message;}
+  finally{clearTimeout(timer);button.disabled=false;}
+};
+document.documentElement.dataset.editorReady = 'true';

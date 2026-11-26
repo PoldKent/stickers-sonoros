@@ -8,14 +8,16 @@ Si te resulta útil el proyecto y deseas apoyar voluntariamente su mantenimiento
 
 | Dato | Valor |
 |---|---|
-| Activo | Binance Wrapped BTC (**BBTC**) |
+| Activos admitidos | **USDC** (Circle) o Binance Wrapped BTC (**BBTC**) |
 | Red | **Ethereum mainnet (ERC-20)** |
 | Dirección de depósito | `0xf2c539c5712b299ad4bd03a9aef64e64e14aee6a` |
-| Contrato del token (no es la dirección de depósito) | `0x9be89d2a4cd102d8fecc6bf9da793be995c22541` |
+| Contrato USDC (no es la dirección de depósito) | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` |
+| Contrato BBTC (no es la dirección de depósito) | `0x9be89d2a4cd102d8fecc6bf9da793be995c22541` |
+| Mínimo USDC mostrado en Binance (26/11/2026) | Más de 0,001 USDC; verificar antes de enviar |
 
-[Consultar dirección en Etherscan](https://etherscan.io/address/0xf2c539c5712b299ad4bd03a9aef64e64e14aee6a) · [Ver contrato de BBTC](https://etherscan.io/token/0x9be89d2a4cd102d8fecc6bf9da793be995c22541)
+[Consultar dirección en Etherscan](https://etherscan.io/address/0xf2c539c5712b299ad4bd03a9aef64e64e14aee6a) · [Ver contrato de USDC](https://etherscan.io/token/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48) · [Ver contrato de BBTC](https://etherscan.io/token/0x9be89d2a4cd102d8fecc6bf9da793be995c22541)
 
-**Antes de transferir:** verifica la dirección completa, la red, el contrato y que el depósito de BBTC esté habilitado en Binance. No envíes BTC nativo, ETH, WBTC, USDT ni otros tokens a esta dirección como donación. Comprueba el mínimo y las comisiones vigentes; una transferencia incorrecta puede perderse de forma irreversible. El enlace de Etherscan es informativo, no un botón de pago.
+**Antes de transferir:** verifica la dirección completa, la red, el contrato y que el depósito del activo elegido (USDC o BBTC) esté habilitado en Binance. No envíes BTC nativo, ETH, WBTC, USDT ni otros tokens distintos de USDC y BBTC a esta dirección como donación. Comprueba el mínimo y las comisiones vigentes; una transferencia incorrecta puede perderse de forma irreversible. No uses otras redes ni versiones puenteadas de USDC. El enlace de Etherscan es informativo, no un botón de pago.
 
 El conversor de Shirtep está sujeto a la [licencia PolyForm Noncommercial 1.0.0](vendor/shirtep/LICENSE.md). Las aportaciones no otorgan derechos comerciales. El mantenimiento debe seguir siendo no comercial; confirma con el titular de los derechos la compatibilidad de la financiación antes de aceptar aportes que puedan constituir un uso comercial.
 
@@ -25,15 +27,19 @@ If you find this project useful and wish to voluntarily support its noncommercia
 
 | Field | Value |
 |---|---|
-| Asset | Binance Wrapped BTC (**BBTC**) |
+| Supported assets | **USDC** (Circle) or Binance Wrapped BTC (**BBTC**) |
 | Network | **Ethereum mainnet (ERC-20)** |
 | Deposit address | `0xf2c539c5712b299ad4bd03a9aef64e64e14aee6a` |
-| Token contract (not the deposit address) | `0x9be89d2a4cd102d8fecc6bf9da793be995c22541` |
+| USDC contract (not the deposit address) | `0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48` |
+| BBTC contract (not the deposit address) | `0x9be89d2a4cd102d8fecc6bf9da793be995c22541` |
+| USDC minimum shown by Binance (2026-11-26) | More than 0.001 USDC; verify before sending |
 
-[View address on Etherscan](https://etherscan.io/address/0xf2c539c5712b299ad4bd03a9aef64e64e14aee6a) · [Verify BBTC token contract](https://etherscan.io/token/0x9be89d2a4cd102d8fecc6bf9da793be995c22541)
+[View address on Etherscan](https://etherscan.io/address/0xf2c539c5712b299ad4bd03a9aef64e64e14aee6a) · [Verify USDC token contract](https://etherscan.io/token/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48) · [Verify BBTC token contract](https://etherscan.io/token/0x9be89d2a4cd102d8fecc6bf9da793be995c22541)
 
-**Before sending:** verify the full address, network, token contract and current BBTC deposit availability on Binance. Do not send native BTC, ETH, WBTC, USDT, or other tokens as a donation to this address. Check the current deposit minimum and fees; incorrect transfers may be irrecoverable. The explorer link is informational, not a payment button.
+**Before sending:** verify the full address, network, token contract and current deposit availability for the selected asset (USDC or BBTC) on Binance. Do not send native BTC, ETH, WBTC, USDT, or any tokens other than USDC and BBTC as a donation to this address. Check the current deposit minimum and fees; incorrect transfers may be irrecoverable. Do not use other networks or bridged USDC. The explorer link is informational, not a payment button.
 
 Shirtep's converter is subject to the [PolyForm Noncommercial 1.0.0 license](vendor/shirtep/LICENSE.md). Contributions do not grant commercial rights. Maintenance must remain noncommercial; confirm funding compatibility with the rights holder before accepting contributions that could constitute commercial use.
 
 [Binance: official BBTC contract reference](https://www.binance.com/en-IN/support/announcement/detail/b4b0312230964cf1a347d4712be5123d).
+
+[Circle: contratos oficiales de USDC / Official USDC contracts](https://developers.circle.com/stablecoins/usdc-contract-addresses).

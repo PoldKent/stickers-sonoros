@@ -46,3 +46,5 @@ El editor también permite tomar el fotograma actual de un vídeo y combinarlo c
 ## Acceso a medios públicos sin CORS
 
 Si falla la petición directa del navegador, el editor puede consultar la URL HTTPS pública mediante `/api/media`. El lector no utiliza cookies, credenciales ni proxies, rechaza redes privadas y direcciones no globales en cada resolución y redirección, fija la IP del socket, valida TLS, limita tiempo y tamaño y solo devuelve tipos multimedia permitidos o HTML en JSON. No se ejecuta contenido remoto. No se utiliza este camino para saltar autenticación ni para extraer vídeo restringido de YouTube, TikTok o Instagram. Sigue siendo necesario aislar el servicio y limitar tráfico a nivel de infraestructura antes de ofrecerlo a gran escala.
+
+El contenedor actualiza yt-dlp a la versión disponible del canal de pruebas en la compilación; Node 22 y yt-dlp-ejs se mantienen como dependencias. `/health` informa de la versión instalada. Esto reduce incompatibilidades por cambios del sitio, pero no elimina restricciones de acceso de la plataforma. Para un despliegue estable, fija una versión verificada después de las pruebas reales.

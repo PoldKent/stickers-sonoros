@@ -1,5 +1,7 @@
 # Stickers Sonoros
 
+![Stickers Sonoros — identidad visual](docs/images/brand.svg)
+
 **Crea stickers con sonido para WhatsApp desde tu navegador.**  
 Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
 
@@ -8,6 +10,8 @@ Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
 [![Pruebas automatizadas](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml)
 
 ![Esquema ilustrativo del editor en computadora y teléfono](docs/images/interface.svg)
+
+[Capturas reales de la última versión verificada](https://github.com/PoldKent/stickers-sonoros/actions/runs/45852351963#artifacts) (artefactos temporales de CI).
 
 ## Cómo funciona
 

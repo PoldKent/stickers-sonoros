@@ -1,5 +1,6 @@
 """Servicio de importación para contenido público que el usuario puede descargar."""
 import json
+from importlib.metadata import version as package_version, PackageNotFoundError
 import os
 import re
 import signal
@@ -33,6 +34,10 @@ STATIC_FILES = {
 MAX_BYTES = 80 * 1024 * 1024
 MAX_DURATION = 600
 SERVICE_VERSION = '2026.11.26.9'
+try:
+    DOWNLOADER_VERSION = package_version('yt-dlp')
+except PackageNotFoundError:
+    DOWNLOADER_VERSION = None
 SLOTS = threading.BoundedSemaphore(1)
 LOCK = threading.Lock()
 RECENT = deque()
@@ -189,7 +194,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         route = urlsplit(self.path).path
         if route == "/health":
-            self.reply(200, {"ok": True, "version": SERVICE_VERSION, "maxDuration": MAX_DURATION})
+            self.reply(200, {"ok": True, "version": SERVICE_VERSION, "maxDuration": MAX_DURATION, "downloader": DOWNLOADER_VERSION, "publicMedia": True})
             return
         asset = STATIC_FILES.get(route)
         if not asset:
@@ -236,7 +241,7 @@ class Handler(BaseHTTPRequestHandler):
             elif not isinstance(url, str) or not url.startswith("https://"):
                 raise ValueError()
         except (ValueError, TypeError, TimeoutError):
-            self.reply(400, {"error": "Introduce un enlace público válido de TikTok, Reels o Shorts."})
+            self.reply(400, {"error": "Introduce un enlace HTTPS público válido."})
             return
         if not SLOTS.acquire(blocking=False):
             self.reply(429, {"error": "El servicio está ocupado. Reintenta en unos segundos."})

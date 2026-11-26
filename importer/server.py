@@ -30,6 +30,8 @@ STATIC_FILES = {
     "/vendor/shirtep/LICENSE.md": ("vendor/shirtep/LICENSE.md", "text/plain; charset=utf-8"),
 }
 MAX_BYTES = 80 * 1024 * 1024
+MAX_DURATION = 600
+SERVICE_VERSION = '2026.11.26.7'
 SLOTS = threading.BoundedSemaphore(1)
 LOCK = threading.Lock()
 RECENT = deque()
@@ -63,46 +65,103 @@ def normalize_url(value):
         return "https://www.tiktok.com" + path + "/"
     raise ValueError("Usa un enlace individual de TikTok, Instagram Reel o YouTube Short.")
 
+class ImportFailure(ValueError):
+    def __init__(self, code, message):
+        super().__init__(message)
+        self.code = code
+
+def classify_download_error(log, returncode=1):
+    msg = log.lower().replace("’", "'")
+    # Expose only fixed, safe messages; downloader logs may contain URLs or tokens.
+    if any(x in msg for x in ("confirm you're not a bot", "confirm you are not a bot", "bot detection", "bot check")):
+        return ImportFailure("SOURCE_BOT_CHECK", "YouTube ha bloqueado la descarga desde el servidor y exige una comprobación de acceso. No se puede importar este enlace automáticamente. Si tienes permiso para usar el video, sube el archivo original.")
+    if any(x in msg for x in ("private video", "login required", "sign in", "login to", "cookies", "age-restricted", "members-only")):
+        return ImportFailure("SOURCE_ACCESS", "La plataforma exige iniciar sesión o concede acceso restringido a este video. Importa un archivo que tengas permiso para utilizar.")
+    if "does not pass filter" in msg or "does not pass the filter" in msg or "duration <= 600" in msg:
+        return ImportFailure("SOURCE_DURATION", "El video supera 10 minutos, es una transmisión en directo o no cumple el límite de duración.")
+    if any(x in msg for x in ("larger than max-filesize", "larger than max", "file size limit", "max-filesize", "file too large")):
+        return ImportFailure("SOURCE_SIZE", "El video supera el tamaño permitido para la descarga. Selecciona un archivo más corto o comprimido.")
+    if any(x in msg for x in ("http error 429", "too many requests", "http error 403", "forbidden")):
+        return ImportFailure("SOURCE_BLOCKED", "La plataforma rechazó la solicitud del servidor (acceso limitado o demasiadas peticiones). Prueba con otro video autorizado o importa el archivo.")
+    if any(x in msg for x in ("javascript runtime", "signature solving", "challenge solving", "ejs")):
+        return ImportFailure("SOURCE_JS", "El descargador no pudo procesar la respuesta de la plataforma. Requiere revisión de compatibilidad.")
+    if any(x in msg for x in ("video unavailable", "not available", "removed", "deleted", "not found")):
+        return ImportFailure("SOURCE_UNAVAILABLE", "La publicación no está disponible para el servidor.")
+    if any(x in msg for x in ("requested format is not available", "no video formats", "no suitable formats")):
+        return ImportFailure("SOURCE_FORMAT", "La plataforma no ofrece un formato de video y audio compatible con el editor.")
+    if returncode < 0:
+        return ImportFailure("RESOURCE_LIMIT", "La descarga superó un límite de recursos del servidor.")
+    return ImportFailure("DOWNLOAD_FAILED", "No se pudo obtener el video. El servidor no recibió un archivo válido; prueba otro enlace autorizado.")
+
 def run(args, timeout):
-    # No shell, no cookies, no user-supplied flags; kill the whole process group on timeout.
-    with subprocess.Popen(
-        ["prlimit", "--fsize=" + str(MAX_BYTES), "--"] + args,
-        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-        start_new_session=True,
-    ) as process:
-        try:
-            return process.wait(timeout=timeout)
-        except subprocess.TimeoutExpired:
-            os.killpg(process.pid, signal.SIGKILL)
-            process.wait()
-            raise
+    # Bounded output on disk; never expose raw upstream diagnostics.
+    with tempfile.TemporaryFile() as log:
+        with subprocess.Popen(
+            ["prlimit", "--fsize=" + str(MAX_BYTES), "--"] + args,
+            stdout=log, stderr=subprocess.STDOUT, start_new_session=True,
+        ) as process:
+            try:
+                rc = process.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+                raise
+        size = log.seek(0, os.SEEK_END)
+        log.seek(max(0, size - 32768))
+        return rc, log.read().decode("utf-8", errors="replace")
 
 def fetch_video(url, directory):
     src = str(directory / "source.%(ext)s")
-    rc = run([
+    rc, log = run([
         "yt-dlp", "--ignore-config", "--no-cache-dir", "--no-playlist",
-        "--no-progress", "--no-warnings", "--socket-timeout", "10",
+        "--no-progress", "--socket-timeout", "10",
         "--retries", "1", "--fragment-retries", "1", "--max-filesize", "50M",
-        "--match-filters", "duration <= 180 & !is_live",
+        "--match-filters", f"duration <= {MAX_DURATION} & !is_live",
         "--js-runtimes", "node",
-        "-f", "bv*[height<=720]+ba/b[height<=720]",
-        "--merge-output-format", "mkv", "-o", src, "--", url,
-    ], 65)
+        "-f", "b[height<=480][vcodec^=avc1][acodec^=mp4a]/bv[height<=480][vcodec^=avc1]+ba[acodec^=mp4a]/b[height<=480]/bv*[height<=480]+ba",
+        "--merge-output-format", "mp4/mkv", "-o", src, "--", url,
+    ], 100)
     files = [p for p in directory.glob("source.*") if p.suffix in (".mp4", ".mkv", ".webm", ".mov", ".m4v")]
-    if rc or len(files) != 1 or files[0].stat().st_size > MAX_BYTES:
-        raise ValueError("No se pudo descargar el video público. Puede estar bloqueado, requerir acceso, durar más de 3 minutos o superar el límite.")
+    if rc or len(files) != 1:
+        raise classify_download_error(log, rc)
+    if not 0 < files[0].stat().st_size <= MAX_BYTES:
+        raise ImportFailure("SOURCE_SIZE", "El archivo descargado está vacío o supera 80 MB.")
+    # A compatible original can be remuxed instead of re-encoded.
+    probe_rc, probe_log = run([
+        "ffprobe", "-v", "error", "-show_entries", "stream=codec_name,codec_type:format=duration",
+        "-of", "json", str(files[0]),
+    ], 10)
+    try:
+        probe = json.loads(probe_log) if probe_rc == 0 else {}
+        streams = probe["streams"]
+        duration = float(probe["format"]["duration"])
+        if not 0 < duration <= MAX_DURATION + 1:
+            raise ImportFailure("SOURCE_DURATION", "El video supera el máximo de 10 minutos.")
+        video_codec = next(s["codec_name"] for s in streams if s["codec_type"] == "video")
+        audio_codec = next(s["codec_name"] for s in streams if s["codec_type"] == "audio")
+    except (KeyError, StopIteration, TypeError, json.JSONDecodeError):
+        raise ImportFailure("SOURCE_FORMAT", "El archivo no contiene video y audio compatibles.") from None
     output = directory / "video.mp4"
-    rc = run([
+    base = [
         "ffmpeg", "-nostdin", "-v", "error", "-i", str(files[0]),
-        "-map", "0:v:0", "-map", "0:a:0", "-t", "180",
-        "-vf", "scale=720:720:force_original_aspect_ratio=decrease:force_divisible_by=2",
-        "-c:v", "libx264", "-preset", "veryfast", "-crf", "24",
-        "-threads", "2", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "96k",
+        "-map", "0:v:0", "-map", "0:a:0",
+    ]
+    if video_codec == "h264" and audio_codec == "aac":
+        rc, _ = run(base + ["-c", "copy", "-movflags", "+faststart", str(output)], 20)
+        if rc == 0 and output.exists() and 0 < output.stat().st_size <= MAX_BYTES:
+            return output
+        output.unlink(missing_ok=True)
+    rc, _ = run(base + [
+        "-vf", "scale=480:480:force_original_aspect_ratio=decrease:force_divisible_by=2",
+        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "25",
+        "-maxrate", "800k", "-bufsize", "1600k", "-threads", "2",
+        "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "96k",
         "-movflags", "+faststart", str(output),
-    ], 35)
+    ], 70)
     if rc or not output.exists() or not 0 < output.stat().st_size <= MAX_BYTES:
-        raise ValueError("No se pudo convertir a MP4 con sonido.")
+        raise ImportFailure("CONVERSION_FAILED", "El video se descargó, pero no pudo convertirse a MP4 con audio dentro de los límites del servidor.")
     return output
+
 
 class Handler(BaseHTTPRequestHandler):
     def setup(self):
@@ -129,7 +188,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         route = urlsplit(self.path).path
         if route == "/health":
-            self.reply(200, {"ok": True})
+            self.reply(200, {"ok": True, "version": SERVICE_VERSION, "maxDuration": MAX_DURATION})
             return
         asset = STATIC_FILES.get(route)
         if not asset:
@@ -194,8 +253,12 @@ class Handler(BaseHTTPRequestHandler):
                 except subprocess.TimeoutExpired:
                     self.reply(504, {"error": "La descarga o conversión excedió el tiempo disponible."})
                     return
-                except ValueError as error:
-                    self.reply(422, {"error": str(error)})
+                except ImportFailure as error:
+                    print("Importación fallida: " + error.code, flush=True)
+                    self.reply(422, {"error": str(error), "code": error.code})
+                    return
+                except ValueError:
+                    self.reply(422, {"error": "El archivo recibido no tiene metadatos compatibles.", "code": "SOURCE_FORMAT"})
                     return
                 except OSError:
                     self.reply(503, {"error": "El servicio de descarga no está disponible."})

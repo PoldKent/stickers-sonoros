@@ -3,7 +3,7 @@
 ![Stickers Sonoros — identidad visual](docs/images/brand.svg)
 
 **Crea stickers con sonido para WhatsApp desde tu navegador.**  
-Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
+Video, imagen o GIF + audio · hasta 3 minutos · Español / English.
 
 [**Abrir aplicación**](https://poldkent.github.io/stickers-sonoros/) · [Servidor Render](https://stickers-sonoros.onrender.com/) · [English README](README.en.md) · [❤️ Apoyar el proyecto](SUPPORT.md)
 
@@ -18,7 +18,7 @@ Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
 ![Flujo: importar, editar, crear y enviar](docs/images/workflow.svg)
 
 1. Pega un enlace multimedia HTTPS o selecciona un archivo de tu dispositivo.
-2. Reproduce el tramo, elige el inicio y el final (hasta 60 s) y ajusta el encuadre, posición o zoom.
+2. Reproduce el tramo, elige el inicio y el final (hasta 180 s) y ajusta el encuadre, posición o zoom.
 3. Pulsa **Crear sticker sonoro**. El editor prepara localmente un paquete con WebP y Ogg/Opus vinculados, si el navegador dispone de los códecs necesarios.
 4. Sigue los cuatro pasos de envío que aparecen debajo de la vista previa. La única descarga del editor es `sticker.sonoro.json`.
 
@@ -32,9 +32,11 @@ Los controles de posición se expresan en píxeles del lienzo de 512 × 512 y ad
 
 ## Calidad del sticker
 
+La duración máxima es 180 s. Para clips largos se mantienen los límites de peso y memoria; el audio puede reducir su bitrate para caber. La aceptación real de 180 s en WhatsApp no está confirmada. Actualiza el favorito antes de probar.
+
 **Calidad ampliada:** permite hasta 4.000.000 bytes combinados entre WebP y Ogg (audio hasta 1 MB), con mayor calidad inicial y más FPS de captura para clips cortos. El modo Compatible permanece predeterminado y limita cada componente a 1 MB. La aceptación de imágenes de más de 1 MB por WhatsApp no está verificada; el conversor original advierte de HTTP 413. Sustituye el favorito para probar paquetes grandes, primero en tu propio chat. Si falla, vuelve al modo Compatible. El JSON Base64 pesa más que los medios originales.
 
-El modo predeterminado **Máxima nitidez** prioriza la resolución (mínimo de salida 192 px para animaciones; objetivo 512 px), con una frecuencia de muestreo y codificación de al menos **9 FPS** en animaciones, también para clips largos. No se inventan fotogramas distintos si el origen es estático o tiene menos movimiento. Si no caben ambas condiciones, el modo nitidez no exporta el sticker. **Equilibrado** y **Máxima fluidez** permiten otras combinaciones. La calidad final depende del contenido y del límite elegido; no se garantiza HD en todos los vídeos de 60 s. Si no cabe, reduce la duración o usa fotograma + audio. La vista del resultado indica la resolución y los FPS reales.
+El modo predeterminado **Máxima nitidez** prioriza la resolución (mínimo de salida 192 px para animaciones; objetivo 512 px), con una frecuencia de muestreo y codificación de al menos **9 FPS** en animaciones, también para clips largos. No se inventan fotogramas distintos si el origen es estático o tiene menos movimiento. Si no caben ambas condiciones, el modo nitidez no exporta el sticker. **Equilibrado** y **Máxima fluidez** permiten otras combinaciones. La calidad final depende del contenido y del límite elegido; no se garantiza HD en todos los vídeos de 180 s. Si no cabe, reduce la duración o usa fotograma + audio. La vista del resultado indica la resolución y los FPS reales.
 
 Si falla una importación de TikTok, se ofrece [SnapTik](https://snaptik.fi/) como alternativa manual externa: descarga únicamente contenido autorizado y selecciona el archivo local. No se envía el enlace automáticamente ni se integra su API.
 
@@ -43,7 +45,7 @@ Si falla una importación de TikTok, se ofrece [SnapTik](https://snaptik.fi/) co
 - Importación directa de video, imagen y audio; detección de recursos públicos en páginas compatibles.
 - Importador propio con yt-dlp y alternativa para direcciones públicas de descarga de TikTok.
 - Editor cuadrado de 512 × 512, reproducción previa, selección de fotograma, imagen o GIF con audio.
-- Recorte inicial de hasta 30 segundos, máximo de 60 segundos. Calidad ajustada para los límites del conversor: 1 MB por componente en Compatible, o 4 MB combinados en Calidad ampliada.
+- Recorte inicial de hasta 30 segundos, máximo de 180 segundos (3 minutos). Calidad ajustada para los límites del conversor: 1 MB por componente en Compatible, o 4 MB combinados en Calidad ampliada.
 - Interfaz adaptable a celulares, tablets y computadoras. Selector Español/English persistente.
 - Edición y generación locales; no se requiere instalar programas ni extensiones.
 
@@ -68,7 +70,7 @@ Puedes importar, editar y guardar el archivo `.sonoro.json` desde un navegador c
 |---|---|
 | Envío de sticker sonoro al propio chat | Prueba real confirmada por el usuario en .12 |
 | Importación de TikTok | Prueba real confirmada por el usuario con un clip de 27,14 s en .18 |
-| Paquete de 60 s y envío | Generación real y envío simulado en CI; falta validar envío real de 60 s |
+| Paquete de 180 s y envío | Pruebas de generación imagen + audio y envío simulado en CI; falta validar el envío real de 180 s y animaciones largas |
 | Diseño móvil e idioma | Pruebas Chromium con 320, 390, 740 y 1024 px; no equivalen a pruebas físicas de todos los teléfonos |
 | Importación universal de redes sociales | No garantizada; depende del origen |
 | Envío a todas las cuentas de WhatsApp | No garantizado; depende del cliente y servidor |

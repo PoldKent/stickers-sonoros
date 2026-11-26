@@ -28,7 +28,7 @@ class ClipIntegration(unittest.TestCase):
         self.thread.join()
         ORIGINS.discard(self.origin)
     def request(self, method, path, body=None, headers=None):
-        conn=HTTPConnection("127.0.0.1",self.server.server_port,timeout=45)
+        conn=HTTPConnection("127.0.0.1",self.server.server_port,timeout=110)
         try:
             conn.request(method,path,body=body,headers=headers or {})
             res=conn.getresponse()
@@ -39,7 +39,7 @@ class ClipIntegration(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             src=Path(tmp)/"tone.webm"
             dst=Path(tmp)/"sticker.mp4"
-            subprocess.run(["ffmpeg","-v","error","-f","lavfi","-i","color=c=blue:s=128x128:r=15:d=1","-f","lavfi","-i","sine=frequency=440:sample_rate=48000:duration=1","-c:v","libvpx","-c:a","libopus","-shortest",str(src)],check=True,timeout=30)
+            subprocess.run(["ffmpeg","-v","error","-f","lavfi","-i","color=c=blue:s=128x128:r=15:d=60","-f","lavfi","-i","sine=frequency=440:sample_rate=48000:duration=60","-c:v","libvpx","-c:a","libopus","-shortest",str(src)],check=True,timeout=90)
             code,headers,_=self.request("OPTIONS","/api/clip-mp4",headers={"Origin":self.origin})
             self.assertEqual(code,204)
             self.assertEqual(headers["Access-Control-Allow-Origin"],self.origin)
@@ -52,7 +52,7 @@ class ClipIntegration(unittest.TestCase):
             audio=next(s for s in info["streams"] if s["codec_type"]=="audio")
             self.assertEqual((video["codec_name"],video["width"],video["height"]),("h264",512,512))
             self.assertEqual(audio["codec_name"],"aac")
-            self.assertTrue(0<float(info["format"]["duration"])<=10.1)
+            self.assertTrue(59.5<=float(info["format"]["duration"])<=60.1)
     def test_reject_invalid(self):
         code,_,body=self.request("POST","/api/clip-mp4",b"not a webm",{"Origin":self.origin,"Content-Type":"video/webm"})
         self.assertEqual(code,422)

@@ -133,6 +133,7 @@
     ["Alternativa de descarga pública:","Public download fallback:"],
     ["No se pudo preparar el MP4 con sonido.","Could not prepare MP4 with sound."],["La preparación del MP4 tardó demasiado.","MP4 preparation timed out."],["No se pudo preparar el MP4.","Could not prepare MP4."]
   ];
+  pairs.push(...[["El video no respondió al recorte.","The video did not respond to seeking."],["La reproducción no entregó cuadros","Playback returned no frames"],["La reproducción se detuvo","Playback stopped"],["sin requestVideoFrameCallback","requestVideoFrameCallback unavailable"],["Primero calcula las opciones del tramo","Calculate the selection options first"],["La duración del audio cambió: vuelve a calcular las opciones","Audio duration changed: recalculate the options"],["El navegador no pudo leer el video","The browser could not read the video"],["No se pudo leer el audio. ¿El archivo tiene sonido?","Could not read audio. Does the file contain sound?"],["Generación cancelada","Creation canceled"],["Cancelado","Canceled"],["No se pudo abrir el recurso:","Could not open resource:"],["Enlace no válido.","Invalid link."],["Solo se admiten enlaces HTTPS públicos.","Only public HTTPS links are supported."],["Dominio no permitido para esta descarga.","Domain not allowed for this download."],["Esta plataforma requiere su importador específico.","This platform requires its specific importer."],["Origen o ruta no permitidos.","Origin or route not allowed."],["Origen no permitido.","Origin not allowed."],["Ruta no encontrada.","Route not found."],["Archivo no disponible.","File unavailable."],["El archivo local supera 80 MiB. Selecciona un archivo más pequeño.","The local file exceeds 80 MiB. Choose a smaller file."],["Apoyar el proyecto","Support the project"],["Comprobar servidor","Check server"],["Revisa la red y el token antes de donar.","Check the network and token before donating."]]);
   const exact = new Map(pairs);
   const fragments = [
     [/^Duración: ([\d.]+) s de (\d+) s permitidos\./, "Duration: $1 s of $2 s allowed."],
@@ -152,6 +153,10 @@
     [/^El audio pesa (\d+) KB \(máximo 1000 KB\)/,"Audio is $1 KB (maximum 1000 KB)"],
     [/^El audio dura ([\d.]+) s y el tramo empieza en ([\d.]+) s/,"Audio is $1 s long and the selection starts at $2 s"],
     [/^El sitio no permite acceder al recurso público \(HTTP (\d+)\)\./,"The site does not allow access to the public resource (HTTP $1)."],
+    [/^El navegador no pudo leer el video(?: \(código (\d+): (.*)\))?$/,(_,code,detail)=>"The browser could not read the video"+(code?" (code "+code+": "+(detail==="formato no soportado"?"unsupported format":detail)+")":"")],
+    [/^Este navegador no puede generar WebP \(devolvió ([^)]+)\)\. Usa Chrome o Edge\.$/,"This browser cannot generate WebP (returned $1). Use Chrome or Edge."],
+    [/^No se pudo leer el audio\. ¿El archivo tiene sonido\? \((.*)\)$/,"Could not read audio. Does the file contain sound? ($1)"],
+    [/^Con (\d+) s el audio no cabe en 1 MB \(límite de WhatsApp\)\. Máximo unos (\d+) minutos\.$/,"At $1 s the audio exceeds 1 MB (WhatsApp limit). Maximum about $2 minutes."],
     [/ KB de audio$/," KB audio"],[/ · Versión /," · Version "]
   ];
   const dynamic = new Set(["link-status","status","selection-info","sticker-state","format-note","bridge-status","service-status","sticker-info","download","play-source"]);
@@ -172,6 +177,7 @@
   let language="es";
   try { language=localStorage.getItem("stickers.language")==="en"?"en":"es"; } catch {}
   const picker=document.getElementById("language");
+  if(!picker)return;
   function translateText(node) {
     if(!node.parentElement || node.parentElement.closest("script,style,textarea,[data-no-translate]") || !node.data.trim())return;
     const parent=node.parentElement, previous=stored.get(node);
@@ -209,7 +215,7 @@
     document.dispatchEvent(new CustomEvent("sticker-language",{detail:language}));
   }
   picker.addEventListener("change",()=>setLanguage(picker.value));
-  window.StickerUI={language:()=>language};
+  window.StickerUI={language:()=>language, translate:(message)=>language==="en"?english(message,true):message};
   setLanguage(language);
   new MutationObserver(records=>{
     for(const record of records){

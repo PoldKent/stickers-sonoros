@@ -144,6 +144,6 @@
     };
   }
   window.StickersSonorosBridge = {
-    bookmarklet: () => 'javascript:void('+runStickerBridge.toString()+')()'
+    bookmarklet: () => 'javascript:'+encodeURIComponent('void('+runStickerBridge.toString()+')()')
   };
 })();

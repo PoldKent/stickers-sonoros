@@ -189,6 +189,7 @@ try {
   const blocked='https://blocked.example';
   let proxied;
   await finder.route(blocked+'/**',route=>route.abort());
+  await finder.route('**/health',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,version:'2026.11.26.14',publicMedia:true})}));
   await finder.route('**/api/media',route=>{
     proxied=route.request().postDataJSON().url;
     return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({html:'<img src="/picture.png">',url:blocked+'/page'})});
@@ -197,6 +198,17 @@ try {
   await finder.locator('#load-link').click();
   await finder.waitForFunction(()=>document.querySelector('#media-list').children.length===1 && document.querySelector('#link-status').dataset.state==='success');
   assert.equal(proxied,blocked+'/page');
+  await finder.unroute('**/health');
+  await finder.route('**/health',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,version:'2026.11.26.5'})}));
+  await finder.locator('#link-input').fill(blocked+'/old');
+  await finder.locator('#load-link').click();
+  await finder.waitForFunction(()=>document.querySelector('#link-status').textContent.includes('versión antigua'));
+  assert.equal(proxied,blocked+'/page');
+  await finder.unroute('**/health');
+  await finder.route('**/health',route=>route.abort());
+  await finder.locator('#link-input').fill(blocked+'/offline');
+  await finder.locator('#load-link').click();
+  await finder.waitForFunction(()=>document.querySelector('#link-status').textContent.includes('No se puede conectar con Render'));
   await finder.close();
   console.log('OK: ejemplo, exportación, WebP/Ogg, vínculo de audio y limpieza al cambiar fuente.');
 } finally { await browser.close(); }

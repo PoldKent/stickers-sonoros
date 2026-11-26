@@ -521,7 +521,7 @@ let lastLink = '';
 function switchToVideo() {
   if (mode !== 'video') modes.find(button => button.dataset.mode === 'video').click();
 }
-function cancelImport() { clearTimeout(linkTimer); importController?.abort(); }
+function cancelImport() { clearTimeout(linkTimer); importController?.abort(); lastLink = ''; }
 byId('cancel-link').onclick = cancelImport;
 byId('visual').addEventListener('change', cancelImport, { capture: true });
 drop.addEventListener('drop', cancelImport, { capture: true });
@@ -608,6 +608,7 @@ async function importLink(force) {
       options = {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:url.href})};
     }
     importController?.abort();
+    stopSourcePreview();
     switchToVideo();
     controller = new AbortController();
     importController = controller;
@@ -796,7 +797,7 @@ byId('play-source').onclick = async () => {
     sound.buffer = audio;
     sound.connect(context.destination);
     if (item.kind === 'video') await item.media.play();
-    if (previewSession !== session) return;
+    if (previewSession !== session) { item.media?.pause?.(); return; }
     const start = context.currentTime;
     sound.start(start,a.start,a.duration);
     sound.onended = () => { if (previewSession === session) stopSourcePreview(); };

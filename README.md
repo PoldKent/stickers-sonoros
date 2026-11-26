@@ -64,3 +64,7 @@ La prueba de navegador de la versión anterior fallaba porque seleccionaba cualq
 ## Diagnóstico de importación real (2026.11.26.14)
 
 El editor comprueba /health antes de recurrir a /api/media. Distingue servidor inaccesible, servidor antiguo sin la capacidad publicMedia y errores HTTP devueltos por la fuente. El workflow Diagnóstico público de Render consulta el servicio real, comprueba CORS y realiza una importación de prueba con un MP4 público; no utiliza secretos ni cambia el servicio. Es diagnóstico, no una prueba que exija que Render ya tenga el nuevo commit antes del despliegue. El puente de WhatsApp v2 no se modifica.
+
+## Textos de envío (2026.11.26.15)
+
+Se simplifican las instrucciones y los avisos del marcador para usuarios finales, sin modificar la validación del archivo, la confirmación del destinatario, la compatibilidad temporal ni el envío. La interfaz conserva una nota sobre la integración no oficial. Para ver los textos nuevos, reemplaza el marcador guardado anteriormente; los paquetes sonoros existentes siguen siendo compatibles.

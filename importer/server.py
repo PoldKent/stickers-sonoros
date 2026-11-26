@@ -12,7 +12,23 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit, parse_qs, urlencode
 
-ORIGIN = os.environ.get("ALLOWED_ORIGIN", "https://poldkent.github.io").rstrip("/")
+PORT = int(os.environ.get("PORT", "8080"))
+ORIGINS = {
+    value.rstrip("/") for value in (
+        os.environ.get("ALLOWED_ORIGIN", "https://poldkent.github.io"),
+        os.environ.get("RENDER_EXTERNAL_URL", ""),
+        f"http://localhost:{PORT}", f"http://127.0.0.1:{PORT}",
+    ) if value
+}
+WEB_ROOT = Path(os.environ.get("WEB_ROOT", str(Path(__file__).resolve().parent.parent)))
+STATIC_FILES = {
+    "/": ("index.html", "text/html; charset=utf-8"),
+    "/index.html": ("index.html", "text/html; charset=utf-8"),
+    "/app.js": ("app.js", "text/javascript; charset=utf-8"),
+    "/style.css": ("style.css", "text/css; charset=utf-8"),
+    "/vendor/shirtep/convert.js": ("vendor/shirtep/convert.js", "text/javascript; charset=utf-8"),
+    "/vendor/shirtep/LICENSE.md": ("vendor/shirtep/LICENSE.md", "text/plain; charset=utf-8"),
+}
 MAX_BYTES = 80 * 1024 * 1024
 SLOTS = threading.BoundedSemaphore(1)
 LOCK = threading.Lock()
@@ -94,7 +110,9 @@ class Handler(BaseHTTPRequestHandler):
         self.connection.settimeout(15)
 
     def cors(self):
-        self.send_header("Access-Control-Allow-Origin", ORIGIN)
+        origin = self.headers.get("Origin")
+        if origin in ORIGINS:
+            self.send_header("Access-Control-Allow-Origin", origin)
         self.send_header("Vary", "Origin")
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
@@ -109,13 +127,32 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
-        if self.path == "/health":
+        route = urlsplit(self.path).path
+        if route == "/health":
             self.reply(200, {"ok": True})
-        else:
+            return
+        asset = STATIC_FILES.get(route)
+        if not asset:
             self.reply(404, {"error": "Ruta no encontrada."})
+            return
+        filename, content_type = asset
+        try:
+            body = (WEB_ROOT / filename).read_bytes()
+        except OSError:
+            self.reply(404, {"error": "Archivo no disponible."})
+            return
+        self.send_response(200)
+        self.cors()
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        try:
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError, TimeoutError):
+            pass
 
     def do_OPTIONS(self):
-        if self.path != "/api/import" or self.headers.get("Origin") != ORIGIN:
+        if self.path != "/api/import" or self.headers.get("Origin") not in ORIGINS:
             self.reply(403, {"error": "Origen no permitido."})
             return
         self.send_response(204)
@@ -125,7 +162,7 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        if self.path != "/api/import" or self.headers.get("Origin") != ORIGIN:
+        if self.path != "/api/import" or self.headers.get("Origin") not in ORIGINS:
             self.reply(403, {"error": "Origen o ruta no permitidos."})
             return
         try:
@@ -177,4 +214,4 @@ class Handler(BaseHTTPRequestHandler):
             SLOTS.release()
 
 if __name__ == "__main__":
-    ThreadingHTTPServer(("0.0.0.0", int(os.environ.get("PORT", "8080"))), Handler).serve_forever()
+    ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()

@@ -16,12 +16,15 @@ La captura de pestañas se ha eliminado. El editor descarga URLs de video HTTPS 
 
 **Estado:** el código del servicio está incluido, pero necesita alojamiento HTTPS independiente. No hay una instancia pública preconfigurada. No es necesario instalar una extensión ni programa en el equipo de quien utiliza el editor.
 
-### Despliegue del servicio (administrador del sitio)
+### Despliegue unificado (administrador)
 
-1. Despliega el directorio `importer/` como servicio Docker HTTPS (por ejemplo, en un proveedor compatible con Docker). Usa el Dockerfile de esa carpeta y su contexto de compilación.
-2. Configura `ALLOWED_ORIGIN=https://poldkent.github.io` y permite que el proveedor determine `PORT`. La ruta `GET /health` permite verificar que el servicio responde.
-3. En el editor, abre **Servicio de descarga de redes sociales**, introduce la URL base HTTPS del servicio y pega un enlace público. La configuración se guarda localmente en el navegador. Para preconfigurar el servicio para todos los visitantes, el administrador puede rellenar una sola vez el atributo `content` de la etiqueta `meta[name=sticker-import-endpoint]` en `index.html` y publicar el cambio.
-4. Para desarrollo del servidor: `cd importer && python -m unittest test_server.py`. Construcción local: `docker build -t sticker-importer importer`. El despliegue público requiere TLS; no basta con ejecutar el contenedor HTTP.
+El editor tiene una sola entrada de URL y comienza a importar automáticamente al pegar. No guarda ni solicita una dirección de servidor al visitante. En el despliegue unificado, la página y `/api/import` comparten origen.
+
+- Render: importa el repositorio como Blueprint (archivo `render.yaml` en la raíz). El plan gratuito se propone para pruebas, no garantiza rendimiento suficiente. El servicio utiliza el Dockerfile de la raíz y proporciona HTTPS. Abre la URL asignada al servicio para utilizar el editor completo.
+- Docker local: `docker build -t stickers-sonoros . && docker run --rm -p 8080:8080 stickers-sonoros`. Abre `http://localhost:8080`.
+- GitHub Pages: sigue funcionando para archivos locales y enlaces directos con CORS. Una vez que el administrador tenga la URL HTTPS real del servidor, puede rellenar el atributo `content` de `meta[name=sticker-import-endpoint]` en `index.html` para habilitar la importación social también desde Pages. No hay una instancia desplegada por este cambio.
+- Las pruebas de integración del importador utilizan una respuesta de vídeo simulada; comprobar cada red social contra el servicio real es una prueba distinta.
+
 
 El servicio admite enlaces individuales, limita una descarga simultánea, cuatro intentos por minuto por instancia, tres minutos de duración, tamaño máximo de 80 MiB y aplica plazos máximos al proceso. No usa cookies, cuentas ni credenciales del usuario. Los archivos temporales se eliminan tras la respuesta. CORS no equivale a autenticación: antes de exponerlo ampliamente, aplica límites de tráfico y restricciones de salida de red a nivel del proveedor (bloquear redes privadas, loopback, servicios de metadatos e IP reservadas, también tras redirecciones). Usa una instancia aislada sin secretos. Actualiza y revisa las dependencias periódicamente; fija versiones verificadas para producción. Las redes sociales pueden rechazar las descargas desde centros de datos, requerir autenticación o modificar su funcionamiento; no se garantiza que todas las publicaciones funcionen. Descarga solo contenido que tengas derecho a utilizar.
 

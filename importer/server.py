@@ -40,9 +40,7 @@ MAX_DURATION = 600
 # Sort by the short edge; vertical videos must not be filtered by height.
 FORMAT_SELECTOR = "bv*+ba/b"
 FORMAT_SORT = "res:480,vcodec:h264,acodec:aac"
-SERVICE_VERSION = '2026.11.26.22'
-MAX_CLIP_DURATION = 60
-MAX_CLIP_BYTES = 16 * 1024 * 1024
+SERVICE_VERSION = '2026.11.26.23'
 try:
     DOWNLOADER_VERSION = package_version('yt-dlp')
 except PackageNotFoundError:
@@ -189,27 +187,6 @@ def fetch_video(url, directory):
     return output
 
 
-def convert_clip(source, output):
-    # Only accept a browser-generated WebM, not playlists or arbitrary FFmpeg input.
-    with source.open("rb") as file:
-        if file.read(4) != b"\x1a\x45\xdf\xa3":
-            raise ImportFailure("CLIP_FORMAT", "El archivo no es un WebM compatible.")
-    rc, _ = run([
-        "ffmpeg", "-nostdin", "-v", "error",
-        "-protocol_whitelist", "file,pipe", "-f", "matroska",
-        "-threads", "2", "-i", str(source),
-        "-map", "0:v:0", "-map", "0:a:0", "-t", str(MAX_CLIP_DURATION),
-        "-vf", "scale=512:512:force_original_aspect_ratio=decrease:force_divisible_by=2,pad=512:512:(ow-iw)/2:(oh-ih)/2",
-        "-c:v", "libx264", "-profile:v", "baseline", "-preset", "veryfast",
-        "-pix_fmt", "yuv420p", "-r", "30", "-crf", "23", "-maxrate", "1500k", "-bufsize", "3000k",
-        "-threads", "2", "-c:a", "aac", "-b:a", "96k",
-        "-movflags", "+faststart", str(output),
-    ], 90)
-    if rc or not output.exists() or not 0 < output.stat().st_size <= MAX_CLIP_BYTES:
-        raise ImportFailure("CLIP_CONVERSION", "No se pudo preparar el MP4 con sonido.")
-    return output
-
-
 class Handler(BaseHTTPRequestHandler):
     def setup(self):
         super().setup()
@@ -235,7 +212,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         route = urlsplit(self.path).path
         if route == "/health":
-            self.reply(200, {"ok": True, "version": SERVICE_VERSION, "maxDuration": MAX_DURATION, "downloader": DOWNLOADER_VERSION, "publicMedia": True, "clipMp4": True, "maxClipDuration": MAX_CLIP_DURATION, "tiktokPublicDownload": True})
+            self.reply(200, {"ok": True, "version": SERVICE_VERSION, "maxDuration": MAX_DURATION, "downloader": DOWNLOADER_VERSION, "publicMedia": True, "tiktokPublicDownload": True})
             return
         asset = STATIC_FILES.get(route)
         if not asset:
@@ -248,7 +225,6 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(404, {"error": "Archivo no disponible."})
             return
         self.send_response(200)
-        self.cors()
         self.send_header("Content-Type", content_type)
         self.send_header("Cache-Control", "no-cache" if route in ("/", "/index.html") else "public, max-age=3600")
         self.send_header("X-Content-Type-Options", "nosniff")
@@ -260,7 +236,7 @@ class Handler(BaseHTTPRequestHandler):
             pass
 
     def do_OPTIONS(self):
-        if self.path not in ("/api/import", "/api/media", "/api/clip-mp4") or self.headers.get("Origin") not in ORIGINS:
+        if self.path not in ("/api/import", "/api/media") or self.headers.get("Origin") not in ORIGINS:
             self.reply(403, {"error": "Origen no permitido."})
             return
         self.send_response(204)
@@ -270,11 +246,8 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        if self.path not in ("/api/import", "/api/media", "/api/clip-mp4") or self.headers.get("Origin") not in ORIGINS:
+        if self.path not in ("/api/import", "/api/media") or self.headers.get("Origin") not in ORIGINS:
             self.reply(403, {"error": "Origen o ruta no permitidos."})
-            return
-        if self.path == "/api/clip-mp4":
-            self.convert_uploaded_clip()
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
@@ -343,63 +316,6 @@ class Handler(BaseHTTPRequestHandler):
             pass
         finally:
             SLOTS.release()
-
-    def convert_uploaded_clip(self):
-        try:
-            length = int(self.headers.get("Content-Length", "0"))
-            if not 0 < length <= MAX_CLIP_BYTES or self.headers.get_content_type() != "video/webm":
-                raise ValueError()
-        except ValueError:
-            self.reply(400, {"error": "Se requiere un WebM de hasta 16 MiB."})
-            return
-        if not SLOTS.acquire(blocking=False):
-            self.reply(429, {"error": "El servicio está ocupado. Reintenta en unos segundos."})
-            return
-        try:
-            with LOCK:
-                now = time.monotonic()
-                while RECENT and RECENT[0] <= now - 60:
-                    RECENT.popleft()
-                allowed = len(RECENT) < 4
-                if allowed:
-                    RECENT.append(now)
-            if not allowed:
-                self.reply(429, {"error": "Límite temporal alcanzado."})
-                return
-            with tempfile.TemporaryDirectory(prefix="clip-") as temp:
-                source = Path(temp) / "source.webm"
-                deadline = time.monotonic() + 30
-                with source.open("wb") as file:
-                    remaining = length
-                    while remaining:
-                        if time.monotonic() > deadline:
-                            raise TimeoutError()
-                        chunk = self.rfile.read1(min(65536, remaining))
-                        if not chunk:
-                            raise ImportFailure("CLIP_INCOMPLETE", "El clip recibido está incompleto.")
-                        file.write(chunk)
-                        remaining -= len(chunk)
-                output = convert_clip(source, Path(temp) / "sticker.mp4")
-                self.send_response(200)
-                self.cors()
-                self.send_header("Content-Type", "video/mp4")
-                self.send_header("Content-Disposition", "attachment")
-                self.send_header("Content-Length", str(output.stat().st_size))
-                self.end_headers()
-                with output.open("rb") as file:
-                    while chunk := file.read(65536):
-                        self.wfile.write(chunk)
-        except ImportFailure as error:
-            self.reply(422, {"error": str(error), "code": error.code})
-        except subprocess.TimeoutExpired:
-            self.reply(504, {"error": "La preparación del MP4 tardó demasiado."})
-        except (BrokenPipeError, ConnectionResetError, TimeoutError):
-            pass
-        except OSError:
-            self.reply(503, {"error": "No se pudo preparar el MP4."})
-        finally:
-            SLOTS.release()
-
 
 if __name__ == "__main__":
     ThreadingHTTPServer(("0.0.0.0", PORT), Handler).serve_forever()

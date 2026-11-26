@@ -8,7 +8,7 @@
 
   const SIDE = 512;                    // lado máximo (WhatsApp usa 512; más grande no se ve mejor y pesa 4 veces más)
   const MAX_STICKER_BYTES = 1_000_000; // el servidor de WhatsApp rechaza stickers más pesados (HTTP 413)
-  const MAX_TOTAL_BYTES = 4_000_000; // opt-in, WhatsApp acceptance not verified
+  const MAX_TOTAL_BYTES = 2_000_000; // combined trial budget, WhatsApp acceptance not verified
   const SAFE_BYTES = 900_000;
   const MAX_AUDIO_BYTES = 1_000_000;   // límite de WhatsApp Web para el audio del sticker
   function webpBudget(extended, audioBytes = 0) {

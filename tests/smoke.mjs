@@ -41,7 +41,7 @@ try {
   assert.deepEqual(rank,{sharp:256,smooth:64,limit:9,reject:1,floor:9,belowFloor:0,has9:true,capture:[20,20,12,10,9,9],image:1});
   assert.equal(await page.locator('#quality').inputValue(),'sharp');
   assert.equal(await page.locator('#size-budget').inputValue(),'extended');
-  assert.deepEqual(await page.evaluate(()=>{const x=window.WAAS._internals;return [x.webpBudget(false,123456),x.webpBudget(true,123456),x.captureFpsFor(10,'sharp',true),x.captureFpsFor(60,'sharp',true)];}),[1000000,3876544,30,9]);
+  assert.deepEqual(await page.evaluate(()=>{const x=window.WAAS._internals;return [x.webpBudget(false,123456),x.webpBudget(true,123456),x.captureFpsFor(10,'sharp',true),x.captureFpsFor(60,'sharp',true)];}),[1000000,1876544,30,9]);
   const caps=await page.evaluate(()=>window.WAAS.capabilities());
   assert.equal(caps.opus,true,'Chromium must support Opus');
   assert.equal(caps.webpEncode,'image/webp');
@@ -72,7 +72,7 @@ try {
   await visualAudit.screenshot({path:'artifacts/screenshots/mobile-editor-en.png',fullPage:true});
   await visualAudit.close();
   const sizes = await page.evaluate(async()=>Promise.all(['sticker-image','sticker-audio'].map(async id=>(await (await fetch(document.getElementById(id).src)).blob()).size)));
-  assert(sizes.every(size=>size>0)&&sizes.reduce((a,b)=>a+b,0)<=4000000);
+  assert(sizes.every(size=>size>0)&&sizes.reduce((a,b)=>a+b,0)<=2000000);
   // Export the actual converted package and execute the bookmarklet against mock WA modules.
   const [download] = await Promise.all([page.waitForEvent('download'),page.locator('#package-download').click()]);
   assert.equal(download.suggestedFilename(),'ejemplo.sonoro.json');
@@ -202,7 +202,7 @@ try {
   });
   assert.equal(longPack.info.segundosAudio,240);
   assert.equal(longPack.info.lado,512);
-  assert(Buffer.from(longPack.webp,'base64').length+Buffer.from(longPack.ogg,'base64').length<=4000000);
+  assert(Buffer.from(longPack.webp,'base64').length+Buffer.from(longPack.ogg,'base64').length<=2000000);
   await panel.locator('input[type=file]').setInputFiles({name:'long.sonoro.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(longPack))});
   await wa.waitForFunction(()=>document.querySelector('#ss-local-bridge [role=status]').textContent.includes('240 s'));
   await wa.evaluate(()=>{window.mockCalls.enabled=true;});
@@ -220,7 +220,7 @@ try {
   await enSend.click();
   await panel.getByText('WhatsApp confirmed the send.',{exact:false}).waitFor();
   assert.deepEqual(await wa.evaluate(()=>[window.mockCalls.uploads,window.mockCalls.sends]),[3,3]);
-  // A structural WebP fixture with a JUNK chunk tests large-package transport, not real WhatsApp acceptance.
+  // Legacy 4 MB packages remain readable by the bookmark; this is a structural transport test, not real WhatsApp acceptance.
   function paddedPackage(target) {
     const old=Buffer.from(pack.webp,'base64'), pad=target-old.length-8;
     assert(pad>=0&&pad%2===0);
@@ -392,7 +392,7 @@ try {
       const unique=[0,1,2].map(i=>new Set(chunks.slice(i*114,(i+1)*114).map(c=>Array.from(c.data.subarray(16)).join(','))).size);
       return {frames:chunks.length,ms:times.reduce((a,b)=>a+b,0),max:Math.max(...times),unique,bytes:out.webp.size+out.ogg.size};
     });
-    assert.equal(checked.frames,342);assert.equal(checked.ms,38000);assert(checked.max<=112);assert(checked.unique.every(n=>n>50));assert(checked.bytes<=4000000);
+    assert.equal(checked.frames,342);assert.equal(checked.ms,38000);assert(checked.max<=112);assert(checked.unique.every(n=>n>50));assert(checked.bytes<=2000000);
   }finally{await cadencePage.close();rmSync(cadenceTemp,{recursive:true,force:true});}
   const qualityPage=await browser.newPage();
   const qualityTemp=mkdtempSync(join(tmpdir(),'sticker-quality-'));
@@ -421,7 +421,7 @@ try {
     await qualityPage.locator('#export').click();
     await qualityPage.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
     const extendedSizes=await qualityPage.evaluate(async()=>Promise.all(['sticker-image','sticker-audio'].map(async id=>(await (await fetch(document.getElementById(id).src)).blob()).size)));
-    assert(extendedSizes[0]>0&&extendedSizes[1]>0&&extendedSizes[0]+extendedSizes[1]<=4000000);
+    assert(extendedSizes[0]>0&&extendedSizes[1]>0&&extendedSizes[0]+extendedSizes[1]<=2000000);
     assert(Number((await qualityPage.locator('#quality-result').textContent()).match(/(\d+) FPS/)[1])>=9);
     assert.match(await qualityPage.locator('#size-result').textContent(),/Peso total:/);
     assert.equal(await qualityPage.locator('#size-warning').isVisible(),(extendedSizes[0]>1000000||extendedSizes[1]>1000000));

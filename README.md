@@ -3,7 +3,7 @@
 ![Stickers Sonoros — identidad visual](docs/images/brand.svg)
 
 **Crea stickers con sonido para WhatsApp en cuatro pasos sencillos.**  
-Video, imagen o GIF + audio · 9+ FPS en animaciones · hasta 4 MB combinados · sin límite fijo de duración.
+Video, imagen o GIF + audio · 9+ FPS en animaciones · hasta 2 MB combinados · sin límite fijo de duración.
 
 [**Abrir la app oficial**](https://poldkent.github.io/stickers-sonoros/) · [English](README.en.md) · [Guía móvil](docs/MOBILE.md#español) · [Apoyar](SUPPORT.md)
 
@@ -35,11 +35,11 @@ Video, imagen o GIF + audio · 9+ FPS en animaciones · hasta 4 MB combinados ·
 
 | Límite | Predeterminado: Calidad ampliada | Opcional: Compatible |
 |---|---|---|
-| WebP + Ogg combinados | 4.000.000 bytes | Hasta 1 MB por componente |
+| WebP + Ogg combinados | 2.000.000 bytes | Hasta 1 MB por componente |
 | Animación | ≥9 FPS | ≥9 FPS |
 | Duración | Sin límite fijo | Sin límite fijo |
 
-La envoltura JSON pesa más por Base64. Se mantienen las protecciones de entrada local (80 MiB), memoria, códecs y tiempo/peso de las solicitudes del servidor. WhatsApp puede rechazar stickers largos o grandes; 4 MB es el presupuesto del editor, no un límite garantizado por WhatsApp.
+La envoltura JSON pesa más por Base64. Se mantienen las protecciones de entrada local (80 MiB), memoria, códecs y tiempo/peso de las solicitudes del servidor. WhatsApp puede rechazar stickers largos o grandes; 2 MB es el presupuesto experimental del editor, no un límite garantizado por WhatsApp. Los archivos nuevos se limitan a 2.000.000 bytes combinados; el marcador y el puente móvil conservan la lectura de paquetes anteriores de hasta 4 MB. Si falla el envío, usa Compatible (1 MB máximo por componente).
 
 ### Firma del creador
 

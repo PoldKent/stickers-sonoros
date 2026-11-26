@@ -7,7 +7,7 @@
     ["Selecciona nuevamente los archivos originales.","Select the original files again."],
     ["Ejemplo preparado. Pulsa Siguiente.","Example ready. Select Next."],
     ["Imagen fija","Still image"],
-    ["Crea stickers con sonido para WhatsApp en cuatro pasos: importa, edita, crea y envía. Animaciones desde 9 FPS, hasta 4 MB.","Create sound stickers for WhatsApp in four steps: import, edit, create and send. Animations at 9 FPS or more, up to 4 MB."],
+    ["Crea stickers con sonido para WhatsApp en cuatro pasos: importa, edita, crea y envía. Animaciones desde 9 FPS, hasta 2 MB.","Create sound stickers for WhatsApp in four steps: import, edit, create and send. Animations at 9 FPS or more, up to 2 MB."],
     ["Stickers Sonoros · Creador de stickers con sonido","Stickers Sonoros · Sound sticker maker"],
     ["Importa, edita, crea y envía tu sticker con sonido, una etapa a la vez.","Import, edit, create and send your sound sticker, one step at a time."],
     ["Usa un enlace individual de TikTok, Instagram Reel o YouTube Short.","Use an individual TikTok, Instagram Reel or YouTube Short link."],
@@ -32,15 +32,15 @@
     ["Inicio del audio","Audio start"],
     ["Final del audio","Audio end"],
     ["Compatible (1 MB por componente)","Compatible (1 MB per component)"],
-    ["Calidad ampliada (hasta 4 MB en total)","Extended quality (up to 4 MB total)"],
+    ["Calidad ampliada (hasta 2 MB en total)","Extended quality (up to 2 MB total)"],
     ["Guarda el archivo .sonoro.json. No lo adjuntes al chat.","Save the .sonoro.json file. Do not attach it to the chat."],
     ["El video no tiene una duración válida o es una transmisión en directo.","The video has no valid duration or is a live stream."],
     ["Crea stickers sonoros para WhatsApp desde un video, imagen o GIF.","Create sound stickers for WhatsApp from video, images or GIFs."],
     ["Elige un archivo, recorta y personaliza tu sticker con sonido.","Choose a file, trim and customize your sound sticker."],
     ["Todos los modos mantienen al menos 9 FPS en animaciones. La resolución se adapta al tamaño.","All modes maintain at least 9 FPS for animations. Resolution adapts to the size."],
-    ["Hasta 4 MB de imagen y audio. Si WhatsApp rechaza un archivo grande, prueba el modo Compatible y actualiza el favorito.","Up to 4 MB of image and audio. If WhatsApp rejects a large file, try Compatible mode and update the bookmark."],
+    ["Hasta 2 MB de imagen y audio. Si WhatsApp rechaza el sticker, prueba Compatible (máximo 1 MB por componente).","Up to 2 MB of image and audio. If WhatsApp rejects the sticker, try Compatible (maximum 1 MB per component)."],
     ["Un componente supera 1 MB. Prueba el envío en tu propio chat; si falla, usa Compatible.","One component exceeds 1 MB. Test in your own chat; if it fails, use Compatible."],
-    ["Selecciona un archivo con audio. Animaciones: mínimo 9 FPS; máximo 4 MB.","Choose a file with audio. Animations: at least 9 FPS; maximum 4 MB."],
+    ["Selecciona un archivo con audio. Animaciones: mínimo 9 FPS; máximo 2 MB.","Choose a file with audio. Animations: at least 9 FPS; maximum 2 MB."],
     ["El audio no cabe en el presupuesto de tamaño. Reduce el tramo.","Audio does not fit the size budget. Shorten the selection."],
     ["Las animaciones requieren al menos 9 FPS.","Animations require at least 9 FPS."],
     ["El tramo no cabe en el presupuesto de tamaño con al menos 9 FPS. Acórtalo o cambia el modo de calidad.","The selection does not fit the size budget at 9 FPS or more. Shorten it or change quality mode."],
@@ -319,7 +319,7 @@
   pairs.push(...[["Posición, zoom y rotación","Position, zoom and rotation"],["Rotación","Rotation"],["Girar 90° a la izquierda","Rotate 90° left"],["Girar 90° a la derecha","Rotate 90° right"],["Girar 180°","Rotate 180°"],["Ángulo de rotación","Rotation angle"]]);
   pairs.push(...[["Firma del creador (opcional)","Creator signature (optional)"],["Tu nombre o alias","Your name or nickname"],["La firma se incluye en los datos del sticker. Todos incluyen la atribución y el enlace de la app. No se añade texto sobre la imagen.","The signature is included in sticker metadata. All stickers include the app credit and link. No text is added over the image."],["Metadatos del sticker no válidos.","Invalid sticker metadata."],["No se pudo verificar la firma del sticker.","Could not verify the sticker signature."]]);
   pairs.push(["El tramo no cabe en 1 MB con al menos 9 FPS y 192 px. Acórtalo o cambia el modo de calidad.","The selection does not fit within 1 MB at 9 FPS or more and 192 px or more. Shorten it or change quality mode."]);
-  pairs.push(...[["Límite de tamaño","Size limit"],["Compatible (imagen hasta 1 MB)","Compatible (image up to 1 MB)"],["Calidad ampliada (hasta 4 MB con audio)","Extended quality (up to 4 MB including audio)"],["WhatsApp podría rechazar imágenes de más de 1 MB. Si sucede, usa Compatible. Para enviar archivos grandes, sustituye el favorito de WhatsApp por el nuevo.","WhatsApp may reject images larger than 1 MB. If that happens, use Compatible. Replace your WhatsApp bookmark to send larger files."],["Este sticker supera 1 MB de imagen. Prueba el envío en tu propio chat. Si falla, usa Compatible.","This sticker exceeds 1 MB of image data. Test in your own chat. If it fails, use Compatible."],["La animación puede reducir su calidad para respetar el tamaño elegido.","Animation quality may be reduced to fit the selected size."],]);
+  pairs.push(...[["Límite de tamaño","Size limit"],["Compatible (imagen hasta 1 MB)","Compatible (image up to 1 MB)"],["Calidad ampliada (hasta 2 MB con audio)","Extended quality (up to 2 MB including audio)"],["WhatsApp podría rechazar imágenes de más de 1 MB. Si sucede, usa Compatible. Para enviar archivos grandes, sustituye el favorito de WhatsApp por el nuevo.","WhatsApp may reject images larger than 1 MB. If that happens, use Compatible. Replace your WhatsApp bookmark to send larger files."],["Este sticker supera 1 MB de imagen. Prueba el envío en tu propio chat. Si falla, usa Compatible.","This sticker exceeds 1 MB of image data. Test in your own chat. If it fails, use Compatible."],["La animación puede reducir su calidad para respetar el tamaño elegido.","Animation quality may be reduced to fit the selected size."],]);
   const exact = new Map(pairs);
   const fragments = [
     [/^Duración: ([\d.]+) s\./, "Duration: $1 s."],

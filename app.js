@@ -962,7 +962,7 @@ async function importLink(force) {
 
 function selectionInfo() {
   const info = byId('selection-info');
-  if (!visual || !audio) { info.textContent = 'Selecciona un archivo con audio. Animaciones: mínimo 9 FPS; máximo 4 MB.'; return; }
+  if (!visual || !audio) { info.textContent = 'Selecciona un archivo con audio. Animaciones: mínimo 9 FPS; máximo 2 MB.'; return; }
   try {
     const t = mode === 'video' ? trimmed('v') : trimmed('a');
     info.textContent = 'Duración: ' + t.duration.toFixed(2) + ' s.';
@@ -1012,7 +1012,7 @@ function stickerAttribution() {
   return {packName:stickerPackName,publisher:signature ? signature+' · '+stickerAppUrl : stickerAppUrl,signature};
 }
 async function verifySticker(files) {
-  if (!files.webp?.size || !files.ogg?.size || files.webp.size + files.ogg.size > 4000000 || (byId('size-budget').value === 'compatible' && (files.webp.size > 1000000 || files.ogg.size > 1000000)) || (files.info?.tipo !== 'image' && !(files.info?.fps >= 9))) throw new Error('Los archivos superan el límite del conversor o están vacíos.');
+  if (!files.webp?.size || !files.ogg?.size || files.webp.size + files.ogg.size > 2000000 || (byId('size-budget').value === 'compatible' && (files.webp.size > 1000000 || files.ogg.size > 1000000)) || (files.info?.tipo !== 'image' && !(files.info?.fps >= 9))) throw new Error('Los archivos superan el límite del conversor o están vacíos.');
   const webp = new Uint8Array(await files.webp.arrayBuffer());
   const ogg = new Uint8Array(await files.ogg.arrayBuffer());
   const read = (b,i,n) => String.fromCharCode(...b.subarray(i,i+n));

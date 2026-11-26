@@ -104,3 +104,7 @@ Public Android/iOS sticker-pack contracts do not expose linked audio import. Add
 ### 2026.11.26.42 — Mobile handoff usability
 
 .41 browser CI and Pages succeeded. User confirmed JSON reading and preparation on phone but WhatsApp did not recognize the JSON. Added actual prepared-video preview, format warning, explicit save → open WhatsApp workflow (URL scheme launch attempt, manual fallback), and native editor guidance. No claim of direct JSON or sound sticker import. Extended browser regression to download the prepared media and verify audio/video streams with ffprobe. Native app launch and sound sticker creation remain physical-device checks.
+
+### 2026.11.26.43 — 2 MB compatibility trial / Prueba de compatibilidad de 2 MB
+
+User reported that 4 MB stickers do not work. Reduced the new-generation combined WebP + Ogg budget to 2,000,000 bytes, preserving the 9 FPS animation floor, no fixed duration cap and compatible mode (1 MB per component). Existing bookmark and mobile readers still validate legacy packages up to 4 MB; acceptance by WhatsApp is not implied. Updated ES/EN labels, diagrams, docs and conversion size assertions. Actual 2 MB WhatsApp acceptance requires a real send test; mobile JSON import remains unsupported. CI and deployment pending.

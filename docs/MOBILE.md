@@ -11,7 +11,7 @@
 3. **Crear:** elige calidad, tamaño y firma; genera el sticker y revisa el resultado.
 4. **Enviar:** guarda el archivo `.sonoro.json`, abre [la herramienta móvil](https://poldkent.github.io/stickers-sonoros/mobile.html), selecciónalo y guarda el video preparado o PNG/audio. En WhatsApp, abre tu propio chat → stickers → Crear → selecciona el medio y añade sonido si está disponible. También puedes seguir la [guía de WhatsApp Web](../README.md#enviar-a-whatsapp) para enviar el paquete original.
 
-El editor conserva los cambios al retroceder. El paquete tiene un presupuesto de hasta 4 MB de WebP + Ogg y al menos 9 FPS para animaciones, sin tope temporal fijo. El envío directo de este JSON desde la app móvil no está implementado.
+El editor conserva los cambios al retroceder. El paquete tiene un presupuesto de hasta 2 MB de WebP + Ogg y al menos 9 FPS para animaciones, sin tope temporal fijo. El envío directo de este JSON desde la app móvil no está implementado.
 
 ### Editor nativo e investigación
 
@@ -21,7 +21,7 @@ Las APIs públicas de paquetes [Android](https://github.com/WhatsApp/stickers/tr
 
 ### Pruebas de aceptación
 
-Registra dispositivo, versión, duración, bytes WebP + Ogg, FPS codificados, envío, recepción, reproducción y reenvío. Prueba primero en tu propio chat y después con un destinatario que consienta. Casos: 2, 30, 61 y 240 s y un paquete próximo a 4 MB. Anota rechazos y errores sin compartir credenciales ni QR. No se considera verificado el envío nativo hasta probarlo en equipos reales.
+Registra dispositivo, versión, duración, bytes WebP + Ogg, FPS codificados, envío, recepción, reproducción y reenvío. Prueba primero en tu propio chat y después con un destinatario que consienta. Casos: 2, 30, 61 y 240 s y un paquete próximo a 2 MB. Anota rechazos y errores sin compartir credenciales ni QR. No se considera verificado el envío nativo hasta probarlo en equipos reales.
 
 ## English
 
@@ -32,7 +32,7 @@ Registra dispositivo, versión, duración, bytes WebP + Ogg, FPS codificados, en
 3. **Create:** choose quality, size and signature; generate the sticker and inspect the result.
 4. **Send:** save the `.sonoro.json` file, open [the mobile tool](https://poldkent.github.io/stickers-sonoros/mobile.html), select it and save prepared video or PNG/audio. In WhatsApp, open your own chat → stickers → Create → select media and add sound if available. You can also use the [WhatsApp Web guide](../README.en.md#send-to-whatsapp) to send the original package.
 
-Going back preserves your edits. The package has a budget of up to 4 MB of WebP + Ogg and at least 9 FPS for animations, with no fixed time cap. Direct sending of this JSON from the mobile app is not implemented.
+Going back preserves your edits. The package has a budget of up to 2 MB of WebP + Ogg and at least 9 FPS for animations, with no fixed time cap. Direct sending of this JSON from the mobile app is not implemented.
 
 ### Native editor and research
 
@@ -42,7 +42,7 @@ Public [Android](https://github.com/WhatsApp/stickers/tree/main/Android) and [iO
 
 ### Acceptance tests
 
-Record device, version, duration, WebP + Ogg bytes, encoded FPS, sending, receiving, playback and forwarding. Test your own chat first, then a consenting recipient. Cases: 2, 30, 61 and 240 s, plus a package near 4 MB. Record rejections and errors without sharing credentials or QR codes. Native sending is not verified until tested on real devices.
+Record device, version, duration, WebP + Ogg bytes, encoded FPS, sending, receiving, playback and forwarding. Test your own chat first, then a consenting recipient. Cases: 2, 30, 61 and 240 s, plus a package near 2 MB. Record rejections and errors without sharing credentials or QR codes. Native sending is not verified until tested on real devices.
 
 ## Puente local / Local handoff
 
@@ -55,3 +55,9 @@ The handoff checks format, combined size, dimensions and SHA-256 linkage in EXIF
 Reproduce la vista previa del video, pulsa Guardar video preparado y después Abrir WhatsApp. El botón intenta abrir la aplicación mediante su esquema de URL; si no funciona, ábrela manualmente. Selecciona el archivo descargado desde Stickers → Crear, nunca desde el selector de documentos del chat. Si el editor no tiene audio, el puente no puede enviar un sticker sonoro por sí mismo. El marcador de escritorio permite enviar el paquete a tu propio chat y reutilizarlo en el teléfono, sujeto a aceptación por WhatsApp.
 
 Play the video preview, save the prepared video, then open WhatsApp. The button attempts to launch the app via its URL scheme; open it manually if unsupported. Select the downloaded media inside Stickers → Create, not the chat document picker. If the editor lacks sound, the handoff cannot send sound stickers itself. The desktop bookmark can send the package to your own chat for reuse on mobile, subject to WhatsApp acceptance.
+
+### Presupuesto experimental / Experimental budget (.43)
+
+Los paquetes nuevos usan hasta 2 MB combinados (WebP + Ogg); los lectores siguen aceptando paquetes anteriores de hasta 4 MB. Esto no habilita el envío nativo de JSON ni garantiza que WhatsApp acepte 2 MB.
+
+New packages use up to 2 MB combined (WebP + Ogg); readers still accept older packages up to 4 MB. This does not enable native JSON sending or guarantee WhatsApp acceptance at 2 MB.

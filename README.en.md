@@ -30,7 +30,7 @@ Video, image or GIF + audio · 9+ FPS for animation · up to 4 MB combined · no
 
 - The full source is selected initially; there is no fixed time limit. The preview timeline shows the current position and total duration, with start/end markers and playback from the cursor within the selection.
 - The 512 × 512 editing canvas supports exact position (0.1 px), zoom (0.01%), rotation in 90° steps, fit/fill and magnetic alignment. **Center** resets position only; guides are not exported. **Use frame + audio** creates a still sticker.
-- Video mode samples the original source using the crop/zoom/rotation settings. Animated WebP intervals are not merged into long holds. All animation profiles keep at least 9 encoded FPS; static sources and repeated original frames do not gain artificial motion.
+- All modes convert the original media and selected audio track directly using the crop/zoom/rotation settings, without recording an intermediate video. Animated WebP intervals are not merged into long holds. All animation profiles keep at least 9 encoded FPS; static sources and repeated original frames do not gain artificial motion.
 - **Maximum sharpness** favors resolution; **Balanced** and **Maximum smoothness** trade resolution for motion. Output resolution and compression adapt to the budget. If it cannot fit at 9 FPS or above, shorten the selection or use a still frame.
 
 | Limit | Default: Extended quality | Optional: Compatible |

@@ -1,7 +1,6 @@
 const byId = id => document.getElementById(id);
 const canvas = byId('canvas');
 const drawing = canvas.getContext('2d', { alpha: false });
-const output = byId('output');
 const status = byId('status');
 const modes = [...document.querySelectorAll('[data-mode]')];
 const labels = {
@@ -13,14 +12,13 @@ const maxLocalBytes = 80 * 1024 * 1024;
 let mode = 'video';
 let visual;
 let audio;
-let result;
-let resultUrl;
+let conversionRequest;
+const audioSources = new WeakMap();
 let visualRequest = 0;
 let audioRequest = 0;
 let loadingVisual = false;
 let loadingAudio = false;
 let busy = false;
-let exportJob;
 let previewSession;
 let importController;
 let importing = false;
@@ -39,8 +37,6 @@ function closeVisual(item) {
 
 let stickerJob;
 let nativePackage;
-let clipDuration;
-let directVideo;
 let wizardStep=1;
 function clearResult() {
   hideCropGuides();
@@ -49,7 +45,7 @@ function clearResult() {
   byId('size-result').textContent = '';
   byId('size-warning').hidden = true;
   nativePackage = undefined;
-  directVideo = undefined;
+  conversionRequest = undefined;
   byId('native-bridge').hidden = true;
   byId('bridge-status').textContent = '';
   byId('bookmark-status').textContent = '';
@@ -71,14 +67,8 @@ function clearResult() {
   byId('prepare-sticker').disabled = false;
   byId('sticker-state').textContent = '';
   byId('sticker-files').hidden = true;
-  output.pause();
-  output.removeAttribute('src');
-  output.removeAttribute('poster');
-  output.load();
-  output.hidden = true;
   byId('sticker-advanced').open = false;
-  if (resultUrl) URL.revokeObjectURL(resultUrl);
-  result = resultUrl = undefined;
+
 }
 
 function sync() {
@@ -94,9 +84,9 @@ function sync() {
   byId('position').hidden = !visual;
   for (const id of ['pan-x','pan-y','zoom','pan-x-value','pan-y-value','zoom-value','center-crop','rotation','rotate-left','rotate-right','rotate-half']) byId(id).disabled = busy || importing || !!stickerJob || !visual;
   if (!visual) hideCropGuides();
-  byId('scrub-row').hidden = !visual || visual.kind === 'image' || (wizardStep!==2 && !!result);
-  byId('scrub').disabled = busy || importing || loadingVisual || loadingAudio || !!stickerJob || (wizardStep!==2 && !!result);
-  byId('source-preview').hidden = !visual || !audio || loadingVisual || loadingAudio || busy || importing || (wizardStep!==2 && !!result);
+  byId('scrub-row').hidden = !visual || visual.kind === 'image' || (wizardStep!==2 && !!conversionRequest);
+  byId('scrub').disabled = busy || importing || loadingVisual || loadingAudio || !!stickerJob || (wizardStep!==2 && !!conversionRequest);
+  byId('source-preview').hidden = !visual || !audio || loadingVisual || loadingAudio || busy || importing || (wizardStep!==2 && !!conversionRequest);
   byId('play-source').disabled = busy || importing;
   byId('use-frame').hidden = !visual || visual.kind === 'image' || !audio;
   byId('use-frame').disabled = busy || importing || loadingVisual || loadingAudio;
@@ -119,7 +109,7 @@ function wizardAvailable(step){
   if(step===1)return true;
   if(!visual || !audio || loadingVisual || loadingAudio)return false;
   if(step===2)return true;
-  if(step===3)return !byId('export').disabled || !!result;
+  if(step===3)return !byId('export').disabled || !!conversionRequest;
   return !!nativePackage;
 }
 function syncWizard(){
@@ -143,7 +133,7 @@ function syncWizard(){
 }
 function goWizard(step){
   if(step===wizardStep || busy||importing||loadingVisual||loadingAudio||stickerJob||!wizardAvailable(step)||step>wizardStep+1)return;
-  stopSourcePreview();output.pause();byId('sticker-audio').pause();
+  stopSourcePreview();byId('sticker-audio').pause();
   wizardStep=step;sync();
   if(step===2&&visual)previewFrame(byId('scrub').valueAsNumber);
   const target=step===4?byId('send-title'):byId('editor');
@@ -274,6 +264,7 @@ async function readAudio(file) {
   try {
     const buffer = await context.decodeAudioData(await file.arrayBuffer());
     if (buffer.duration < .01) throw new Error();
+    audioSources.set(buffer,file);
     return buffer;
   } catch {
     throw new Error('No pude leer una pista de audio compatible en este archivo.');
@@ -497,151 +488,31 @@ function trimmed(prefix) {
   return { start, duration: end - start };
 }
 
-function record(stream) {
-  const types = ['video/mp4;codecs=avc1.42001E,mp4a.40.2', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'];
-  const mimeType = types.find(type => MediaRecorder.isTypeSupported(type));
-  const options = { videoBitsPerSecond: 4000000, audioBitsPerSecond: 96000 };
-  const recorder = new MediaRecorder(stream, mimeType ? { ...options, mimeType } : options);
-  const buffered = [];
-  const blob = new Promise((resolve, reject) => {
-    recorder.addEventListener('dataavailable', event => {
-      if (event.data.size) buffered.push(event.data);
-    });
-    recorder.addEventListener('stop', () => resolve(new Blob(buffered, { type: recorder.mimeType || buffered[0]?.type })), { once: true });
-    recorder.addEventListener('error', event => reject(event.error || new Error('Falló la codificación.')), { once: true });
-  });
-  blob.catch(() => {});
-  return { recorder, blob };
+// Build a single conversion request from the original media and editor settings.
+function conversionSettings() {
+  const visualTrim=visual.kind==='image'?null:trimmed('v');
+  const soundTrim=mode==='video'?visualTrim:trimmed('a');
+  const file=audioSources.get(audio);
+  if(!file || !visual.file)throw new Error('Selecciona nuevamente los archivos originales.');
+  return {
+    visual:{kind:visual.kind,file:visual.file,start:visualTrim?.start||0,dur:visualTrim?.duration||soundTrim.duration},
+    audio:{file,start:soundTrim.start,dur:soundTrim.duration},
+    mode:{fit:byId('fit').value,rotation:Number(byId('rotation').value),zoom:Number(byId('zoom').value),x:Number(byId('pan-x').value),y:Number(byId('pan-y').value)},
+    fit:mode==='video'?'independiente':mode==='mix'&&byId('motion').value==='loop'?'repetir':'congelar'
+  };
 }
-
-async function render(context, videoTrim, soundTrim, signal) {
-  const item = visual;
-  const video = item.kind === 'video' ? item.media : null;
-  const sound = context.createBufferSource();
-  sound.buffer = audio;
-  const destination = context.createMediaStreamDestination();
-  sound.connect(destination);
-  const stream = canvas.captureStream(30);
-  for (const track of destination.stream.getAudioTracks()) stream.addTrack(track);
-  let encoding;
-  let interval;
-  let failure;
-  let updating = false;
-  let watchdog;
-  let pendingUpdate;
-  let abortRender;
-  const interrupted = new Promise((_, reject) => { abortRender = () => reject(new DOMException('Generación cancelada','AbortError')); });
-  interrupted.catch(() => {});
-  signal.addEventListener('abort', abortRender, {once:true});
-  const loop = mode === 'mix' && byId('motion').value === 'loop';
-  const end = videoTrim && videoTrim.start + videoTrim.duration;
-  try {
-    if (video) await seek(video, videoTrim.start);
-    paint(item.kind === 'gif' ? await gifAt(item, videoTrim.start) : item.media);
-    encoding = record(stream);
-    if (signal.aborted) throw new DOMException('Generación cancelada','AbortError');
-    if (video) await video.play();
-    if (signal.aborted) throw new DOMException('Generación cancelada','AbortError');
-    encoding.recorder.start();
-    const started = context.currentTime;
-    const ended = new Promise(resolve => sound.addEventListener('ended', resolve, { once: true }));
-    sound.start(started, soundTrim.start, soundTrim.duration);
-    interval = setInterval(() => {
-      if (updating || failure) return;
-      updating = true;
-      pendingUpdate = (async () => { try {
-        const elapsed = context.currentTime - started;
-        byId('progress').value = Math.min(1, elapsed / soundTrim.duration);
-        if (video) {
-          if ((video.currentTime >= end || video.ended) && !video.paused) video.pause();
-          if ((video.currentTime >= end || video.ended) && loop) {
-            await seek(video, videoTrim.start);
-            await video.play();
-          }
-          paint(video);
-        } else if (item.kind === 'gif') {
-          const time = loop ? elapsed % videoTrim.duration : Math.min(elapsed, videoTrim.duration - .001);
-          paint(await gifAt(item, videoTrim.start + time));
-        } else {
-          paint(item.media);
-        }
-      } catch (error) {
-        failure = error;
-        try { sound.stop(); } catch {}
-      } finally {
-        updating = false;
-      } })();
-    }, 33);
-    const timeout = new Promise((_, reject) => { watchdog = setTimeout(() => reject(new Error('La generación tardó demasiado. Mantén la pestaña visible y vuelve a intentar.')), (soundTrim.duration + 15) * 1000); });
-    await Promise.race([ended, encoding.blob, interrupted, timeout]);
-    clearInterval(interval);
-    await pendingUpdate;
-    if (encoding.recorder.state !== 'inactive') encoding.recorder.stop();
-    const blob = await encoding.blob;
-    if (failure) throw failure;
-    if (!blob.size) throw new Error('El navegador devolvió un video vacío.');
-    return blob;
-  } finally {
-    clearInterval(interval);
-    clearTimeout(watchdog);
-    signal.removeEventListener('abort', abortRender);
-    try { sound.stop(); } catch {}
-    await pendingUpdate;
-    video?.pause();
-    if (encoding && encoding.recorder.state !== 'inactive') encoding.recorder.stop();
-    for (const track of stream.getTracks()) track.stop();
-  }
-}
-
-byId('project').addEventListener('submit', async event => {
+byId('project').addEventListener('submit',async event=>{
   event.preventDefault();
-  if (wizardStep!==3 || busy || importing || !visual || !audio) return;
-  let context;
-  try {
-    if (!window.MediaRecorder || !canvas.captureStream || !window.AudioContext) throw new Error('Este navegador no permite exportar el clip. Prueba con Chrome o Edge actualizado.');
-    const videoTrim = visual.kind === 'image' ? null : trimmed('v');
-    const soundTrim = mode === 'video' ? videoTrim : trimmed('a');
-
-    busy = true;
+  if(wizardStep!==3||busy||importing||stickerJob||!visual||!audio)return;
+  try{
+    const request=conversionSettings();
     clearResult();
-    exportJob = new AbortController();
-    byId('cancel-export').hidden = false;
-    for (const field of document.querySelectorAll('input, select, .modes button')) field.disabled = true;
-    sync();
-    const progress = byId('progress');
-    progress.value = 0;
-    progress.hidden = false;
-    status.textContent = 'Creando el clip. Mantén esta pestaña abierta…';
-    context = new AudioContext();
-    await context.resume();
-    const blob = await render(context, videoTrim, soundTrim, exportJob.signal);
-    if (exportJob.signal.aborted) throw new DOMException('Generación cancelada','AbortError');
-    const type = blob.type.split(';')[0];
-    const extension = type === 'video/mp4' ? 'mp4' : 'webm';
-    result = new File([blob], 'sticker-sonoro.' + extension, { type });
-    clipDuration = soundTrim.duration;
-    // Final video is sampled from the original file, not the real-time preview recording.
-    if(mode==='video' && visual.file){
-      directVideo={visual:{kind:'video',file:visual.file,start:videoTrim.start,dur:videoTrim.duration},audio:{file:visual.file,start:soundTrim.start,dur:soundTrim.duration},mode:{fit:byId('fit').value,rotation:Number(byId('rotation').value),zoom:Number(byId('zoom').value),x:Number(byId('pan-x').value),y:Number(byId('pan-y').value)},fit:'independiente'};
-    }
-    byId('components').hidden = false;
-    resultUrl = URL.createObjectURL(result);
-    output.src = resultUrl;
-    output.hidden = false;
-  } catch (error) {
-    status.textContent = error.name === 'AbortError' ? 'Generación cancelada.' : error.message || 'No pude crear el clip.';
-  } finally {
-    if (context) await context.close().catch(() => {});
-    exportJob = undefined;
-    byId('cancel-export').hidden = true;
-    busy = false;
-    byId('progress').hidden = true;
-    for (const field of document.querySelectorAll('input, select, .modes button')) field.disabled = false;
-    sync();
-  }
-  if (result) { status.textContent = 'Preparando tu sticker con sonido…'; await prepareSticker(); }
+    conversionRequest=request;
+    byId('components').hidden=false;
+    status.textContent='';
+    await prepareSticker();
+  }catch(error){status.textContent=error.message||'No se pudo generar el sticker.';}
 });
-byId('cancel-export').onclick = () => exportJob?.abort();
 
 sync();
 
@@ -668,7 +539,7 @@ function snapCrop(id,raw,magnetic) {
 }
 function editCrop() {
   if(!cropAvailable())return;
-  if(result || previewSession || nativePackage)clearResult();
+  if(conversionRequest || previewSession || nativePackage)clearResult();
   paint(visual.frame || visual.media);
   cropReadouts();
   showCropGuides();
@@ -1170,11 +1041,13 @@ async function verifySticker(files) {
   return {...files.info,...expected,appUrl:stickerAppUrl};
 }
 async function prepareSticker() {
-  if (!result || stickerJob) return;
-  const source = result, duration = clipDuration;
+  if (!conversionRequest || stickerJob) return;
+  const request = conversionRequest;
   const button = byId('prepare-sticker'), state = byId('sticker-state'), progress = byId('sticker-progress');
   const controller = new AbortController();
   stickerJob = controller;
+  busy=true;
+  for(const field of document.querySelectorAll('input,select,.modes button'))field.disabled=true;
   sync();
   button.hidden = true;
   button.disabled = true;
@@ -1187,44 +1060,46 @@ async function prepareSticker() {
     if (caps.opus !== true || caps.webpEncode !== 'image/webp') throw new Error('Este navegador no puede crear el sticker con sonido. Prueba Chrome o Edge actualizado.');
     if (controller.signal.aborted) return;
     const files = await window.WAAS.convert({
-      file: source, duration, ...directVideo, profile: byId('quality').value, extended: byId('size-budget').value === 'extended', ...stickerAttribution(), signal: controller.signal,
+      ...request, profile: byId('quality').value, extended: byId('size-budget').value === 'extended', ...stickerAttribution(), signal: controller.signal,
       onProgress(message, fraction) { if (!controller.signal.aborted) { state.textContent = message; if (Number.isFinite(fraction)) progress.value = Math.max(0, Math.min(1, fraction)); } }
     });
     const info = await verifySticker(files);
-    if (controller.signal.aborted || result !== source) return;
+    if (controller.signal.aborted || conversionRequest !== request) return;
     const webpUrl = URL.createObjectURL(files.webp), oggUrl = URL.createObjectURL(files.ogg);
-    output.poster = webpUrl;
     byId('sticker-image').src = webpUrl;
     byId('sticker-audio').src = oggUrl;
-    byId('sticker-info').textContent = (info.lado || '?') + ' px · ' + (info.fps || 1) + ' FPS · ' + Math.round(files.webp.size/1024) + ' KB + ' + Math.round(files.ogg.size/1024) + ' KB de audio';
+    byId('sticker-info').textContent = (info.lado || '?') + ' px · ' + (info.fps ? info.fps + ' FPS' : 'Imagen fija') + ' · ' + Math.round(files.webp.size/1024) + ' KB + ' + Math.round(files.ogg.size/1024) + ' KB de audio';
     nativePackage = {webp:files.webp,ogg:files.ogg,info};
     byId('attribution-result').textContent=info.packName+' · '+info.publisher;
-    byId('quality-result').textContent = 'Calidad final: ' + info.lado + ' × ' + info.lado + ' px · ' + (info.fps || 1) + ' FPS' + (info.lado < 256 ? ' · Resolución reducida. Para mejorar la nitidez, elige un tramo más corto.' : '');
+    byId('quality-result').textContent = 'Calidad final: ' + info.lado + ' × ' + info.lado + ' px · ' + (info.fps ? info.fps + ' FPS' : 'Imagen fija') + (info.lado < 256 ? ' · Resolución reducida. Para mejorar la nitidez, elige un tramo más corto.' : '');
     byId('quality-result').hidden = false;
     byId('size-result').textContent = 'Peso total: '+((files.webp.size+files.ogg.size)/1000000).toFixed(2)+' MB';
     byId('size-warning').hidden = files.webp.size <= 1000000 && files.ogg.size <= 1000000;
     byId('native-bridge').hidden = false;
     byId('sticker-files').hidden = false;
     state.textContent = 'Tu sticker está listo para enviar.';
-    status.textContent = 'Sticker listo. Sigue los pasos para enviarlo a WhatsApp.';
+    status.textContent = '';
+    byId('sticker-advanced').open=true;
   } catch (error) {
     if (stickerJob === controller) {
       state.textContent = controller.signal.aborted ? 'Conversión cancelada. Puedes reintentar.' : (error.message || 'No se pudo generar el sticker.') + ' Puedes reintentar o elegir un tramo más corto.';
-      status.textContent = controller.signal.aborted ? 'Conversión cancelada. Puedes reintentar.' : 'No se pudo preparar el sticker. Revisa el aviso junto a la vista previa.';
+      status.textContent = '';
       button.hidden = false;
     }
   } finally {
     if (stickerJob === controller) {
       stickerJob = undefined;
+      busy=false;
+      for(const field of document.querySelectorAll('input,select,.modes button'))field.disabled=false;
       sync();
       progress.hidden = true;
       byId('cancel-sticker').hidden = true;
       button.disabled = false;
-      if (controller.signal.aborted) { button.hidden = false; state.textContent = 'Conversión cancelada. Puedes reintentar.'; status.textContent = 'Conversión cancelada. Puedes reintentar.'; }
+      if (controller.signal.aborted) { button.hidden = false; state.textContent = 'Conversión cancelada. Puedes reintentar.'; status.textContent = ''; }
     }
   }
 }
-byId('signature').addEventListener('input',()=>{ if(result || nativePackage) {clearResult();sync();if(visual)paint(visual.frame || visual.media);} });
+byId('signature').addEventListener('input',()=>{ if(conversionRequest || nativePackage) {clearResult();sync();if(visual)paint(visual.frame || visual.media);} });
 for(const id of ['quality','size-budget']) byId(id).addEventListener('change', () => { clearResult(); sync(); if (visual) paint(visual.frame || visual.media); });
 byId('prepare-sticker').onclick = prepareSticker;
 byId('cancel-sticker').onclick = () => stickerJob?.abort();
@@ -1251,7 +1126,7 @@ byId('demo').onclick = async () => {
   const selected = chooseVisual(new File([svg],'ejemplo.svg',{type:'image/svg+xml'}));
   const track = chooseAudio(demoAudio());
   await Promise.all([selected,track]);
-  if (mode==='image' && visual && audio) status.textContent='Ejemplo preparado. Pulsa Crear sticker sonoro.';
+  if (mode==='image' && visual && audio) status.textContent='Ejemplo preparado. Pulsa Siguiente.';
 };
 
 function stopSourcePreview() {

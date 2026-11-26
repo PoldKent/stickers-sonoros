@@ -30,7 +30,7 @@ Video, imagen o GIF + audio · 9+ FPS en animaciones · hasta 4 MB combinados ·
 
 - Se selecciona el archivo completo inicialmente, sin límite temporal fijo. La línea bajo la vista previa muestra posición y duración total, con marcadores de inicio/final y reproducción desde el cursor dentro del tramo.
 - El lienzo de 512 × 512 permite posición exacta (0,1 px), zoom (0,01 %), rotación en pasos de 90°, ajustar/rellenar y alineación magnética. **Centrar** restablece solo la posición; las guías no se exportan. **Usar fotograma + audio** crea un sticker fijo.
-- El modo Video muestrea el original con el encuadre, zoom y rotación elegidos. Los intervalos del WebP animado no se fusionan en pausas largas. Todos los perfiles mantienen al menos 9 FPS codificados; las fuentes estáticas o cuadros repetidos del original no ganan movimiento artificial.
+- Todos los modos convierten directamente el archivo original y la pista de audio seleccionada con el encuadre, zoom y rotación elegidos, sin grabar un video intermedio. Los intervalos del WebP animado no se fusionan en pausas largas. Todos los perfiles mantienen al menos 9 FPS codificados; las fuentes estáticas o cuadros repetidos del original no ganan movimiento artificial.
 - **Máxima nitidez** prioriza resolución; **Equilibrado** y **Máxima fluidez** ofrecen otras combinaciones. La resolución de salida y compresión se adaptan al presupuesto. Si no cabe con al menos 9 FPS, reduce el tramo o usa un fotograma fijo.
 
 | Límite | Predeterminado: Calidad ampliada | Opcional: Compatible |

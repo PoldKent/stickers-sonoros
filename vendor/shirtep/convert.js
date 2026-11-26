@@ -323,7 +323,7 @@
   }
 
   // Captura un GIF a fps fijo durante dur segundos (si dur supera al GIF, este se repite).
-  async function captureAnimation(file, dur, fps, side, mode, onProgress, signal) {
+  async function captureAnimation(file, dur, fps, side, mode, onProgress, signal, start=0) {
     const t0 = performance.now();
     const info = await probeAnimation(file);
     const ends = [];
@@ -333,7 +333,7 @@
     const n = Math.max(1, Math.round(dur * fps));
     const want = [];
     for (let i = 0; i < n; i++) {
-      const t = (((i + 0.5) * 1000) / fps) % total;
+      const t = Math.min(total-.001, (start*1000)+((i+.5)*1000)/fps);
       let k = 0;
       while (k < ends.length - 1 && ends[k] <= t) k++;
       want.push(k);
@@ -549,7 +549,7 @@
         checkAbort(signal);
         const f = frames[p[k].idx];
         const prev = out[out.length - 1];
-        // Cuadro repetido (mismo criterio que la estimación): se alarga el anterior y no se codifica.
+        // Only still-image tracks may consolidate repeated intervals.
         if (!fixedCadence && prev && prevF && (f === prevF || sameBytes(f.fp, prevF.fp))) { prev.durationMs += p[k].durationMs; continue; }
         let enc = cache.get(f);
         if (!enc) { enc = await encodeStaticFrame(f.bmp, q, canvas, ctx); cache.set(f, enc); }
@@ -858,12 +858,12 @@
     });
     const capProg = (t, f) => prog(t, f * 0.8);
     const captured = visual.kind === "gif"
-      ? await captureAnimation(visual.file, capDur, captureFps, captureSide, mode, capProg, signal)
+      ? await captureAnimation(visual.file, capDur, captureFps, captureSide, mode, capProg, signal, visual.start||0)
       : await captureFrames(visual.file, visual.start || 0, capDur, captureFps, captureSide, mode, capProg, signal);
     const frames = fitTimeline(captured, capDur, dur, captureFps, fit);
     const sides = SIDES.filter((x) => x <= captureSide);
     const fpsList = FPS_LIST.filter((x) => x <= captureFps);
-    // Cuadros distintos para cada fps (los repetidos se fusionan y casi no pesan).
+    // Count distinct source frames for diagnostics; every encoded animation interval is retained.
     const distinct = {};
     for (const f of fpsList) {
       const p = plan(frames.length, dur, f, captureFps);

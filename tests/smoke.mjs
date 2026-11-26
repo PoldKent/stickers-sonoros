@@ -27,8 +27,10 @@ try {
   assert.equal(await page.locator('#position').isVisible(),false);
   await page.locator('#signature').fill('Mi firma 🎵');
   await page.locator('#export').click();
-  await page.locator('#output').waitFor({state:'visible',timeout:40000});
-  await page.waitForFunction(()=>document.querySelector('#output').readyState>=2,{},{timeout:20000});
+  await page.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
+  assert.equal(await page.locator('#output').count(),0);
+  assert.equal(await page.locator('#cancel-export').count(),0);
+  assert.equal(await page.locator('#sticker-advanced').getAttribute('open'),'');
   const rank=await page.evaluate(()=>{
     const {rankedCells,captureFpsFor}=window.WAAS._internals;
     const cells=[{side:64,fps:20,estado:'ok'},{side:384,fps:5,estado:'baja'},{side:256,fps:10,estado:'ok'}];

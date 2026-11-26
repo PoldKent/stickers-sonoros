@@ -1,16 +1,15 @@
 /* Spanish/English presentation layer; does not change media or sending logic. */
 (() => {
   const pairs = [
+    ["Selecciona nuevamente los archivos originales.","Select the original files again."],
+    ["Ejemplo preparado. Pulsa Siguiente.","Example ready. Select Next."],
+    ["Imagen fija","Still image"],
     ["Crea stickers con sonido para WhatsApp en cuatro pasos: importa, edita, crea y envía. Animaciones desde 9 FPS, hasta 4 MB.","Create sound stickers for WhatsApp in four steps: import, edit, create and send. Animations at 9 FPS or more, up to 4 MB."],
     ["Stickers Sonoros · Creador de stickers con sonido","Stickers Sonoros · Sound sticker maker"],
     ["Importa, edita, crea y envía tu sticker con sonido, una etapa a la vez.","Import, edit, create and send your sound sticker, one step at a time."],
-    ["Puedes reintentar o elegir un tramo más corto.","You can retry or choose a shorter selection."],
     ["Usa un enlace individual de TikTok, Instagram Reel o YouTube Short.","Use an individual TikTok, Instagram Reel or YouTube Short link."],
     ["Solicitud no válida.","Invalid request."],
-    ["El navegador no puede leer imágenes","The browser cannot read images"],
-    ["El navegador no pudo leer la imagen","The browser could not read the image"],
     ["El audio generado no se puede reproducir","The generated audio cannot be played"],
-    ["Alternativa de descarga pública:","Public download fallback:"],
     ["Importar contenido","Import content"],
     ["Editar sticker","Edit sticker"],
     ["Crear sticker","Create sticker"],
@@ -38,7 +37,6 @@
     ["Todos los modos mantienen al menos 9 FPS en animaciones. La resolución se adapta al tamaño.","All modes maintain at least 9 FPS for animations. Resolution adapts to the size."],
     ["Hasta 4 MB de imagen y audio. Si WhatsApp rechaza un archivo grande, prueba el modo Compatible y actualiza el favorito.","Up to 4 MB of image and audio. If WhatsApp rejects a large file, try Compatible mode and update the bookmark."],
     ["Un componente supera 1 MB. Prueba el envío en tu propio chat; si falla, usa Compatible.","One component exceeds 1 MB. Test in your own chat; if it fails, use Compatible."],
-    ["Esta es la calidad real del sticker. Los clips largos pueden necesitar una resolución menor.","This is the actual sticker quality. Long clips may need lower resolution."],
     ["Selecciona un archivo con audio. Animaciones: mínimo 9 FPS; máximo 4 MB.","Choose a file with audio. Animations: at least 9 FPS; maximum 4 MB."],
     ["El audio no cabe en el presupuesto de tamaño. Reduce el tramo.","Audio does not fit the size budget. Shorten the selection."],
     ["Las animaciones requieren al menos 9 FPS.","Animations require at least 9 FPS."],
@@ -97,7 +95,6 @@
     ["También puedes arrastrar la imagen en la vista previa.","You can also drag the image in the preview."],
     ["Probar un ejemplo","Try an example"],
     ["Crear sticker sonoro","Create sound sticker"],
-    ["Cancelar generación","Cancel generation"],
     ["Vista previa","Preview"],
     ["Encuadre del clip","Clip framing"],
     ["Pega un enlace o elige un archivo","Paste a link or choose a file"],
@@ -113,7 +110,6 @@
     ["Enviar sticker sonoro","Send sound sticker"],
     ["Copiar dirección del marcador","Copy bookmark address"],
     ["Abrir WhatsApp Web","Open WhatsApp Web"],
-    ["Edición y conversión locales. La creación del mensaje de sticker sonoro se completa en WhatsApp si la cuenta es compatible.","Editing and conversion are local. Sound sticker messages are completed in WhatsApp when the account supports them."],
     ["Conversor de","Converter by"],
     ["Stickers con sonido, de Shirtep","Shirtep's sound stickers"],
     ["Licencia de uso no comercial","Noncommercial license"],
@@ -127,11 +123,7 @@
     ["Leyendo archivo…","Reading file…"],
     ["Leyendo la pista de audio…","Reading audio track…"],
     ["Selecciona un tramo válido dentro de la duración del archivo.","Select a valid range within the file duration."],
-    ["El navegador devolvió un video vacío.","The browser returned an empty video."],
-    ["Este navegador no permite exportar el clip. Prueba con Chrome o Edge actualizado.","This browser cannot export the clip. Try an up-to-date Chrome or Edge browser."],
-    ["Creando el clip. Mantén esta pestaña abierta…","Creating clip. Keep this tab open…"],
     ["Generación cancelada.","Creation canceled."],
-    ["No pude crear el clip.","Could not create the clip."],
     ["Importación cancelada.","Import canceled."],
     ["Introduce una URL HTTPS válida.","Enter a valid HTTPS URL."],
     ["El archivo supera el límite permitido.","The file exceeds the allowed size."],
@@ -184,7 +176,6 @@
     ["Comprobando compatibilidad del navegador…","Checking browser compatibility…"],
     ["No se cargó el conversor. Recarga la página.","The converter did not load. Reload the page."],
     ["No se pudo generar el sticker.","Could not create the sticker."],
-    ["Ejemplo preparado. Pulsa Crear sticker sonoro.","Example ready. Click Create sound sticker."],
     ["Pega un enlace para detectar video, imagen o audio.","Paste a link to find video, image or audio."],
     ["Importa un archivo de video mediante un enlace directo. YouTube, TikTok e Instagram requieren el servidor de descarga, todavía sin conectar.","Import a video from a direct link. YouTube, TikTok and Instagram require the download server, which is not connected yet."],
     ["Fotograma seleccionado con el audio original. Puedes ajustar el tramo sonoro.","Frame selected with original audio. Adjust the sound selection."],
@@ -199,8 +190,6 @@
     ["El servidor no respondió a tiempo.","The server did not respond in time."],
     ["El navegador no pudo leer el video.","The browser could not read the video."],
     ["El video tardó demasiado en abrirse.","The video took too long to open."],
-    ["Falló la codificación.","Encoding failed."],
-    ["La generación tardó demasiado. Mantén la pestaña visible y vuelve a intentar.","Creation timed out. Keep the tab visible and try again."],
     ["Tiempo agotado cargando el video","Timed out loading video"],
     ["El video no tiene imagen (¿es solo audio?)","The video has no image (audio only?)"],
     ["Este navegador no puede leer GIF animados (falta ImageDecoder). Usa Chrome o Edge actualizados.","This browser cannot read animated GIFs. Use updated Chrome or Edge."],
@@ -354,7 +343,7 @@
     [/^No se pudo leer el audio\. ¿El archivo tiene sonido\? \((.*)\)$/,"Could not read audio. Does the file contain sound? ($1)"],
     [/^Con (\d+) s el audio no cabe en 1 MB \(límite de WhatsApp\)\. Máximo unos (\d+) minutos\.$/,"At $1 s the audio exceeds 1 MB (WhatsApp limit). Maximum about $2 minutes."],
     [/^Calidad final: /,"Final quality: "], [/^Peso total: /,"Total size: "],
-    [/ KB de audio$/," KB audio"],[/ · Versión /," · Version "], [/^Versión /,"Version "]
+    [/Imagen fija/g,"Still image"], [/ KB de audio$/," KB audio"],[/ · Versión /," · Version "], [/^Versión /,"Version "]
   ];
   const dynamic = new Set(["link-status","status","selection-info","sticker-state","bridge-status","bookmark-status","service-status","sticker-info","quality-result","size-result","play-source"]);
   const longPhrases = pairs.filter(([a,b]) => a!==b && a.length>=25).sort((a,b)=>b[0].length-a[0].length);

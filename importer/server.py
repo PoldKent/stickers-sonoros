@@ -29,6 +29,7 @@ STATIC_FILES = {
     "/index.html": ("index.html", "text/html; charset=utf-8"),
     "/i18n.js": ("i18n.js", "text/javascript; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
+    "/assets/logo.svg": ("assets/logo.svg", "image/svg+xml"),
     "/style.css": ("style.css", "text/css; charset=utf-8"),
     "/vendor/shirtep/local-send.js": ("vendor/shirtep/local-send.js", "text/javascript; charset=utf-8"),
     "/vendor/shirtep/convert.js": ("vendor/shirtep/convert.js", "text/javascript; charset=utf-8"),
@@ -39,7 +40,7 @@ MAX_DURATION = 600
 # Sort by the short edge; vertical videos must not be filtered by height.
 FORMAT_SELECTOR = "bv*+ba/b"
 FORMAT_SORT = "res:480,vcodec:h264,acodec:aac"
-SERVICE_VERSION = '2026.11.26.20'
+SERVICE_VERSION = '2026.11.26.21'
 MAX_CLIP_DURATION = 60
 MAX_CLIP_BYTES = 16 * 1024 * 1024
 try:
@@ -249,6 +250,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.cors()
         self.send_header("Content-Type", content_type)
+        self.send_header("Cache-Control", "no-cache" if route in ("/", "/index.html") else "public, max-age=3600")
+        self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         try:

@@ -20,6 +20,8 @@ let audioRequest = 0;
 let loadingVisual = false;
 let loadingAudio = false;
 let busy = false;
+let importController;
+let importing = false;
 
 function closeVisual(item) {
   if (!item) return;
@@ -57,13 +59,14 @@ function clearResult() {
 }
 
 function sync() {
-  byId('export').disabled = busy || loadingVisual || loadingAudio || !visual || !audio;
+  byId('export').disabled = busy || importing || loadingVisual || loadingAudio || !visual || !audio;
   byId('sound-row').hidden = mode === 'video';
   byId('visual-trim').hidden = !visual || visual.kind === 'image';
   byId('audio-trim').hidden = mode === 'video' || !audio;
   byId('motion-row').hidden = mode !== 'mix';
   byId('empty').hidden = !!visual;
   byId('position').hidden = !visual;
+  byId('scrub-row').hidden = !visual || visual.kind === 'image';
   canvas.classList.toggle('ready', !!visual);
 }
 
@@ -86,6 +89,7 @@ function range(prefix, duration) {
   byId(prefix + 's').value = 0;
   byId(prefix + 'e').max = max;
   byId(prefix + 'e').value = Math.min(limit, max);
+  if (prefix === 'v') { byId('scrub').max = max; byId('scrub').value = 0; byId('scrub-time').textContent = '0.00 s'; }
 }
 
 function loadVideo(video, url) {
@@ -180,8 +184,10 @@ async function chooseVisual(file) {
       range('v', Math.min(item.duration, audio.duration));
     }
     status.textContent = '';
+    return true;
   } catch (error) {
     if (request === visualRequest) status.textContent = error.message;
+    return false;
   } finally {
     if (item && item !== visual) closeVisual(item);
     if (request === visualRequest) {
@@ -273,10 +279,10 @@ async function gifAt(item, time) {
   return image;
 }
 
-async function previewFrame() {
+async function previewFrame(at) {
   if (!visual || busy) return;
   const item = visual;
-  const time = Math.max(0, Math.min(item.duration || 0, byId('vs').valueAsNumber || 0));
+  const time = Math.max(0, Math.min(item.duration || 0, typeof at === 'number' ? at : (byId('vs').valueAsNumber || 0)));
   try {
     if (item.kind === 'video') await seek(item.media, time);
     const media = item.kind === 'gif' ? await gifAt(item, time) : item.media;
@@ -285,8 +291,12 @@ async function previewFrame() {
     if (visual === item && !busy) status.textContent = error.message;
   }
 }
-byId('fit').addEventListener('change', previewFrame);
-byId('vs').addEventListener('change', previewFrame);
+byId('fit').addEventListener('change', () => previewFrame(byId('scrub').valueAsNumber));
+byId('vs').addEventListener('change', () => { clearResult(); byId('scrub').value = byId('vs').value; updateScrub(); });
+for (const id of ['ve','as','ae','motion','fit']) byId(id).addEventListener('change', clearResult);
+function updateScrub() { byId('scrub-time').textContent = Number(byId('scrub').value).toFixed(2) + ' s'; previewFrame(byId('scrub').valueAsNumber); }
+byId('scrub').addEventListener('change', updateScrub);
+byId('scrub').addEventListener('input', () => { byId('scrub-time').textContent = Number(byId('scrub').value).toFixed(2) + ' s'; });
 
 function trimmed(prefix) {
   const start = byId(prefix + 's').valueAsNumber;
@@ -379,7 +389,7 @@ async function render(context, videoTrim, soundTrim) {
 
 byId('project').addEventListener('submit', async event => {
   event.preventDefault();
-  if (busy || !visual || !audio) return;
+  if (busy || importing || !visual || !audio) return;
   let context;
   try {
     if (!window.MediaRecorder || !canvas.captureStream || !window.AudioContext) throw new Error('Este navegador no permite exportar el clip. Prueba con Chrome o Edge actualizado.');
@@ -445,6 +455,7 @@ let drag;
 canvas.addEventListener('pointerdown', event => {
   if (!visual || busy) return;
   canvas.setPointerCapture(event.pointerId);
+  clearResult();
   drag = [event.clientX, event.clientY, ...axes.map(id => +byId(id).value)];
 });
 canvas.addEventListener('pointermove', event => {
@@ -455,75 +466,102 @@ canvas.addEventListener('pointermove', event => {
 });
 canvas.addEventListener('lostpointercapture', () => { drag = undefined; });
 const linkStatus = byId('link-status');
-let capturing;
+const endpointField = byId('import-endpoint');
+const maxImportBytes = 80 * 1024 * 1024;
+const socialHosts = /^(?:(?:www|m|vm|vt)\.tiktok\.com|tiktok\.com|(?:www\.)?instagram\.com|(?:www\.|m\.)?youtube\.com|youtu\.be)$/i;
+const configuredEndpoint = document.querySelector('meta[name="sticker-import-endpoint"]')?.content || '';
+endpointField.value = configuredEndpoint;
+try { endpointField.value = localStorage.getItem('sticker-import-endpoint') || configuredEndpoint; } catch {}
+endpointField.addEventListener('change', () => {
+  try { localStorage.setItem('sticker-import-endpoint', endpointField.value.trim()); } catch {}
+});
 function switchToVideo() {
   if (mode !== 'video') modes.find(button => button.dataset.mode === 'video').click();
 }
-byId('load-link').onclick = async () => {
-  if (busy || capturing) return;
-  const button = byId('load-link');
-  button.disabled = true;
-  byId('social').hidden = true;
-  try {
-    const url = new URL(byId('link-input').value.trim());
-    if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Introduce un enlace HTTPS válido.');
-    if (/(^|\.)(tiktok\.com|instagram\.com|youtube\.com|youtu\.be)$/.test(url.hostname)) {
-      byId('original').href = url.href;
-      byId('social').hidden = false;
-      linkStatus.textContent = navigator.mediaDevices?.getDisplayMedia ? '' : 'Este navegador requiere descargar el video y seleccionarlo en el editor.';
-      return;
+function cancelImport() { importController?.abort(); }
+byId('cancel-link').onclick = cancelImport;
+byId('visual').addEventListener('change', cancelImport, { capture: true });
+drop.addEventListener('drop', cancelImport, { capture: true });
+for (const button of modes) button.addEventListener('click', cancelImport, { capture: true });
+function httpsUrl(value) {
+  const url = new URL(value);
+  if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Introduce una URL HTTPS válida.');
+  return url;
+}
+async function downloadVideo(response, signal) {
+  if (!response.ok) {
+    let message = 'Error de descarga (' + response.status + ').';
+    if ((response.headers.get('content-type') || '').includes('application/json')) {
+      try { message = (await response.json()).error || message; } catch {}
     }
-    linkStatus.textContent = 'Importando video…';
-    const response = await fetch(url, { credentials: 'omit', referrerPolicy: 'no-referrer' });
-    if (!response.ok) throw new Error('No se pudo descargar el archivo.');
-    const blob = await response.blob();
-    if (busy) throw new Error('Espera a que termine la exportación.');
-    switchToVideo();
-    await chooseVisual(new File([blob], 'Video del enlace', { type: blob.type }));
-    linkStatus.textContent = '';
-  } catch (error) {
-    linkStatus.textContent = 'No se pudo importar el enlace. Comprueba la URL o selecciona el archivo descargado.';
-  } finally { button.disabled = false; }
-};
-byId('capture').onclick = async () => {
-  if (busy || capturing) return;
-  let stream;
-  const button = byId('capture');
-  button.disabled = true;
+    throw new Error(message);
+  }
+  const type = (response.headers.get('content-type') || '').split(';')[0];
+  if (type && !type.startsWith('video/') && type !== 'application/octet-stream') throw new Error('El enlace no devolvió un archivo de video.');
+  const total = Number(response.headers.get('content-length')) || 0;
+  if (total > maxImportBytes) throw new Error('El video supera 80 MB.');
+  if (!response.body) throw new Error('El navegador no permite leer esta descarga.');
+  const reader = response.body.getReader(), chunks = [];
+  let bytes = 0;
   try {
-    if (!navigator.mediaDevices?.getDisplayMedia || !window.MediaRecorder) throw new Error('La captura requiere un navegador de escritorio compatible.');
-    stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true, preferCurrentTab: false, selfBrowserSurface: 'exclude' });
-    if (!stream.getAudioTracks().length) throw new Error('Selecciona una pestaña con Compartir audio activado.');
-    const chunks = [];
-    const recorder = new MediaRecorder(stream);
-    capturing = recorder;
+    for (;;) {
+      const {done, value} = await reader.read();
+      if (signal.aborted) throw new DOMException('Cancelado','AbortError');
+      if (done) break;
+      bytes += value.byteLength;
+      if (bytes > maxImportBytes) throw new Error('El video supera 80 MB.');
+      chunks.push(value);
+      linkStatus.textContent = 'Descargando… ' + (total ? Math.min(100,Math.round(100*bytes/total)) + '%' : (bytes/1048576).toFixed(1) + ' MB');
+    }
+  } finally { await reader.cancel().catch(() => {}); reader.releaseLock(); }
+  if (!bytes) throw new Error('El video está vacío.');
+  return new File(chunks, type === 'video/webm' ? 'video-importado.webm' : 'video-importado.mp4', {type: type.startsWith('video/') ? type : 'video/mp4'});
+}
+byId('link-input').addEventListener('keydown', event => {
+  if (event.key === 'Enter') { event.preventDefault(); byId('load-link').click(); }
+});
+byId('load-link').onclick = async () => {
+  if (busy || importing) return;
+  const button = byId('load-link');
+  let controller, timer;
+  try {
+    const url = httpsUrl(byId('link-input').value.trim());
+    const social = socialHosts.test(url.hostname);
+    let request = url.href, options = {};
+    if (social) {
+      if (!endpointField.value.trim()) {
+        byId('import-settings').open = true;
+        throw new Error('Falta configurar el servicio de descarga para TikTok, Reels y Shorts.');
+      }
+      const endpoint = httpsUrl(endpointField.value.trim());
+      if (endpoint.search || endpoint.hash) throw new Error('Configura la URL base del servicio, sin parámetros.');
+      request = endpoint.href.replace(/\/$/, '') + '/api/import';
+      options = {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:url.href})};
+    }
     switchToVideo();
-    const finish = byId('finish');
-    finish.hidden = false;
-    const stop = () => { if (recorder.state !== 'inactive') recorder.stop(); };
-    finish.onclick = stop;
-    stream.getVideoTracks()[0].addEventListener('ended', stop, { once: true });
-    const timer = setTimeout(stop, 60000);
-    recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
-    recorder.onstop = async () => {
-      clearTimeout(timer);
-      stream.getTracks().forEach(track => track.stop());
-      finish.hidden = true;
-      capturing = undefined;
-      button.disabled = false;
-      if (busy) { linkStatus.textContent = 'Termina la exportación antes de capturar otra pestaña.'; return; }
-      switchToVideo();
-      linkStatus.textContent = '';
-      await chooseVisual(new File(chunks, 'Captura de la publicación', { type: recorder.mimeType }));
-    };
-    recorder.start(250);
-    linkStatus.textContent = 'Capturando hasta 60 segundos. Puedes terminar antes desde esta pestaña o desde el navegador.';
+    controller = new AbortController();
+    importController = controller;
+    importing = true;
+    button.disabled = true;
+    byId('cancel-link').hidden = false;
+    sync();
+    timer = setTimeout(() => controller.abort(), 120000);
+    linkStatus.textContent = social ? 'Preparando el video en el servicio de descarga…' : 'Conectando con el video…';
+    const response = await fetch(request, {...options, signal:controller.signal, credentials:'omit', referrerPolicy:'no-referrer', cache:'no-store'});
+    const file = await downloadVideo(response, controller.signal);
+    if (controller.signal.aborted || busy) return;
+    linkStatus.textContent = 'Abriendo el video en el editor…';
+    const loaded = await chooseVisual(file);
+    if (!controller.signal.aborted) linkStatus.textContent = loaded ? 'Video importado. Ajusta el tramo, zoom y posición antes de crear el clip.' : 'No se pudo abrir el video: ' + status.textContent;
   } catch (error) {
-    stream?.getTracks().forEach(track => track.stop());
-    capturing = undefined;
+    linkStatus.textContent = error.name === 'AbortError' ? 'Descarga cancelada o tiempo agotado.' : error instanceof TypeError ? 'No se pudo conectar. Comprueba el servicio o que el video directo permita CORS.' : error.message;
+  } finally {
+    clearTimeout(timer);
+    importController = undefined;
+    importing = false;
     button.disabled = false;
-    byId('finish').hidden = true;
-    linkStatus.textContent = error.name === 'NotAllowedError' ? 'Captura cancelada o sin permiso.' : error.message;
+    byId('cancel-link').hidden = true;
+    sync();
   }
 };
 

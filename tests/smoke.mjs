@@ -302,12 +302,13 @@ try {
   try {
     await crop.goto('http://127.0.0.1:8000');
     await crop.locator('[data-mode="image"]').click();
-    async function loadCropFixture(width,height){
-      const bytes=await crop.evaluate(async({width,height})=>{
+    async function loadCropFixture(width,height,asymmetric=false){
+      const bytes=await crop.evaluate(async({width,height,asymmetric})=>{
         const c=document.createElement('canvas');c.width=width;c.height=height;
         const ctx=c.getContext('2d');ctx.fillStyle='#ff0000';ctx.fillRect(0,0,width,height);
+        if(asymmetric){ctx.fillStyle='#0000ff';ctx.fillRect(width/2,0,width/2,height);}
         return Array.from(new Uint8Array(await (await new Promise(r=>c.toBlob(r,'image/png'))).arrayBuffer()));
-      },{width,height});
+      },{width,height,asymmetric});
       await crop.locator('#visual').setInputFiles({name:'crop.png',mimeType:'image/png',buffer:Buffer.from(bytes)});
       await crop.waitForFunction(()=>!document.querySelector('#position').hidden&&!document.querySelector('#pan-x').disabled);
     }
@@ -362,7 +363,41 @@ try {
     await loadCropFixture(400,800);
     assert.equal(await pan('pan-x',126),128);
     await crop.locator('#center-crop').click();
+    await loadCropFixture(800,400,true);
+    const colorAt=(x,y)=>crop.evaluate(({x,y})=>Array.from(document.querySelector('#canvas').getContext('2d').getImageData(x,y,1,1).data).slice(0,3),{x,y});
+    assert.deepEqual(await colorAt(64,256),[255,0,0]);
+    assert.deepEqual(await colorAt(448,256),[0,0,255]);
+    await crop.locator('#rotate-right').click();
+    assert.equal(await crop.locator('#rotation').inputValue(),'90');
+    assert.deepEqual(await colorAt(256,64),[255,0,0]);
+    assert.deepEqual(await colorAt(256,448),[0,0,255]);
+    assert.equal(await pan('pan-x',126),128);
+    await crop.locator('#center-crop').click();
+    await crop.locator('#rotate-half').click();
+    assert.equal(await crop.locator('#rotation').inputValue(),'270');
+    assert.deepEqual(await colorAt(256,64),[0,0,255]);
+    await crop.locator('#rotate-left').click();
+    assert.equal(await crop.locator('#rotation').inputValue(),'180');
+    assert.deepEqual(await colorAt(64,256),[0,0,255]);
+    await crop.locator('#rotation').selectOption('0');
+    assert.deepEqual(await colorAt(64,256),[255,0,0]);
+    // The edited media must keep its rotation in the actual converted output.
+    await crop.locator('#demo').click();
+    await crop.waitForFunction(()=>!document.querySelector('#export').disabled);
+    await loadCropFixture(800,400,true);
+    await crop.waitForFunction(()=>!document.querySelector('#export').disabled);
+    await crop.locator('#rotate-right').click();
+    await crop.locator('#export').click();
+    await crop.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
+    const colors=await crop.evaluate(async()=>{
+      const img=document.querySelector('#sticker-image');await img.decode();
+      const c=document.createElement('canvas');c.width=c.height=512;
+      const ctx=c.getContext('2d');ctx.drawImage(img,0,0,512,512);
+      return [64,448].map(y=>Array.from(ctx.getImageData(256,y,1,1).data).slice(0,3));
+    });
+    assert(colors[0][0]>180&&colors[0][2]<70&&colors[1][2]>180&&colors[1][0]<70);
     await crop.locator('#language').selectOption('en');
+    assert.equal(await crop.locator('#rotate-right').getAttribute('aria-label'),'Rotate 90° right');
     assert.equal(await crop.locator('#center-crop').textContent(),'Center');
     assert.equal(await crop.locator('#pan-x-value').getAttribute('aria-label'),'Horizontal position in pixels');
     await crop.setViewportSize({width:320,height:800});

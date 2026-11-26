@@ -82,7 +82,7 @@
       }
       if(!linked||digest!==p.info?.soundSha256||!side||side!==p.info.lado||animated!==p.info.isAnimated)throw Error(t('El archivo del sticker está dañado. Vuelve a guardarlo desde la aplicación.',"The sticker file is damaged. Save it again from the editor."));
       const seconds=p.info.segundosAudio;
-      if(!Number.isInteger(seconds)||seconds<1||seconds>180)throw Error(t('Duración de audio no válida.',"Invalid audio duration."));
+      if(!Number.isSafeInteger(seconds)||seconds<1)throw Error(t('Duración de audio no válida.',"Invalid audio duration."));
       return {webp:new Blob([webp],{type:'image/webp'}),ogg:new Blob([ogg],{type:'audio/ogg; codecs=opus'}),side,animated,seconds,digest};
     }
     function enableTemporaryCompatibility() {

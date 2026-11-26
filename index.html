@@ -10,7 +10,7 @@
 <script type="module" src="./app.js"></script>
 </head>
 <body>
-<header><div class="brand"><span class="logo" aria-hidden="true">◖≋</span> Stickers Sonoros</div><span class="privacy"><i></i> Procesamiento local</span></header>
+<header><div class="brand"><span class="logo" aria-hidden="true">◖≋</span> Stickers Sonoros</div><span class="privacy"><i></i> Edición local</span></header>
 <main>
 <section class="intro"><h1>Dale sonido <em>a tu sticker.</em></h1><p>Recorta una escena, combina imagen y audio y crea un clip cuadrado para compartir.</p></section>
 <div class="workspace">
@@ -21,8 +21,8 @@
 <button type="button" data-mode="image" aria-pressed="false">Imagen + audio</button>
 <button type="button" data-mode="mix" aria-pressed="false">Video o GIF + audio</button>
 </div>
-<section id="links"><label for="link-input">Enlace de TikTok, Reel, Short o video directo</label><div class="linkbar"><input id="link-input" type="url" placeholder="https://…" autocomplete="off"><button id="load-link">Abrir enlace</button></div>
-<div id="social" hidden><a id="original" target="_blank" rel="noopener noreferrer">Abrir publicación en otra pestaña ↗</a><p>Abre la publicación, pulsa Capturar y selecciona su pestaña con el audio activado. Reproduce el tramo y termina la captura para editarlo.</p><button id="capture">Capturar pestaña</button><button id="finish" hidden>Terminar e importar</button></div><p id="link-status" role="status"></p></section>
+<section id="links"><label for="link-input">Enlace de TikTok, Reel, Short o video directo</label><div class="linkbar"><input id="link-input" type="url" placeholder="https://…" autocomplete="off"><button id="load-link" type="button">Importar video</button><button id="cancel-link" type="button" hidden>Cancelar</button></div>
+<details id="import-settings"><summary>Servicio de descarga de redes sociales</summary><label for="import-endpoint">URL HTTPS del servicio de importación</label><input id="import-endpoint" type="url" placeholder="https://tu-servicio.example"><small>Solo se envía el enlace al servicio configurado. Para enlaces MP4 directos no se necesita servidor si admiten CORS.</small></details><p id="link-status" role="status"></p></section>
 <form id="project">
 <label class="drop" id="drop"><input type="file" id="visual" accept="video/*"><span class="upload" aria-hidden="true">↑</span><strong id="visual-label">Selecciona o arrastra un video</strong><small id="visual-hint">MP4, WebM u otro video compatible</small></label>
 <label id="sound-row" hidden>Pista de audio <input id="sound" type="file" accept="audio/*,video/*"></label>
@@ -30,6 +30,7 @@
 <label>Video desde (s)<input id="vs" type="number" min="0" step=".01" value="0" required></label>
 <label>Video hasta (s)<input id="ve" type="number" min=".01" step=".01" value="1" required></label>
 </div>
+<label id="scrub-row" hidden>Explorar video <input id="scrub" type="range" min="0" max="1" step=".01" value="0"><output id="scrub-time">0.00 s</output></label>
 <div id="audio-trim" class="row" hidden>
 <label>Audio desde (s)<input id="as" type="number" min="0" step=".01" value="0" required></label>
 <label>Audio hasta (s)<input id="ae" type="number" min=".01" step=".01" value="1" required></label>

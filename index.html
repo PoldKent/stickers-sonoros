@@ -1,22 +1,22 @@
 <!doctype html>
-<html lang="es" data-version="2026.11.26.25">
+<html lang="es" data-version="2026.11.26.26">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#130f1b">
-<link rel="icon" type="image/svg+xml" href="./assets/logo.svg?v=2026.11.26.25">
+<link rel="icon" type="image/svg+xml" href="./assets/logo.svg?v=2026.11.26.26">
 <meta name="description" content="Crea stickers sonoros de hasta 60 segundos para WhatsApp desde un video, imagen o GIF.">
 <title>Stickers Sonoros · Editor web</title>
 <meta name="sticker-import-endpoint" content="https://stickers-sonoros.onrender.com">
-<link rel="stylesheet" href="./style.css?v=2026.11.26.25">
-<script defer src="./vendor/shirtep/convert.js?v=2026.11.26.25"></script>
-<script defer src="./vendor/shirtep/local-send.js?v=2026.11.26.25"></script>
-<script defer src="./i18n.js?v=2026.11.26.25"></script>
-<script type="module" src="./app.js?v=2026.11.26.25"></script>
+<link rel="stylesheet" href="./style.css?v=2026.11.26.26">
+<script defer src="./vendor/shirtep/convert.js?v=2026.11.26.26"></script>
+<script defer src="./vendor/shirtep/local-send.js?v=2026.11.26.26"></script>
+<script defer src="./i18n.js?v=2026.11.26.26"></script>
+<script type="module" src="./app.js?v=2026.11.26.26"></script>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Saltar al editor</a>
-<header><div class="brand"><img class="logo" src="./assets/logo.svg?v=2026.11.26.25" alt="" width="36" height="36"> Stickers Sonoros</div><div class="header-tools"><span class="privacy"><i></i> Edición local</span><label class="language-picker"><span class="sr-only">Idioma</span><select id="language" aria-label="Idioma"><option value="es">Español</option><option value="en">English</option></select></label></div></header>
+<header><div class="brand"><img class="logo" src="./assets/logo.svg?v=2026.11.26.26" alt="" width="36" height="36"> Stickers Sonoros</div><div class="header-tools"><span class="privacy"><i></i> Edición local</span><label class="language-picker"><span class="sr-only">Idioma</span><select id="language" aria-label="Idioma"><option value="es">Español</option><option value="en">English</option></select></label></div></header>
 <main id="main-content">
 <section class="intro"><h1>Dale sonido <em>a tu sticker.</em></h1><p>Recorta hasta 60 segundos, ajusta el encuadre y prepara tu sticker con sonido.</p></section>
 <div class="workspace">
@@ -45,11 +45,11 @@
 <label>Encuadre<select id="fit"><option value="contain">Ajustar</option><option value="cover">Rellenar</option></select></label>
 <label id="motion-row" hidden>Al terminar la animación<select id="motion"><option value="freeze">Mantener último cuadro</option><option value="loop">Repetir</option></select></label>
 </div>
-<fieldset id="position" hidden><legend>Posición y zoom</legend>
+<fieldset id="position" hidden><legend>Posición, zoom y rotación</legend>
 <div class="crop-row"><label for="pan-x">Horizontal</label><input type="range" id="pan-x" min="-256" max="256" step="0.1" value="0"><span class="crop-number"><input type="number" id="pan-x-value" step="0.1" value="0" aria-label="Posición horizontal en píxeles"><small>px</small></span></div>
 <div class="crop-row"><label for="pan-y">Vertical</label><input type="range" id="pan-y" min="-256" max="256" step="0.1" value="0"><span class="crop-number"><input type="number" id="pan-y-value" step="0.1" value="0" aria-label="Posición vertical en píxeles"><small>px</small></span></div>
 <div class="crop-row"><label for="zoom">Zoom</label><input type="range" id="zoom" min="100" max="300" step="0.01" value="100"><span class="crop-number"><input type="number" id="zoom-value" step="0.01" value="100" aria-label="Zoom en porcentaje"><small>%</small></span></div>
-<div class="crop-tools"><small>Imán suave al centro y a los bordes. Arrastra la imagen o escribe un valor exacto.</small><button type="button" id="center-crop">Centrar</button></div></fieldset>
+<div class="rotation-row"><label for="rotation">Rotación</label><div class="rotation-actions"><button id="rotate-left" type="button" aria-label="Girar 90° a la izquierda" title="Girar 90° a la izquierda">↶ 90°</button><button id="rotate-half" type="button" aria-label="Girar 180°" title="Girar 180°">180°</button><button id="rotate-right" type="button" aria-label="Girar 90° a la derecha" title="Girar 90° a la derecha">90° ↷</button><select id="rotation" aria-label="Ángulo de rotación"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></div></div><div class="crop-tools"><small>Imán suave al centro y a los bordes. Arrastra la imagen o escribe un valor exacto.</small><button type="button" id="center-crop">Centrar</button></div></fieldset>
 <label id="quality-row">Calidad del sticker <select id="quality"><option value="sharp" selected>Máxima nitidez (recomendado)</option><option value="balanced">Equilibrado</option><option value="smooth">Máxima fluidez</option></select><small>La nitidez tiene prioridad. Si el tramo no cabe en 1 MB, reduce su duración o cambia la calidad.</small></label><button id="demo" class="subtle" type="button">Probar un ejemplo</button><p id="selection-info" class="note" aria-live="polite"></p><button class="primary" id="export" disabled>Crear sticker sonoro <span aria-hidden="true">↗</span></button><button id="cancel-export" type="button" hidden>Cancelar generación</button>
 <progress id="progress" max="1" value="0" hidden></progress>
 <p id="status" role="status" aria-live="polite"></p>
@@ -82,7 +82,7 @@
 </section>
 </div>
 </main>
-<footer><div class="footer-main"><div class="footer-brand"><img src="./assets/logo.svg?v=2026.11.26.25" alt="" width="32" height="32"><div><strong>Stickers Sonoros</strong><small>Versión 2026.11.26.25</small></div></div><nav class="footer-links" aria-label="Información del proyecto"><a id="guide-link" href="https://github.com/PoldKent/stickers-sonoros/blob/main/README.md">Guía de uso</a><a href="https://github.com/PoldKent/stickers-sonoros">GitHub</a><a id="support-link" href="https://github.com/PoldKent/stickers-sonoros/blob/main/SUPPORT.md">Apoyar el proyecto</a><button id="check-service" type="button" class="subtle">Comprobar servidor</button></nav></div><p id="service-status" role="status" aria-live="polite"></p><div class="footer-credit">Conversor de <a href="https://github.com/Shirtep/WA-audio-stickers">Stickers con sonido, de Shirtep</a> · <a href="./vendor/shirtep/LICENSE.md">Licencia de uso no comercial</a></div></footer>
+<footer><div class="footer-main"><div class="footer-brand"><img src="./assets/logo.svg?v=2026.11.26.26" alt="" width="32" height="32"><div><strong>Stickers Sonoros</strong><small>Versión 2026.11.26.26</small></div></div><nav class="footer-links" aria-label="Información del proyecto"><a id="guide-link" href="https://github.com/PoldKent/stickers-sonoros/blob/main/README.md">Guía de uso</a><a href="https://github.com/PoldKent/stickers-sonoros">GitHub</a><a id="support-link" href="https://github.com/PoldKent/stickers-sonoros/blob/main/SUPPORT.md">Apoyar el proyecto</a><button id="check-service" type="button" class="subtle">Comprobar servidor</button></nav></div><p id="service-status" role="status" aria-live="polite"></p><div class="footer-credit">Conversor de <a href="https://github.com/Shirtep/WA-audio-stickers">Stickers con sonido, de Shirtep</a> · <a href="./vendor/shirtep/LICENSE.md">Licencia de uso no comercial</a></div></footer>
 <script>
 (function () {
   var status = document.getElementById('link-status');

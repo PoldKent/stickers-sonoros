@@ -952,7 +952,7 @@
   }
 
   // Atajo (pruebas): analizar + elegir (automático o fijo) + crear.
-  async function convert({ file, start = 0, duration, mode = "ajustar", visual, audio, fit, still = false, syncMs = 0, side = "auto", fps = "auto", profile = "sharp", onProgress, signal }) {
+  async function convert({ file, start = 0, duration, mode = "ajustar", visual, audio, fit, still = false, syncMs = 0, side = "auto", fps = "auto", profile = "sharp", packName = "", publisher = "", onProgress, signal }) {
     profile = profileOf(profile);
     const an = await analyze({ file, start, duration, mode, visual, audio, fit, profile, onProgress, signal });
     try {
@@ -963,7 +963,7 @@
       for (const c of cells.slice(0,4)) {
         checkAbort(signal);
         try {
-          const r = await create(an, { side: c.side, fps: c.fps, syncMs, still, onProgress, signal });
+          const r = await create(an, { side: c.side, fps: c.fps, syncMs, still, packName, publisher, onProgress, signal });
           r.analysis = { auto: an.auto, cells: an.cells, ms: an.ms, captureFps: an.captureFps, captureSide: an.captureSide, profile };
           return r;
         } catch(e) { if (e.code !== "STICKER_SIZE") throw e; lastError=e; }

@@ -5,7 +5,7 @@ COPY --from=js /usr/local/bin/node /usr/local/bin/node
 RUN pip install --no-cache-dir "yt-dlp[default]"
 RUN useradd --create-home --uid 10001 app
 WORKDIR /app
-COPY importer/server.py ./importer/server.py
+COPY importer/server.py importer/public_media.py ./importer/
 COPY index.html app.js style.css ./
 COPY vendor/shirtep/ ./vendor/shirtep/
 USER app

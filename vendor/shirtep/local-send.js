@@ -49,17 +49,18 @@
     const b64=bytes=>btoa(String.fromCharCode(...bytes));
     const hash=async bytes=>b64(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)));
     const read=(b,i,n)=>String.fromCharCode(...b.subarray(i,i+n));
-    function decode(value) {
-      if(typeof value!=='string'||value.length>1333336||! /^[A-Za-z0-9+/]+={0,2}$/.test(value)) throw Error(t('El archivo del sticker no es válido.',"Invalid sticker file."));
+    function decode(value, maxBytes) {
+      if(typeof value!=='string'||value.length>4*Math.ceil(maxBytes/3)||! /^[A-Za-z0-9+/]+={0,2}$/.test(value)) throw Error(t('El archivo del sticker no es válido.',"Invalid sticker file."));
       const raw=atob(value);
-      if(!raw.length||raw.length>1000000)throw Error(t('El archivo supera 1 MB o está vacío.',"The file exceeds 1 MB or is empty."));
+      if(!raw.length||raw.length>maxBytes)throw Error(t('El archivo supera el límite de tamaño o está vacío.',"The file exceeds the size limit or is empty."));
       return Uint8Array.from(raw,c=>c.charCodeAt(0));
     }
     async function validate(file) {
-      if(!file||file.size>3000000)throw Error(t('Selecciona un paquete de hasta 3 MB.',"Choose a package up to 3 MB."));
+      if(!file||file.size>5500000)throw Error(t('Selecciona un paquete de hasta 5,5 MB.',"Choose a package up to 5.5 MB."));
       const p=JSON.parse(await file.text());
       if(p.format!=='stickers-sonoros/1')throw Error(t('Selecciona un archivo guardado desde Stickers Sonoros.',"Choose a file saved in Stickers Sonoros."));
-      const webp=decode(p.webp),ogg=decode(p.ogg);
+      const webp=decode(p.webp,4000000),ogg=decode(p.ogg,1000000);
+      if(webp.length+ogg.length>4000000)throw Error(t('El sticker y su audio superan 4 MB.', 'The sticker and its audio exceed 4 MB.'));
       if(read(webp,0,4)!=='RIFF'||read(webp,8,4)!=='WEBP'||read(ogg,0,4)!=='OggS'||!new TextDecoder().decode(ogg.subarray(0,256)).includes('OpusHead'))throw Error(t('La imagen o el sonido del sticker no son válidos.',"The sticker image or sound is invalid."));
       const digest=await hash(ogg), view=new DataView(webp.buffer);
       let linked=false,side=0,animated=false;
@@ -141,7 +142,7 @@
           compatibility.hidden=false; compatibility.style.display='flex';
           throw Error(t('El sonido no está habilitado en esta sesión. Marca Activar compatibilidad con sonido para continuar.',"Sound is not enabled in this session. Enable sound compatibility to continue."));
         }
-        if(!confirm(t('¿Enviar un sticker con sonido al chat «',"Send a sound sticker to chat «")+name(chat)+'»?'+(unavailable?t(' Se activará la compatibilidad temporal con sonido. Se desactivará al terminar. WhatsApp podría rechazar el envío.'," Temporary sound compatibility will be enabled and restored afterwards. WhatsApp may reject the send."):'')))return;
+        if(!confirm(t('¿Enviar un sticker con sonido al chat «',"Send a sound sticker to chat «")+name(chat)+'»?'+(data.webp.size>1000000?t(' La imagen supera 1 MB; WhatsApp podría rechazar el envío.',' The image exceeds 1 MB; WhatsApp may reject the send.'):'')+(unavailable?t(' Se activará la compatibilidad temporal con sonido. Se desactivará al terminar. WhatsApp podría rechazar el envío.'," Temporary sound compatibility will be enabled and restored afterwards. WhatsApp may reject the send."):'')))return;
         if(activeChat()!==chat)throw Error(t('El chat ha cambiado. Confirma de nuevo.',"The chat changed. Confirm again."));
         if(unavailable)restoreCompatibility=enableTemporaryCompatibility();
       }catch(e){restoreCompatibility?.();msg(e.message);return;}
@@ -175,7 +176,8 @@
         else {msg(t('El mensaje se creó, pero la confirmación no llegó o fue negativa. Revisa el chat antes de volver a enviar.',"The message was created but confirmation was missing or negative. Check the chat before retrying."));}
         data=undefined;
       }catch(e){
-        msg((e.message||t('Error del cliente WhatsApp',"WhatsApp client error"))+(attempted?t(' Revisa el chat antes de volver a intentar.'," Check the chat before retrying."):t(' No se envió el sticker.'," The sticker was not sent.")));
+        const largeHint=data?.webp.size>1000000?t(' Si WhatsApp rechaza el tamaño, vuelve al editor y usa el modo compatible.',' If WhatsApp rejects the size, return to the editor and use compatible mode.'):'';
+        msg((e.message||t('Error del cliente WhatsApp',"WhatsApp client error"))+largeHint+(attempted?t(' Revisa el chat antes de volver a intentar.'," Check the chat before retrying."):t(' No se envió el sticker.'," The sticker was not sent.")));
         if(attempted)data=undefined;
       }finally{
         restoreCompatibility?.(); opt.checked=false;

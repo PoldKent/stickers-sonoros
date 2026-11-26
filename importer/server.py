@@ -17,11 +17,12 @@ from public_media import fetch_public, PublicFetchError, HTML_TYPES
 from tiktok_public import fetch_tiktok_download, TikTokDownloadUnavailable
 
 PORT = int(os.environ.get("PORT", "8080"))
+OFFICIAL_WEB = "https://poldkent.github.io/stickers-sonoros/"
+API_ONLY = os.environ.get("API_ONLY", "1" if os.environ.get("RENDER") == "true" else "0") == "1"
 ORIGINS = {
     value.rstrip("/") for value in (
         os.environ.get("ALLOWED_ORIGIN", "https://poldkent.github.io"),
-        os.environ.get("RENDER_EXTERNAL_URL", ""),
-        f"http://localhost:{PORT}", f"http://127.0.0.1:{PORT}",
+        *(() if API_ONLY else (f"http://localhost:{PORT}", f"http://127.0.0.1:{PORT}")),
     ) if value
 }
 WEB_ROOT = Path(os.environ.get("WEB_ROOT", str(Path(__file__).resolve().parent.parent)))
@@ -40,7 +41,7 @@ MAX_BYTES = 80 * 1024 * 1024
 # Sort by the short edge; vertical videos must not be filtered by height.
 FORMAT_SELECTOR = "bv*+ba/b"
 FORMAT_SORT = "res:480,vcodec:h264,acodec:aac"
-SERVICE_VERSION = '2026.11.26.31'
+SERVICE_VERSION = '2026.11.26.32'
 try:
     DOWNLOADER_VERSION = package_version('yt-dlp')
 except PackageNotFoundError:
@@ -192,6 +193,11 @@ class Handler(BaseHTTPRequestHandler):
         super().setup()
         self.connection.settimeout(15)
 
+    def end_headers(self):
+        if API_ONLY:
+            self.send_header("X-Robots-Tag", "noindex, nofollow")
+        super().end_headers()
+
     def cors(self):
         origin = self.headers.get("Origin")
         if origin in ORIGINS:
@@ -207,12 +213,39 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
-        self.wfile.write(body)
+        if self.command != "HEAD":
+            self.wfile.write(body)
 
     def do_GET(self):
+        self.read_route(send_body=True)
+
+    def do_HEAD(self):
+        self.read_route(send_body=False)
+
+    def read_route(self, send_body):
         route = urlsplit(self.path).path
         if route == "/health":
             self.reply(200, {"ok": True, "version": SERVICE_VERSION, "maxDuration": None, "downloader": DOWNLOADER_VERSION, "publicMedia": True, "tiktokPublicDownload": True})
+            return
+        if API_ONLY:
+            if route in ("/", "/index.html", "/stickers-sonoros", "/stickers-sonoros/", "/stickers-sonoros/index.html"):
+                self.send_response(308)
+                self.send_header("Location", OFFICIAL_WEB)
+                self.send_header("Cache-Control", "public, max-age=3600")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
+            if route == "/robots.txt":
+                # Permit crawling so search engines can discover redirects/noindex.
+                body = b"User-agent: *\nAllow: /\n"
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                if send_body:
+                    self.wfile.write(body)
+                return
+            self.reply(404, {"error": "Ruta no encontrada."})
             return
         asset = STATIC_FILES.get(route)
         if not asset:
@@ -231,7 +264,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         try:
-            self.wfile.write(body)
+            if send_body:
+                self.wfile.write(body)
         except (BrokenPipeError, ConnectionResetError, TimeoutError):
             pass
 

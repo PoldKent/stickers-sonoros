@@ -52,3 +52,7 @@ Editor and local bridge: no fixed 60-second cutoff; every animation quality prof
 ### 2026.11.26.31
 
 Se actualizan diagramas y README, nombre de descarga basado en el original, controles deslizantes de recorte y estado visual del flujo. El importador deja de imponer 10 minutos, pero conserva límites de bytes, tiempo de solicitud y protección de red. Se mantiene un límite explícito de memoria de captura, no un límite de segundos. / Updated diagrams, source-based filenames, trim sliders and workflow state; import duration cutoff removed while keeping byte, request-time and network protections. Capture memory remains bounded. Added regression checks for a 61-second package and trim sliders.
+
+### 2026.11.26.32 — Web oficial única / Single official website
+
+GitHub Pages es el único frontend público. Render conserva las rutas de importación y salud; la raíz y las rutas históricas del editor redirigen con HTTP 308, los antiguos activos devuelven 404 y las respuestas incluyen `X-Robots-Tag: noindex, nofollow`. La imagen Docker de producción no contiene el editor; el target `local-editor` conserva el flujo de desarrollo. Se añade URL canónica y pruebas HTTP de redirección, HEAD, CORS, importación y ausencia de activos. / GitHub Pages is the sole public frontend; Render is API-only with permanent redirects, noindex headers, and no production frontend assets. Local editor target retained. Live deployment must be verified separately.

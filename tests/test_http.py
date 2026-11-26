@@ -10,7 +10,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "importer"))
-from server import Handler, ORIGINS, LOCK, RECENT, SERVICE_VERSION, STATIC_FILES
+from server import Handler, ORIGINS, LOCK, RECENT, SERVICE_VERSION, STATIC_FILES, OFFICIAL_WEB
 
 class ImportHTTP(unittest.TestCase):
     def setUp(self):
@@ -60,6 +60,34 @@ class ImportHTTP(unittest.TestCase):
                 if route == "/":
                     self.assertEqual(re.search(rb'data-version="([^"]+)"', body).group(1).decode(), SERVICE_VERSION)
 
+    @patch("server.API_ONLY", True)
+    def test_production_redirects_and_noindex(self):
+        for method in ("GET", "HEAD"):
+            for route in ("/", "/index.html?v=1", "/stickers-sonoros/", "/stickers-sonoros/index.html"):
+                with self.subTest(method=method, route=route):
+                    code, headers, body = self.request(method, route)
+                    self.assertEqual(code, 308)
+                    self.assertEqual(headers["Location"], OFFICIAL_WEB)
+                    self.assertEqual(headers["X-Robots-Tag"], "noindex, nofollow")
+                    self.assertEqual(body, b"")
+            for route in STATIC_FILES.keys() - {"/", "/index.html"}:
+                code, headers, _ = self.request(method, route)
+                self.assertEqual(code, 404)
+                self.assertIn("noindex", headers["X-Robots-Tag"])
+        code, headers, body = self.request("GET", "/robots.txt")
+        self.assertEqual(code, 200)
+        self.assertIn(b"Allow: /", body)
+        code, headers, body = self.request("GET", "/health", headers={"Origin": "https://poldkent.github.io"})
+        self.assertEqual(code, 200)
+        self.assertEqual(headers["Access-Control-Allow-Origin"], "https://poldkent.github.io")
+        self.assertIn("noindex", headers["X-Robots-Tag"])
+        self.assertEqual(json.loads(body)["version"], SERVICE_VERSION)
+        for path in ("/api/import", "/api/media"):
+            code, headers, _ = self.request("OPTIONS", path, headers={"Origin": "https://poldkent.github.io"})
+            self.assertEqual(code, 204)
+            self.assertEqual(headers["Access-Control-Allow-Origin"], "https://poldkent.github.io")
+            self.assertIn("noindex", headers["X-Robots-Tag"])
+
     def test_removed_and_restricted_routes(self):
         for method in ("POST", "OPTIONS"):
             code, _, _ = self.request(method, "/api/clip-mp4", headers={"Origin": self.origin})
@@ -69,6 +97,7 @@ class ImportHTTP(unittest.TestCase):
         self.assertEqual(self.post("/api/media", "https://example.com/file", "https://unauthorized.example")[0], 403)
         self.assertEqual(self.post("/api/import", "https://127.0.0.1/video.mp4")[0], 400)
 
+    @patch("server.API_ONLY", True)
     @patch("server.fetch_public")
     def test_public_media(self, fetch):
         def fixture(url, path):
@@ -83,6 +112,7 @@ class ImportHTTP(unittest.TestCase):
         self.assertEqual(headers["Content-Type"], "video/mp4")
         self.assertEqual(headers["Access-Control-Allow-Origin"], self.origin)
 
+    @patch("server.API_ONLY", True)
     @patch("server.fetch_video")
     def test_social_import(self, fetch):
         def fixture(url, directory):

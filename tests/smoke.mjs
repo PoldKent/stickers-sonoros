@@ -55,6 +55,7 @@ try {
   assert.equal(pack.format,'stickers-sonoros/1');
   assert.equal(pack.info.segundosAudio,2);
   const appUrl='https://poldkent.github.io/stickers-sonoros/';
+  assert.match(readFileSync('index.html','utf8'), /<link rel="canonical" href="https:\/\/poldkent\.github\.io\/stickers-sonoros\/">/);
   assert.equal(pack.info.packName,'Creado en Stickers Sonoros');
   assert.equal(pack.info.publisher,'Mi firma 🎵 · '+appUrl);
   assert.equal(pack.info.signature,'Mi firma 🎵');

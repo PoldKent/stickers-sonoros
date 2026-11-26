@@ -5,7 +5,7 @@
 **Create sound stickers for WhatsApp from your browser.**  
 Video, image or GIF + audio · no fixed duration limit · Español / English.
 
-[**Open app**](https://poldkent.github.io/stickers-sonoros/) · [Render server](https://stickers-sonoros.onrender.com/) · [README en español](README.md) · [❤️ Support the project](SUPPORT.md#english)
+[**Official website**](https://poldkent.github.io/stickers-sonoros/) · [README en español](README.md) · [❤️ Support the project](SUPPORT.md#english)
 
 [![Automated checks](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml)
 
@@ -80,18 +80,20 @@ Updated Chrome or Edge is recommended for WebCodecs, WebP and Opus. Animated GIF
 **Static editor:** run `python -m http.server 8000` at the repository root and visit `http://localhost:8000`. Use the full service for social links.
 
 ```sh
-docker build -t stickers-sonoros .
+docker build --target local-editor -t stickers-sonoros .
 docker run --rm -p 8080:8080 stickers-sonoros
 ```
 
 Visit `http://localhost:8080`. The root Dockerfile is the only build file.
 
-- GitHub Pages serves the frontend from `main`; Render's URL is configured in `index.html`.
-- Render uses `render.yaml`, Docker and the free plan, with deployments after checks pass. If needed, use **Manual sync** in the Blueprint and **Manual Deploy** in the service.
+- GitHub Pages is the only official website and serves the frontend from `main`. Its canonical URL is also included in sticker EXIF attribution.
+- Render exclusively hosts the supporting API configured in `index.html`; its root permanently redirects to the official website (HTTP 308). It does not serve the editor or its assets. Responses carry `X-Robots-Tag: noindex, nofollow`.
+- Render uses `render.yaml`, the production Docker image (without frontend files) and the free plan, with deployments after checks pass. If needed, use **Manual sync** in the Blueprint and **Manual Deploy** in the service.
 - `/health` reports the service version, capabilities and yt-dlp version. Free instances may sleep.
 
 | Route | Purpose |
 |---|---|
+| GET/HEAD `/` | Permanent redirect to the official website |
 | GET `/health` | Status and capabilities |
 | POST `/api/import` | Supported public social video |
 | POST `/api/media` | Public HTTPS resource or inert HTML |

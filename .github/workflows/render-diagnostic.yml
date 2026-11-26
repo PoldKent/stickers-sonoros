@@ -30,21 +30,26 @@ jobs:
           trap 'rm -rf "$tmp"' EXIT
           echo '### Estado de las publicaciones (versiones activas, no la rama PR)' >> "$GITHUB_STEP_SUMMARY"
           curl -fsSL --max-time 40 "$pages" -o "$tmp/pages.html"
-          curl -fsSL --max-time 100 "$base/" -o "$tmp/render.html"
-          python - "$tmp/pages.html" "$tmp/render.html" <<'PY'
+          curl -sS --max-time 100 -D "$tmp/redirect" -o /dev/null "$base/"
+          grep -iq '^HTTP/[^ ]* 308' "$tmp/redirect"
+          grep -iq "^Location: $pages" "$tmp/redirect"
+          grep -iq '^X-Robots-Tag: noindex' "$tmp/redirect"
+          test "$(curl -sS --max-time 30 -o /dev/null -w '%{http_code}' "$base/app.js")" = 404
+          python - "$tmp/pages.html" "$pages" <<'PY'
           import re,sys
-          for site,path in zip(("GitHub Pages","Render web"),sys.argv[1:]):
-              html=open(path,encoding="utf-8").read()
-              version=re.search(r'data-version="([^"]+)"',html)
-              print(site+" version: "+(version.group(1) if version else "unknown"))
-              assert 'id="export"' in html and 'id="language"' in html
+          html=open(sys.argv[1],encoding="utf-8").read()
+          version=re.search(r'data-version="([^"]+)"',html)
+          print("GitHub Pages version: "+(version.group(1) if version else "unknown"))
+          assert 'id="export"' in html and 'id="language"' in html
+          assert f'<link rel="canonical" href="{sys.argv[2]}">' in html
           PY
           echo '### Estado público de Render' >> "$GITHUB_STEP_SUMMARY"
           curl -fsS --max-time 100 -D "$tmp/health-headers" -o "$tmp/health" -H "Origin: $origin" "$base/health"
           echo 'Estado /health:'
           cat "$tmp/health-headers" "$tmp/health" 2>/dev/null
           printf '\n'
-          python - "$tmp/health" "$tmp/pages.html" "$tmp/render.html" <<'PY'
+          grep -iq '^X-Robots-Tag: noindex' "$tmp/health-headers"
+          python - "$tmp/health" "$tmp/pages.html" <<'PY'
           import json,re,sys
           health=json.load(open(sys.argv[1])); print('Render API version:',health.get('version'))
           versions=[re.search(r'data-version="([^"]+)"',open(p).read()) for p in sys.argv[2:]]
@@ -54,10 +59,12 @@ jobs:
             echo 'El servidor no anuncia publicMedia; revisar el despliegue o la conexión.' >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
-          curl -sS --max-time 20 -D "$tmp/options-headers" -o /dev/null -X OPTIONS -H "Origin: $origin" -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type' "$base/api/media"
-          cat "$tmp/options-headers"
-          grep -iq '^HTTP/[^ ]* 204' "$tmp/options-headers"
-          grep -iq '^Access-Control-Allow-Origin: https://poldkent.github.io' "$tmp/options-headers"
+          for route in /api/media /api/import; do
+            curl -sS --max-time 20 -D "$tmp/options-headers" -o /dev/null -X OPTIONS -H "Origin: $origin" -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type' "$base$route"
+            cat "$tmp/options-headers"
+            grep -iq '^HTTP/[^ ]* 204' "$tmp/options-headers"
+            grep -iq '^Access-Control-Allow-Origin: https://poldkent.github.io' "$tmp/options-headers"
+          done
           status=$(curl -sS --max-time 90 --max-filesize 10000000 -D "$tmp/media-headers" -o "$tmp/media" -w '%{http_code}' -H "Origin: $origin" -H 'Content-Type: application/json' --data '{"url":"https://www.w3schools.com/html/mov_bbb.mp4"}' "$base/api/media")
           echo "Importación HTTP $status"
           cat "$tmp/media-headers" 2>/dev/null

@@ -11,3 +11,5 @@ services:
     envVars:
       - key: ALLOWED_ORIGIN
         value: https://poldkent.github.io
+      - key: API_ONLY
+        value: "1"

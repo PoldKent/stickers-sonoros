@@ -1,5 +1,5 @@
 FROM node:22-bookworm-slim AS js
-FROM python:3.12-slim-bookworm
+FROM python:3.12-slim-bookworm AS service
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg util-linux libstdc++6 ca-certificates && rm -rf /var/lib/apt/lists/*
 COPY --from=js /usr/local/bin/node /usr/local/bin/node
 ARG DOWNLOADER_BUILD=2026-11-26
@@ -7,10 +7,18 @@ RUN echo "Downloader build ${DOWNLOADER_BUILD}" && pip install --no-cache-dir --
 RUN useradd --create-home --uid 10001 app
 WORKDIR /app
 COPY importer/server.py importer/public_media.py importer/tiktok_public.py ./importer/
-COPY index.html app.js i18n.js style.css ./
-COPY assets/ ./assets/
-COPY vendor/shirtep/ ./vendor/shirtep/
 USER app
 ENV PORT=8080 PYTHONUNBUFFERED=1 WEB_ROOT=/app
 EXPOSE 8080
 CMD ["python", "importer/server.py"]
+
+# Optional full editor for local development only.
+FROM service AS local-editor
+COPY index.html app.js i18n.js style.css ./
+COPY assets/ ./assets/
+COPY vendor/shirtep/ ./vendor/shirtep/
+ENV API_ONLY=0
+
+# Default production image contains only the API.
+FROM service AS production
+ENV API_ONLY=1

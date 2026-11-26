@@ -5,7 +5,7 @@
 **Crea stickers con sonido para WhatsApp desde tu navegador.**  
 Video, imagen o GIF + audio · sin duración fija · Español / English.
 
-[**Abrir aplicación**](https://poldkent.github.io/stickers-sonoros/) · [Servidor Render](https://stickers-sonoros.onrender.com/) · [English README](README.en.md) · [❤️ Apoyar el proyecto](SUPPORT.md)
+[**Web oficial**](https://poldkent.github.io/stickers-sonoros/) · [English README](README.en.md) · [❤️ Apoyar el proyecto](SUPPORT.md)
 
 [![Pruebas automatizadas](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml)
 
@@ -80,18 +80,20 @@ Usa Chrome o Edge actualizados para la mejor compatibilidad con WebCodecs, WebP 
 **Editor estático:** desde la raíz, ejecuta `python -m http.server 8000` y abre `http://localhost:8000`. Para importar redes sociales, usa el servicio completo.
 
 ```sh
-docker build -t stickers-sonoros .
+docker build --target local-editor -t stickers-sonoros .
 docker run --rm -p 8080:8080 stickers-sonoros
 ```
 
 Abre `http://localhost:8080`. El Dockerfile de la raíz es el único archivo de construcción.
 
-- GitHub Pages sirve el frontend desde `main`; la URL de Render se define en `index.html`.
-- Render utiliza `render.yaml`, Docker y el plan gratuito con despliegue tras superar las comprobaciones. Si no se actualiza automáticamente, usa **Manual sync** en el Blueprint y **Manual Deploy** en el servicio.
+- GitHub Pages es la única web oficial y sirve el frontend desde `main`. Su URL canónica también se incluye en la firma EXIF de los stickers.
+- Render aloja exclusivamente la API auxiliar, configurada en `index.html`; su raíz redirige permanentemente a la web oficial (HTTP 308). No sirve el editor ni sus archivos estáticos. Las respuestas llevan `X-Robots-Tag: noindex, nofollow`.
+- Render utiliza `render.yaml`, la imagen Docker de producción (sin frontend) y el plan gratuito con despliegue tras superar las comprobaciones. Si no se actualiza automáticamente, usa **Manual sync** en el Blueprint y **Manual Deploy** en el servicio.
 - `/health` informa de versión, capacidades y versión de yt-dlp. El plan gratuito puede entrar en reposo.
 
 | Ruta | Propósito |
 |---|---|
+| GET/HEAD `/` | Redirección permanente a la web oficial |
 | GET `/health` | Estado y capacidades |
 | POST `/api/import` | Video social público compatible |
 | POST `/api/media` | Recurso HTTPS público o HTML inerte |

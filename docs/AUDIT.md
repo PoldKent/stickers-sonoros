@@ -92,3 +92,7 @@ Verificación aprobada de editor, despliegue y API sincronizada en .38. Redirecc
 ### 2026.11.26.39 — Native conversion and cleanup / Conversión directa y depuración
 
 Removed the redundant MediaRecorder/canvas.captureStream intermediate path, its temporary object URL, output player, second cancellation/progress controls, and duplicated signature credit. All three project modes build one conversion request from original files; GIF sampling honors the selected start, motion fit and crop are passed directly. Final WebP and Ogg remain the actual preview. Cleaned obsolete CSS selectors and exact repeated declarations, removed dead/duplicate localization strings, kept API, source preview, native browser decoding, 9 FPS/4 MB rules, and license. Tests updated; this revision requires CI and production checks before being called stable.
+
+### 2026.11.26.40 — Direct image decoder correction
+
+.39 Pages deployed, but browser CI timed out generating the example sticker; production diagnostic skipped. Local Chromium reproduced InvalidStateError for createImageBitmap(File SVG). Added native HTMLImageElement.decode + canvas fallback with scoped object URL, retaining direct conversion. Improved CI failure diagnostics for the example. This fixes a reproduced incompatibility, but full CI and production synchronization must still pass.

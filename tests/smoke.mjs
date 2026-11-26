@@ -27,7 +27,8 @@ try {
   assert.equal(await page.locator('#position').isVisible(),false);
   await page.locator('#signature').fill('Mi firma 🎵');
   await page.locator('#export').click();
-  await page.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
+  await page.waitForFunction(()=>!document.querySelector('#sticker-files').hidden || !document.querySelector('#prepare-sticker').hidden || (!document.querySelector('#export').disabled && !document.querySelector('#components').hidden),{},{timeout:120000}).catch(async error=>{throw new Error('Conversion timeout: '+await page.locator('#sticker-state').textContent()+' / '+await page.locator('#status').textContent(),{cause:error});});
+  assert.equal(await page.locator('#sticker-files').isVisible(),true,await page.locator('#sticker-state').textContent());
   assert.equal(await page.locator('#output').count(),0);
   assert.equal(await page.locator('#cancel-export').count(),0);
   assert.equal(await page.locator('#sticker-advanced').getAttribute('open'),'');

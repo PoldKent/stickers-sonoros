@@ -360,9 +360,27 @@
   }
 
   // Imagen fija (JPG, PNG, WebP…). En un GIF se toma el primer cuadro.
+  // SVG and other browser-decodable images may be rejected by the Blob overload of
+  // createImageBitmap. Decode via HTMLImageElement in that case, with a scoped URL.
+  async function imageBitmap(file) {
+    try { return await createImageBitmap(file); }
+    catch (originalError) {
+      const url=URL.createObjectURL(file);
+      try {
+        const image=new Image();
+        image.src=url;
+        await image.decode();
+        const canvas=new OffscreenCanvas(image.naturalWidth,image.naturalHeight);
+        canvas.getContext("2d").drawImage(image,0,0);
+        return await createImageBitmap(canvas);
+      } catch { throw originalError; }
+      finally { URL.revokeObjectURL(url); }
+    }
+  }
+
   async function probeImage(file) {
     let bmp;
-    try { bmp = await createImageBitmap(file); } catch (e) { throw new Error("El navegador no pudo leer la imagen (" + (e && e.message ? e.message : e) + ")"); }
+    try { bmp = await imageBitmap(file); } catch (e) { throw new Error("El navegador no pudo leer la imagen (" + (e && e.message ? e.message : e) + ")"); }
     const out = { width: bmp.width, height: bmp.height, animated: false };
     bmp.close();
     if (isAnimationFile(file) && typeof ImageDecoder !== "undefined") {
@@ -372,7 +390,7 @@
   }
 
   async function captureImage(file, side, mode) {
-    const bmp = await createImageBitmap(file);
+    const bmp = await imageBitmap(file);
     try {
       const s = makeSnapper(side, mode)(bmp);
       return { bmp: await s.bmpPromise, fp: s.fp };

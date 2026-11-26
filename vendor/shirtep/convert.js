@@ -34,7 +34,7 @@
   function score(side, fps, profile = "sharp") {
     if (profile === "smooth") return Math.min(30,fps)*25 + side/512*70;
     if (profile === "balanced") return side/512*180 + Math.min(20,fps)*7;
-    return side/512*480 + Math.min(15,fps)*4;
+    return side/512*480 + Math.min(30,fps)*4;
   }
   function captureFpsFor(dur, profile = "sharp", extended = false) {
     if (extended && profile === "sharp") return dur <= 10 ? 30 : dur <= 20 ? 20 : dur <= 30 ? 15 : 9;

@@ -340,6 +340,15 @@ try {
     assert.match(await qualityPage.locator('#quality-result').textContent(),/Calidad final:/);
     const fps=Number((await qualityPage.locator('#quality-result').textContent()).match(/(\d+) FPS/)[1]);
     assert(fps>=9);
+    await qualityPage.locator('#size-budget').selectOption('extended');
+    assert.equal(await qualityPage.locator('#sticker-files').isVisible(),false);
+    await qualityPage.locator('#export').click();
+    await qualityPage.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
+    const extendedSizes=await qualityPage.evaluate(async()=>Promise.all(['sticker-image','sticker-audio'].map(async id=>(await (await fetch(document.getElementById(id).src)).blob()).size)));
+    assert(extendedSizes[0]>0&&extendedSizes[1]>0&&extendedSizes[1]<=1000000&&extendedSizes[0]+extendedSizes[1]<=4000000);
+    assert(Number((await qualityPage.locator('#quality-result').textContent()).match(/(\d+) FPS/)[1])>=9);
+    assert.match(await qualityPage.locator('#size-result').textContent(),/Peso total:/);
+    assert.equal(await qualityPage.locator('#size-warning').isVisible(),extendedSizes[0]>1000000);
     await qualityPage.locator('#quality').selectOption('balanced');
     assert.equal(await qualityPage.locator('#sticker-files').isVisible(),false);
   } finally {await qualityPage.close();rmSync(qualityTemp,{recursive:true,force:true});}

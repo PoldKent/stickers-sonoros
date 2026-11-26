@@ -34,7 +34,10 @@ STATIC_FILES = {
 }
 MAX_BYTES = 80 * 1024 * 1024
 MAX_DURATION = 600
-SERVICE_VERSION = '2026.11.26.15'
+# Sort by the short edge; vertical videos must not be filtered by height.
+FORMAT_SELECTOR = "bv*+ba/b"
+FORMAT_SORT = "res:480,vcodec:h264,acodec:aac"
+SERVICE_VERSION = '2026.11.26.16'
 MAX_CLIP_BYTES = 16 * 1024 * 1024
 try:
     DOWNLOADER_VERSION = package_version('yt-dlp')
@@ -94,7 +97,7 @@ def classify_download_error(log, returncode=1):
     if any(x in msg for x in ("javascript runtime", "signature solving", "challenge solving", "ejs")):
         return ImportFailure("SOURCE_JS", "El descargador no pudo procesar la respuesta de la plataforma. Requiere revisión de compatibilidad.")
     if any(x in msg for x in ("requested format is not available", "no video formats", "no suitable formats")):
-        return ImportFailure("SOURCE_FORMAT", "La plataforma no ofrece un formato de video y audio compatible con el editor.")
+        return ImportFailure("SOURCE_FORMAT", "No se encontró un formato de video con sonido accesible. Puede que la publicación no ofrezca ambos recursos.")
     if any(x in msg for x in ("video unavailable", "not available", "removed", "deleted", "not found")):
         return ImportFailure("SOURCE_UNAVAILABLE", "La publicación no está disponible para el servidor.")
     if returncode < 0:
@@ -126,7 +129,7 @@ def fetch_video(url, directory):
         "--retries", "1", "--fragment-retries", "1", "--max-filesize", "50M",
         "--match-filters", f"duration <= {MAX_DURATION} & !is_live",
         "--js-runtimes", "node",
-        "-f", "b[height<=480][vcodec^=avc1][acodec^=mp4a]/bv[height<=480][vcodec^=avc1]+ba[acodec^=mp4a]/b[height<=480]/bv*[height<=480]+ba",
+        "-f", FORMAT_SELECTOR, "-S", FORMAT_SORT,
         "--merge-output-format", "mp4/mkv", "-o", src, "--", url,
     ], 100)
     files = [p for p in directory.glob("source.*") if p.suffix in (".mp4", ".mkv", ".webm", ".mov", ".m4v")]
@@ -145,9 +148,13 @@ def fetch_video(url, directory):
         duration = float(probe["format"]["duration"])
         if not 0 < duration <= MAX_DURATION + 1:
             raise ImportFailure("SOURCE_DURATION", "El video supera el máximo de 10 minutos.")
-        video_codec = next(s["codec_name"] for s in streams if s["codec_type"] == "video")
-        audio_codec = next(s["codec_name"] for s in streams if s["codec_type"] == "audio")
-    except (KeyError, StopIteration, TypeError, json.JSONDecodeError):
+        video_codec = next((s["codec_name"] for s in streams if s["codec_type"] == "video"), None)
+        audio_codec = next((s["codec_name"] for s in streams if s["codec_type"] == "audio"), None)
+        if not video_codec or not audio_codec:
+            raise ImportFailure("SOURCE_NO_TRACK", "El archivo descargado no contiene ambas pistas: video y sonido. Selecciona otro contenido o combina un video con audio en el editor.")
+    except ImportFailure:
+        raise
+    except (KeyError, StopIteration, TypeError, ValueError):
         raise ImportFailure("SOURCE_FORMAT", "El archivo no contiene video y audio compatibles.") from None
     output = directory / "video.mp4"
     base = [

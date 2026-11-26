@@ -9,7 +9,8 @@ const labels = {
   image: ['Selecciona o arrastra una imagen', 'PNG, JPEG, WebP u otra imagen compatible', 'image/*'],
   mix: ['Selecciona o arrastra un video o GIF', 'MP4, WebM o GIF animado', 'video/*,image/gif']
 };
-const limit = 10;
+const limit = 60;
+const defaultTrim = 30;
 let mode = 'video';
 let visual;
 let audio;
@@ -120,7 +121,7 @@ function range(prefix, duration) {
   byId(prefix + 's').max = max;
   byId(prefix + 's').value = 0;
   byId(prefix + 'e').max = max;
-  byId(prefix + 'e').value = Math.min(limit, max);
+  byId(prefix + 'e').value = Math.min(defaultTrim, max);
   if (prefix === 'v') { byId('scrub').max = max; byId('scrub').value = 0; byId('scrub-time').textContent = '0.00 s'; }
 }
 
@@ -454,7 +455,7 @@ byId('project').addEventListener('submit', async event => {
     if (!window.MediaRecorder || !canvas.captureStream || !window.AudioContext) throw new Error('Este navegador no permite exportar el clip. Prueba con Chrome o Edge actualizado.');
     const videoTrim = visual.kind === 'image' ? null : trimmed('v');
     const soundTrim = mode === 'video' ? videoTrim : trimmed('a');
-    if (soundTrim.duration > limit + .0001) throw new Error('Selecciona un tramo de audio de hasta 10 segundos para WhatsApp.');
+    if (soundTrim.duration > limit + .0001) throw new Error('Selecciona un tramo de audio de hasta 60 segundos.');
     busy = true;
     clearResult();
     exportJob = new AbortController();
@@ -885,10 +886,11 @@ async function importLink(force) {
 
 function selectionInfo() {
   const info = byId('selection-info');
-  if (!visual || !audio) { info.textContent = 'Selecciona un archivo con audio. Máximo 10 segundos por sticker.'; return; }
+  if (!visual || !audio) { info.textContent = 'Selecciona un archivo con audio. Máximo 60 segundos por sticker.'; return; }
   try {
     const t = mode === 'video' ? trimmed('v') : trimmed('a');
     info.textContent = 'Duración: ' + t.duration.toFixed(2) + ' s de ' + limit + ' s permitidos.';
+    if (t.duration > 30 && t.duration <= limit) info.textContent += ' · La animación puede reducir su calidad para caber en 1 MB.';
     if (t.duration > limit + .0001) info.textContent += ' Reduce el tramo antes de generar.';
     if (visual.kind !== 'image' && mode !== 'video') trimmed('v');
     if (t.duration > limit + .0001) byId('export').disabled = true;
@@ -1024,7 +1026,7 @@ byId('play-source').onclick = async () => {
   try {
     const v = item.kind === 'image' ? null : trimmed('v');
     const a = mode === 'video' ? v : trimmed('a');
-    if (a.duration > limit + .0001) throw new Error('Reduce el tramo a 10 segundos.');
+    if (a.duration > limit + .0001) throw new Error('Reduce el tramo a 60 segundos.');
     const context = new AudioContext();
     session = {context,item};
     previewSession = session;
@@ -1103,6 +1105,8 @@ byId('convert-mp4').onclick = async () => {
   const timer = setTimeout(()=>controller.abort(),120000);
   byId('format-note').textContent='Preparando MP4 con sonido…';
   try {
+    const health=await backendHealth(controller.signal);
+    if (clipDuration > (health.maxClipDuration || 10)) throw new Error('El servidor aún no admite clips de esta duración. Actualiza Render o guarda el vídeo original.');
     const endpoint=new URL(importEndpoint);
     const response=await fetch(endpoint.href.replace(/\/$/,'')+'/api/clip-mp4',{
       method:'POST',body:original,headers:{'Content-Type':'video/webm'},signal:controller.signal,

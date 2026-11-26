@@ -6,6 +6,7 @@
 <meta name="description" content="Crea un clip cuadrado con sonido desde un video, imagen o GIF.">
 <title>Stickers Sonoros · Editor web</title>
 <link rel="stylesheet" href="./style.css">
+<script defer src="./vendor/shirtep/convert.js"></script>
 <script type="module" src="./app.js"></script>
 </head>
 <body>
@@ -47,11 +48,12 @@
 <div class="heading"><h2 id="preview-title">Vista previa</h2><span>512 × 512</span></div>
 <div class="stage"><canvas id="canvas" width="512" height="512" aria-label="Encuadre del clip"></canvas><video id="output" controls playsinline hidden></video><div id="empty"><div class="waves" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b><b></b><b></b></div><strong>Tu clip aparecerá aquí</strong></div></div>
 <div id="downloads" hidden><a id="download" class="primary">Descargar video ↓</a><button id="share" type="button" hidden>Compartir como video</button></div>
+<section id="components" hidden><button type="button" id="prepare-sticker">Generar WebP y audio del sticker</button><p id="sticker-state" role="status"></p><div id="sticker-files" hidden><a download="sticker.webp" id="webp-file">Descargar WebP</a> · <a download="sonido.ogg" id="ogg-file">Descargar audio Ogg</a></div><small>Estos dos archivos contienen la animación y el sonido. WhatsApp los vincula al crear el mensaje en un chat compatible.</small></section>
 <details id="native" hidden open><summary>Crear el sticker con audio en WhatsApp</summary><ol><li>Guarda el clip en la galería del teléfono con el botón de descarga.</li><li>En el chat de WhatsApp, abre el teclado de stickers, toca <b>Crear</b> y selecciona el video de la galería.</li><li>Si aparece <b>Añadir sonido</b>, elige conservar el audio original y envía el sticker.</li></ol><p>Esta opción depende de la versión y de tu cuenta. Si todavía no aparece, puedes compartir el clip como video con sonido.</p></details>
 <p class="note">Edita el clip en el navegador. La creación del sticker con audio se completa en las versiones compatibles de WhatsApp para teléfono.</p>
 </section>
 </div>
 </main>
-<footer>Inspirado en <a href="https://github.com/Shirtep/WA-audio-stickers">Stickers con sonido, de Shirtep</a>.</footer>
+<footer>Conversor de <a href="https://github.com/Shirtep/WA-audio-stickers">Stickers con sonido, de Shirtep</a> · <a href="./vendor/shirtep/LICENSE.md">Licencia de uso no comercial</a>.</footer>
 </body>
 </html>

@@ -33,7 +33,19 @@ function closeVisual(item) {
   if (item.url) URL.revokeObjectURL(item.url);
 }
 
+let stickerJob;
+let clipDuration;
 function clearResult() {
+  stickerJob?.abort();
+  byId('components').hidden = true;
+  byId('prepare-sticker').disabled = false;
+  byId('sticker-state').textContent = '';
+  byId('sticker-files').hidden = true;
+  for (const id of ['webp-file', 'ogg-file']) {
+    const link = byId(id);
+    if (link.hasAttribute('href')) URL.revokeObjectURL(link.href);
+    link.removeAttribute('href');
+  }
   output.pause();
   output.removeAttribute('src');
   output.load();
@@ -388,6 +400,8 @@ byId('project').addEventListener('submit', async event => {
     const type = blob.type.split(';')[0];
     const extension = type === 'video/mp4' ? 'mp4' : 'webm';
     result = new File([blob], 'sticker-sonoro.' + extension, { type });
+    clipDuration = soundTrim.duration;
+    byId('components').hidden = false;
     resultUrl = URL.createObjectURL(result);
     output.src = resultUrl;
     output.hidden = false;
@@ -512,3 +526,33 @@ byId('capture').onclick = async () => {
     linkStatus.textContent = error.name === 'NotAllowedError' ? 'Captura cancelada o sin permiso.' : error.message;
   }
 };
+
+byId('prepare-sticker').addEventListener('click', async () => {
+  if (!result) return;
+  const button = byId('prepare-sticker');
+  const state = byId('sticker-state');
+  const controller = new AbortController();
+  stickerJob = controller;
+  button.disabled = true;
+  try {
+    const caps = await window.WAAS.capabilities();
+    if (caps.opus !== true || caps.webpEncode !== 'image/webp') {
+      throw new Error('Este navegador necesita compatibilidad con WebP y Opus. Prueba Chrome o Edge actualizado.');
+    }
+    if (controller.signal.aborted) return;
+    const files = await window.WAAS.convert({
+      file: result, duration: clipDuration, signal: controller.signal,
+      onProgress(message) { if (!controller.signal.aborted) state.textContent = message; }
+    });
+    if (controller.signal.aborted) return;
+    byId('webp-file').href = URL.createObjectURL(files.webp);
+    byId('ogg-file').href = URL.createObjectURL(files.ogg);
+    byId('sticker-files').hidden = false;
+    state.textContent = 'Sticker preparado. Puedes guardar la animación y el sonido.';
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      state.textContent = error.message;
+      button.disabled = false;
+    }
+  }
+});

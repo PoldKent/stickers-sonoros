@@ -97,7 +97,7 @@ File processing is local by default. The importer accesses the supplied public U
 
 ## ❤️ Support the project
 
-To voluntarily support noncommercial maintenance, see [BBTC donation instructions on Ethereum (ERC-20)](SUPPORT.md#english). Do not send native BTC or other tokens. The app does not sell features, require payment or automate transfers.
+To voluntarily support noncommercial maintenance, see [USDC or BBTC donation instructions on Ethereum (ERC-20)](SUPPORT.md#english). Do not send native BTC, other tokens or use other networks. The app does not sell features, require payment or automate transfers.
 
 ## Credits and license
 

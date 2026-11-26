@@ -101,6 +101,13 @@ function sync() {
   // Hidden trim fields must not block form submission.
   for (const [ids,hidden] of [[['vs','ve'],byId('visual-trim').hidden],[['as','ae'],byId('audio-trim').hidden]]) for (const id of ids) { byId(id).required = !hidden; byId(id).disabled = hidden || busy; }
   for (const id of ['mark-start','mark-end','demo']) byId(id).disabled = busy || importing;
+  for (const id of ['vs','ve','as','ae']) {
+    const field=byId(id), slider=byId(id+'-slider');
+    slider.max=field.max || 1; slider.value=field.value;
+    slider.disabled=field.disabled || importing || !!stickerJob;
+  }
+  const step=nativePackage?3:busy||stickerJob||result?2:visual?1:0;
+  document.querySelectorAll('.workflow-strip span').forEach((el,i)=>{if(i===step)el.setAttribute('aria-current','step');else el.removeAttribute('aria-current');});
   selectionInfo();
   canvas.classList.toggle('ready', !!visual);
 }
@@ -239,7 +246,7 @@ async function readVisual(file, selectedMode) {
       const count = decoder.tracks.selectedTrack.frameCount;
       const ends = [];
       let duration = 0;
-      for (let frameIndex = 0; frameIndex < Math.min(count, 1200) && duration < 120; frameIndex++) {
+      for (let frameIndex = 0; frameIndex < count; frameIndex++) {
         const { image } = await decoder.decode({ frameIndex });
         duration += Math.max(.02, (image.duration || 100000) / 1e6);
         ends.push(duration);
@@ -409,7 +416,14 @@ async function gifAt(item, time) {
   return image;
 }
 
+let pendingPreview, previewActive=false;
 async function previewFrame(at) {
+  pendingPreview=at;
+  if(previewActive)return;
+  previewActive=true;
+  try{do{const next=pendingPreview;pendingPreview=undefined;await drawPreviewFrame(next);}while(pendingPreview!==undefined);}finally{previewActive=false;}
+}
+async function drawPreviewFrame(at) {
   if (!visual || busy) return;
   stopSourcePreview();
   const item = visual;
@@ -1038,7 +1052,17 @@ function selectionInfo() {
 
   } catch (error) { info.textContent = error.message; byId('export').disabled = true; }
 }
-for (const id of ['vs','ve','as','ae']) byId(id).addEventListener('input', () => { clearResult(); sync(); });
+for (const id of ['vs','ve','as','ae']) {
+  const field=byId(id), slider=byId(id+'-slider');
+  field.addEventListener('input', () => { clearResult(); sync(); });
+  slider.addEventListener('input', () => {
+    const prefix=id[0], start=byId(prefix+'s'), end=byId(prefix+'e');
+    const value=slider.valueAsNumber;
+    field.value=(id.endsWith('s')?Math.min(value,end.valueAsNumber-.01):Math.max(value,start.valueAsNumber+.01)).toFixed(2);
+    clearResult(); sync();
+    if(prefix==='v'){byId('scrub').value=field.value;updateScrub();}
+  });
+}
 byId('mark-start').onclick = () => {
   if (busy || !visual) return;
   const start = byId('scrub').valueAsNumber;
@@ -1282,7 +1306,8 @@ byId('package-download').onclick=async()=>{
     const {lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl}=files.info;
     const blob=new Blob([JSON.stringify({format:'stickers-sonoros/1',webp,ogg,info:{lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl}})],{type:'application/json'});
     const url=URL.createObjectURL(blob), link=document.createElement('a');
-    link.href=url;link.download='sticker.sonoro.json';document.body.append(link);link.click();link.remove();
+    const name=(visual?.name || 'sticker').replace(/\.[^.]+$/,'').replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/g,'_').trim().slice(0,120) || 'sticker';
+    link.href=url;link.download=name+'.sonoro.json';document.body.append(link);link.click();link.remove();
     setTimeout(()=>URL.revokeObjectURL(url),30000);
     byId('bridge-status').textContent='Archivo preparado para descargar. Continúa con el paso 2 si es tu primera vez, o con el paso 3 si ya tienes el favorito.';
   }catch(e){byId('bridge-status').textContent=e.message||'No se pudo guardar el paquete.';}

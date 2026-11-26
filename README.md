@@ -18,9 +18,9 @@ Video, imagen o GIF + audio · sin duración fija · Español / English.
 ![Flujo: importar, editar, crear y enviar](docs/images/workflow.svg)
 
 1. Pega un enlace multimedia HTTPS o selecciona un archivo de tu dispositivo.
-2. Reproduce el tramo, elige el inicio y el final (hasta 60 s) y ajusta el encuadre, posición o zoom.
+2. Reproduce el tramo, elige el inicio y el final (sin duración fija) y ajusta el encuadre, posición o zoom.
 3. Pulsa **Crear sticker sonoro**. El editor prepara localmente un paquete con WebP y Ogg/Opus vinculados, si el navegador dispone de los códecs necesarios.
-4. Sigue los cuatro pasos de envío que aparecen debajo de la vista previa. La única descarga del editor es `sticker.sonoro.json`.
+4. Sigue los cuatro pasos de envío que aparecen debajo de la vista previa. La única descarga del editor es `nombre-original.sonoro.json`.
 
 ## Firma del sticker
 
@@ -32,7 +32,7 @@ Los controles de posición se expresan en píxeles del lienzo de 512 × 512 y ad
 
 ## Calidad del sticker
 
-**Calidad ampliada:** permite hasta 4.000.000 bytes combinados entre WebP y Ogg (sin límite separado de audio en modo ampliado), con mayor calidad inicial y más FPS de captura para clips cortos. El modo Compatible es opcional y limita cada componente a 1 MB. La aceptación de imágenes de más de 1 MB por WhatsApp no está verificada; el conversor original advierte de HTTP 413. Sustituye el favorito para probar paquetes grandes, primero en tu propio chat. Si falla, vuelve al modo Compatible. El JSON Base64 pesa más que los medios originales.
+**Calidad ampliada (predeterminada):** permite hasta 4.000.000 bytes combinados entre WebP y Ogg (sin límite separado de audio en modo ampliado), con mayor calidad inicial y más FPS de captura para clips cortos. El modo Compatible es opcional y limita cada componente a 1 MB. La aceptación de imágenes de más de 1 MB por WhatsApp no está verificada; el conversor original advierte de HTTP 413. Sustituye el favorito para probar paquetes grandes, primero en tu propio chat. Si falla, vuelve al modo Compatible. El JSON Base64 pesa más que los medios originales.
 
 El modo predeterminado **Máxima nitidez** prioriza la resolución (objetivo 512 px, resolución adaptativa), con una frecuencia de muestreo y codificación de al menos **9 FPS** en animaciones, también para clips largos. No se inventan fotogramas distintos si el origen es estático o tiene menos movimiento. Todos los perfiles mantienen al menos 9 FPS; si no cabe en el presupuesto, no se exporta. **Equilibrado** y **Máxima fluidez** permiten otras combinaciones. La calidad final depende del contenido y del límite elegido; no se garantiza HD en todos los vídeos. Si no cabe, reduce la duración o usa fotograma + audio. La vista del resultado indica la resolución y los FPS reales.
 
@@ -51,7 +51,7 @@ Si falla una importación de TikTok, se ofrece [SnapTik](https://snaptik.fi/) co
 
 ### Computadora (WhatsApp Web)
 
-1. **Guarda tu sticker.** Pulsa **Guardar sticker sonoro** para descargar `sticker.sonoro.json`. No abras el archivo ni lo adjuntes al chat.
+1. **Guarda tu sticker.** Pulsa **Guardar sticker sonoro** para descargar `nombre-original.sonoro.json`. No abras el archivo ni lo adjuntes al chat.
 2. **Prepara el botón de envío (solo la primera vez).** Muestra la barra de favoritos con Ctrl + Shift + B (Mac: ⌘ + Shift + B) y arrastra el enlace **Enviar sticker sonoro** de la app a esa barra. Si no puedes arrastrarlo, pulsa **Copiar dirección del marcador**, crea un favorito nuevo llamado Enviar sticker sonoro y pega la dirección en su campo URL. Si ya tienes el favorito, salta este paso.
 3. **Abre el chat de WhatsApp.** Pulsa **Abrir WhatsApp Web**, inicia sesión y abre el chat deseado. Para tu primera prueba, usa tu propio chat.
 4. **Selecciona el archivo y envía.** Dentro de WhatsApp Web, pulsa el favorito, selecciona el archivo del paso 1 y pulsa **Enviar sticker con sonido**. Si se ofrece Activar compatibilidad con sonido, márcala antes de enviar. Confirma el destinatario y comprueba la reproducción.

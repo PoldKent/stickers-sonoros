@@ -49,7 +49,7 @@ try {
   assert(sizes.every(size=>size>0)&&sizes.reduce((a,b)=>a+b,0)<=4000000);
   // Export the actual converted package and execute the bookmarklet against mock WA modules.
   const [download] = await Promise.all([page.waitForEvent('download'),page.locator('#package-download').click()]);
-  assert.equal(download.suggestedFilename(),'sticker.sonoro.json');
+  assert.equal(download.suggestedFilename(),'ejemplo.sonoro.json');
   const packageBytes=readFileSync(await download.path());
   const pack=JSON.parse(packageBytes.toString('utf8'));
   assert.equal(pack.format,'stickers-sonoros/1');
@@ -131,27 +131,27 @@ try {
   assert.deepEqual(await wa.evaluate(()=>[window.mockCalls.uploads,window.mockCalls.sends]),[1,1]);
   assert.equal(await send.isDisabled(),true);
   assert.equal(await wa.evaluate(()=>window.require('WAWebSoundStickerGating').isSoundStickerCreationEnabled()),false);
-  // A real 60-second image+audio package, produced by the shipped converter.
+  // A real 61-second image+audio package, produced by the shipped converter.
   const longPack=await page.evaluate(async()=>{
     const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
     const ctx=canvas.getContext('2d');ctx.fillStyle='#5845a3';ctx.fillRect(0,0,128,128);
     const image=new File([await new Promise(r=>canvas.toBlob(r,'image/png'))],'long.png',{type:'image/png'});
-    const samples=60*48000, bytes=new ArrayBuffer(44+samples*2), d=new DataView(bytes);
+    const samples=61*48000, bytes=new ArrayBuffer(44+samples*2), d=new DataView(bytes);
     const ascii=(at,s)=>{for(let i=0;i<s.length;i++)d.setUint8(at+i,s.charCodeAt(i));};
     ascii(0,'RIFF');d.setUint32(4,bytes.byteLength-8,true);ascii(8,'WAVE');ascii(12,'fmt ');
     d.setUint32(16,16,true);d.setUint16(20,1,true);d.setUint16(22,1,true);d.setUint32(24,48000,true);d.setUint32(28,96000,true);d.setUint16(32,2,true);d.setUint16(34,16,true);ascii(36,'data');d.setUint32(40,samples*2,true);
     for(let i=0;i<samples;i++)d.setInt16(44+i*2,Math.round(Math.sin(2*Math.PI*440*i/48000)*3000),true);
     const audio=new File([bytes],'long.wav',{type:'audio/wav'});
-    const out=await window.WAAS.convert({visual:{kind:'image',file:image,start:0,dur:60},audio:{file:audio,start:0,dur:60},fit:'repetir'});
+    const out=await window.WAAS.convert({visual:{kind:'image',file:image,start:0,dur:61},audio:{file:audio,start:0,dur:61},fit:'repetir'});
     const encode=async blob=>{const u=new Uint8Array(await blob.arrayBuffer());let s='';for(let i=0;i<u.length;i+=16384)s+=String.fromCharCode(...u.subarray(i,i+16384));return btoa(s);};
     return {format:'stickers-sonoros/1',webp:await encode(out.webp),ogg:await encode(out.ogg),info:out.info};
   });
-  assert.equal(longPack.info.segundosAudio,60);
+  assert.equal(longPack.info.segundosAudio,61);
   assert.equal(longPack.info.lado,512);
   assert(Buffer.from(longPack.webp,'base64').length<=1000000);
   assert(Buffer.from(longPack.ogg,'base64').length<=1000000);
   await panel.locator('input[type=file]').setInputFiles({name:'long.sonoro.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(longPack))});
-  await wa.waitForFunction(()=>document.querySelector('#ss-local-bridge [role=status]').textContent.includes('60 s'));
+  await wa.waitForFunction(()=>document.querySelector('#ss-local-bridge [role=status]').textContent.includes('61 s'));
   await wa.evaluate(()=>{window.mockCalls.enabled=true;});
   await send.click();
   await panel.getByText('WhatsApp confirmó el envío.',{exact:false}).waitFor();
@@ -329,6 +329,7 @@ try {
     await qualityPage.goto('http://127.0.0.1:8000');
     await qualityPage.locator('#visual').setInputFiles(file);
     await qualityPage.waitForFunction(()=>!document.querySelector('#export').disabled);
+    await qualityPage.locator('#size-budget').selectOption('compatible');
     await qualityPage.locator('#export').click();
     await qualityPage.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
     const result=await qualityPage.evaluate(async()=>{
@@ -476,6 +477,8 @@ try {
     await durations.locator('#ve').dispatchEvent('change');
     await durations.waitForFunction(()=>!document.querySelector('#export').disabled);
     assert.match(await durations.locator('#selection-info').textContent(),/61\.00 s/);
+    await durations.locator('#ve-slider').fill('45');
+    assert.equal(Number(await durations.locator('#ve').inputValue()),45);
   }finally{await durations.close();rmSync(temp,{recursive:true,force:true});}
   // Mobile layout and language switch preserve the active media and project.
   for(const width of [320,390,740,1024]){

@@ -1,5 +1,6 @@
 """Servicio de importación para contenido público que el usuario puede descargar."""
 import json
+import math
 from importlib.metadata import version as package_version, PackageNotFoundError
 import os
 import re
@@ -36,11 +37,10 @@ STATIC_FILES = {
     "/vendor/shirtep/LICENSE.md": ("vendor/shirtep/LICENSE.md", "text/plain; charset=utf-8"),
 }
 MAX_BYTES = 80 * 1024 * 1024
-MAX_DURATION = 600
 # Sort by the short edge; vertical videos must not be filtered by height.
 FORMAT_SELECTOR = "bv*+ba/b"
 FORMAT_SORT = "res:480,vcodec:h264,acodec:aac"
-SERVICE_VERSION = '2026.11.26.30'
+SERVICE_VERSION = '2026.11.26.31'
 try:
     DOWNLOADER_VERSION = package_version('yt-dlp')
 except PackageNotFoundError:
@@ -91,7 +91,7 @@ def classify_download_error(log, returncode=1):
     if any(x in msg for x in ("private video", "login required", "sign in", "login to", "cookies", "age-restricted", "members-only")):
         return ImportFailure("SOURCE_ACCESS", "La plataforma exige iniciar sesión o concede acceso restringido a este video. Importa un archivo que tengas permiso para utilizar.")
     if "does not pass filter" in msg or "does not pass the filter" in msg or "duration <= 600" in msg:
-        return ImportFailure("SOURCE_DURATION", "El video supera 10 minutos, es una transmisión en directo o no cumple el límite de duración.")
+        return ImportFailure("SOURCE_DURATION", "El video no tiene una duración válida o es una transmisión en directo.")
     if any(x in msg for x in ("larger than max-filesize", "larger than max", "file size limit", "max-filesize", "file too large")):
         return ImportFailure("SOURCE_SIZE", "El video supera el tamaño permitido para la descarga. Selecciona un archivo más corto o comprimido.")
     if any(x in msg for x in ("http error 429", "too many requests", "http error 403", "forbidden")):
@@ -129,7 +129,7 @@ def fetch_video(url, directory):
         "yt-dlp", "--ignore-config", "--no-cache-dir", "--no-playlist",
         "--no-progress", "--socket-timeout", "10",
         "--retries", "1", "--fragment-retries", "1", "--max-filesize", "50M",
-        "--match-filters", f"duration <= {MAX_DURATION} & !is_live",
+        "--match-filters", "!is_live",
         "--js-runtimes", "node",
         "-f", FORMAT_SELECTOR, "-S", FORMAT_SORT,
         "--merge-output-format", "mp4/mkv", "-o", src, "--", url,
@@ -155,8 +155,8 @@ def fetch_video(url, directory):
         probe = json.loads(probe_log) if probe_rc == 0 else {}
         streams = probe["streams"]
         duration = float(probe["format"]["duration"])
-        if not 0 < duration <= MAX_DURATION + 1:
-            raise ImportFailure("SOURCE_DURATION", "El video supera el máximo de 10 minutos.")
+        if not math.isfinite(duration) or duration <= 0:
+            raise ImportFailure("SOURCE_DURATION", "El video no tiene una duración válida o es una transmisión en directo.")
         video_codec = next((s["codec_name"] for s in streams if s["codec_type"] == "video"), None)
         audio_codec = next((s["codec_name"] for s in streams if s["codec_type"] == "audio"), None)
         if not video_codec or not audio_codec:
@@ -212,7 +212,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         route = urlsplit(self.path).path
         if route == "/health":
-            self.reply(200, {"ok": True, "version": SERVICE_VERSION, "maxDuration": MAX_DURATION, "downloader": DOWNLOADER_VERSION, "publicMedia": True, "tiktokPublicDownload": True})
+            self.reply(200, {"ok": True, "version": SERVICE_VERSION, "maxDuration": None, "downloader": DOWNLOADER_VERSION, "publicMedia": True, "tiktokPublicDownload": True})
             return
         asset = STATIC_FILES.get(route)
         if not asset:

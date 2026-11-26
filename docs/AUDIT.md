@@ -48,3 +48,7 @@ Perfiles de calidad con ranking de resolución/FPS, captura adaptativa y hasta c
 Editor y puente: sin límite fijo de 60 s; todos los perfiles de animación mantienen al menos 9 FPS. Presupuesto ampliado predeterminado de 4.000.000 bytes combinados. Compatible sigue disponible para WhatsApp. Las imágenes fijas no son animaciones. Los límites de importación, memoria y aceptación externa son independientes. La envoltura JSON pesa más. La publicación requiere confirmar CI y dispositivos reales.
 
 Editor and local bridge: no fixed 60-second cutoff; every animation quality profile targets at least 9 FPS. Default extended budget: 4,000,000 combined WebP and Ogg bytes. Optional compatible profile remains for WhatsApp. Static images are not animations. Source import limits, browser memory and external acceptance remain separate constraints. The JSON envelope is larger than the media. Deployment and physical-device tests remain required.
+
+### 2026.11.26.31
+
+Se actualizan diagramas y README, nombre de descarga basado en el original, controles deslizantes de recorte y estado visual del flujo. El importador deja de imponer 10 minutos, pero conserva límites de bytes, tiempo de solicitud y protección de red. Se mantiene un límite explícito de memoria de captura, no un límite de segundos. / Updated diagrams, source-based filenames, trim sliders and workflow state; import duration cutoff removed while keeping byte, request-time and network protections. Capture memory remains bounded. Added regression checks for a 61-second package and trim sliders.

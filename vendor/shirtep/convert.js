@@ -842,6 +842,7 @@
 
     const captureFps = captureFpsFor(dur, profile, base.extended);
     const slots = Math.ceil(capDur * captureFps);
+    if (slots * 64 * 64 * 4 > CAPTURE_MEM_BYTES) throw new Error('El tramo supera la memoria de captura disponible. Reduce la resolución del archivo original o acorta el tramo.');
     const captureSide = Math.max(64, Math.min(SIDE, Math.floor(Math.sqrt(CAPTURE_MEM_BYTES / (4 * slots)))));
     log("info", "analizar:parametros", {
       tipo: visual.kind, archivo: visual.file.name, bytes: visual.file.size, inicio: visual.start || 0, duracionImagen: vDur,

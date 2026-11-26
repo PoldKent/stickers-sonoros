@@ -20,7 +20,7 @@ Video, image or GIF + audio · no fixed duration limit · Español / English.
 1. Paste a public HTTPS media link or choose a local file.
 2. Preview the selection, set start and end (no fixed duration limit), and adjust framing, position or zoom.
 3. Select **Create sound sticker**. The editor locally creates a package containing linked WebP and Ogg/Opus files when the browser supports the required codecs.
-4. Follow the four sending steps under the preview. The editor's only download is `sticker.sonoro.json`.
+4. Follow the four sending steps under the preview. The editor's only download is `original-name.sonoro.json`.
 
 ## Sticker signature
 
@@ -32,7 +32,7 @@ Position controls use pixels of the 512 × 512 canvas, with 0.1 px steps; zoom u
 
 ## Sticker quality
 
-**Extended quality:** allows up to 4,000,000 combined WebP and Ogg bytes (no separate audio cap in extended mode), with higher initial quality and capture FPS for short clips. Compatible is optional and limits each component to 1 MB. WhatsApp acceptance of images over 1 MB is unverified; the upstream converter warns of HTTP 413. Replace the bookmark to try larger packages, first in your own chat. If rejected, use Compatible. Base64 JSON is larger than the original media.
+**Extended quality (default):** allows up to 4,000,000 combined WebP and Ogg bytes (no separate audio cap in extended mode), with higher initial quality and capture FPS for short clips. Compatible is optional and limits each component to 1 MB. WhatsApp acceptance of images over 1 MB is unverified; the upstream converter warns of HTTP 413. Replace the bookmark to try larger packages, first in your own chat. If rejected, use Compatible. Base64 JSON is larger than the original media.
 
 The default **Maximum sharpness** mode prioritizes resolution (512 px target; adaptive resolution), with a minimum **9 FPS** sampling and encoding rate for animations, including long clips. Static or low-motion sources do not gain artificial distinct frames. All profiles maintain at least 9 FPS; if the budget cannot be met, export fails. **Balanced** and **Maximum smoothness** offer other tradeoffs. Output depends on content and the selected size limit; HD is not guaranteed for every clip. Shorten the selection or use frame + audio if needed. Actual resolution and FPS appear in the result.
 
@@ -51,7 +51,7 @@ If TikTok import fails, [SnapTik](https://snaptik.fi/) is offered as an external
 
 ### Desktop (WhatsApp Web)
 
-1. **Save your sticker.** Click **Save sound sticker** to download `sticker.sonoro.json`. Do not open it or attach it to a chat.
+1. **Save your sticker.** Click **Save sound sticker** to download `original-name.sonoro.json`. Do not open it or attach it to a chat.
 2. **Set up the send button (first time only).** Show the bookmarks bar with Ctrl + Shift + B (Mac: ⌘ + Shift + B) and drag the app's **Send sound sticker** link onto it. If dragging is unavailable, click **Copy bookmark address**, create a bookmark named Send sound sticker, and paste the address into its URL field. Skip this step if you already have the bookmark.
 3. **Open the WhatsApp chat.** Click **Open WhatsApp Web**, sign in and open the recipient's chat. For the first test, use your own chat.
 4. **Choose the file and send.** In WhatsApp Web, click the bookmark, choose the file from step 1 and click **Send sticker with sound**. If Enable sound compatibility is offered, check it before sending. Confirm the recipient and check playback.

@@ -20,10 +20,10 @@ Crear un sticker con sonido en el teléfono y enviarlo desde la aplicación ofic
 2. Registrar versión, disponibilidad del selector de audio, reproducción en chat propio y recepción desde otra cuenta.
 3. Si el editor permite sonido, investigar un flujo de transferencia explícita del clip desde la web al editor nativo; no etiquetar un envío de vídeo como sticker.
 4. Si existe un contrato oficial de importación sonora, crear un prototipo nativo aislado con consentimiento y sin copiar credenciales. Una PWA o un wrapper nativo por sí solos no añaden soporte al protocolo.
-5. Validar clips de 2, 10, 30 y 60 segundos y resoluciones reales, límites de tamaño, envío, reenvío y reproducción.
+5. Validar clips de 2, 10, 30, 60 y 180 segundos y resoluciones reales, límites de tamaño, envío, reenvío y reproducción.
 
 No se modificarán permisos de cuenta, no se extraerán sesiones ni se añadirá un cliente no oficial en el servidor. El paquete actual sigue disponible para WhatsApp Web. El envío directo móvil aún no está implementado.
 
 ## English summary
 
-The goal is a real sound sticker sent from the official mobile app, not a video attachment. Public Android/iOS sticker-pack samples do not document the audio linkage. Test the official phone editor on actual devices first; investigate an authorized handoff or documented native sound-sticker import if available. Validate 2–60-second clips, size, playback and receiving-account compatibility before shipping. No session extraction, server-side unofficial client, or automatic sending. Existing desktop sending remains unchanged.
+The goal is a real sound sticker sent from the official mobile app, not a video attachment. Public Android/iOS sticker-pack samples do not document the audio linkage. Test the official phone editor on actual devices first; investigate an authorized handoff or documented native sound-sticker import if available. Validate 2–180-second clips, size, playback and receiving-account compatibility before shipping. No session extraction, server-side unofficial client, or automatic sending. Existing desktop sending remains unchanged.

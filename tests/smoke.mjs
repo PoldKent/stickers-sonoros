@@ -31,6 +31,8 @@ try {
   });
   assert.deepEqual(rank,{sharp:256,smooth:64,limit:9,reject:0,floor:9,belowFloor:0,has9:true,capture:[20,20,12,10,9,9],image:1});
   assert.equal(await page.locator('#quality').inputValue(),'sharp');
+  assert.equal(await page.locator('#size-budget').inputValue(),'compatible');
+  assert.deepEqual(await page.evaluate(()=>{const x=window.WAAS._internals;return [x.webpBudget(false,123456),x.webpBudget(true,123456),x.captureFpsFor(10,'sharp',true),x.captureFpsFor(60,'sharp',true)];}),[1000000,3876544,30,9]);
   const caps=await page.evaluate(()=>window.WAAS.capabilities());
   assert.equal(caps.opus,true,'Chromium must support Opus');
   assert.equal(caps.webpEncode,'image/webp');
@@ -165,6 +167,24 @@ try {
   await enSend.click();
   await panel.getByText('WhatsApp confirmed the send.',{exact:false}).waitFor();
   assert.deepEqual(await wa.evaluate(()=>[window.mockCalls.uploads,window.mockCalls.sends]),[3,3]);
+  // A structural WebP fixture with a JUNK chunk tests large-package transport, not real WhatsApp acceptance.
+  function paddedPackage(target) {
+    const old=Buffer.from(pack.webp,'base64'), pad=target-old.length-8;
+    assert(pad>=0&&pad%2===0);
+    const bytes=Buffer.concat([old,Buffer.from('JUNK'),Buffer.alloc(4),Buffer.alloc(pad)]);
+    bytes.writeUInt32LE(pad,old.length+4);bytes.writeUInt32LE(bytes.length-8,4);
+    return Buffer.from(JSON.stringify({...pack,webp:bytes.toString('base64')}));
+  }
+  const audioSize=Buffer.from(pack.ogg,'base64').length;
+  const maxWebp=Math.floor((4000000-audioSize)/2)*2;
+  await panel.locator('input[type=file]').setInputFiles({name:'large.sonoro.json',mimeType:'application/json',buffer:paddedPackage(maxWebp)});
+  await wa.waitForFunction(()=>!document.querySelector('#ss-local-bridge button').disabled);
+  await enSend.click();
+  await panel.getByText('WhatsApp confirmed the send.',{exact:false}).waitFor();
+  assert.deepEqual(await wa.evaluate(()=>[window.mockCalls.uploads,window.mockCalls.sends]),[4,4]);
+  await panel.locator('input[type=file]').setInputFiles({name:'oversize.sonoro.json',mimeType:'application/json',buffer:paddedPackage(maxWebp+2)});
+  await panel.getByText('The sticker and its audio exceed 4 MB.',{exact:true}).waitFor();
+  assert.equal(await enSend.isDisabled(),true);
   await wa.close();
   await page.locator('#language').selectOption('es');
   await page.route('**/health',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,version:'2026.11.26.5'})}));

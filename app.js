@@ -519,7 +519,7 @@ const socialHosts = /^(?:(?:www|m|vm|vt)\.tiktok\.com|tiktok\.com|(?:www\.)?inst
 const configuredEndpoint = document.querySelector('meta[name="sticker-import-endpoint"]')?.content.trim() || '';
 // Deployment configuration belongs to the administrator, never to the user.
 const isPages = location.hostname.endsWith('.github.io');
-const importEndpoint = configuredEndpoint || (!isPages ? location.origin : '');
+const importEndpoint = isPages ? configuredEndpoint : location.origin;
 try { localStorage.removeItem('sticker-import-endpoint'); } catch {}
 let linkTimer;
 let lastLink = '';

@@ -81,6 +81,8 @@ function sync() {
   byId('scrub-row').hidden = !visual || visual.kind === 'image';
   byId('source-preview').hidden = !visual || !audio || loadingVisual || loadingAudio || busy || importing || !!result;
   byId('play-source').disabled = busy || importing;
+  byId('use-frame').hidden = !visual || visual.kind === 'image' || !audio;
+  byId('use-frame').disabled = busy || importing || loadingVisual || loadingAudio;
   byId('trim-actions').hidden = byId('scrub-row').hidden;
   // Hidden trim fields must not block form submission.
   for (const [ids,hidden] of [[['vs','ve'],byId('visual-trim').hidden],[['as','ae'],byId('audio-trim').hidden]]) for (const id of ids) { byId(id).required = !hidden; byId(id).disabled = hidden || busy; }
@@ -549,7 +551,7 @@ function inferredType(url) {
 function detectedType(response, hint = '') {
   const declared = (response.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
   if (mediaKind(declared)) return declared;
-  if (declared === 'application/octet-stream' || !declared) return hint || inferredType(response.url);
+  if (declared === 'application/octet-stream' || !declared) return (hint.endsWith('/unknown') ? '' : hint) || inferredType(response.url);
   return declared;
 }
 async function checkResponse(response) {
@@ -986,3 +988,28 @@ byId('play-source').onclick = async () => {
 // Set only after every handler has been registered.
 document.documentElement.dataset.editorReady = 'true';
 showLinkState(importEndpoint ? 'Pega un enlace para detectar video, imagen o audio.' : 'Importa un archivo de video mediante un enlace directo. YouTube, TikTok e Instagram requieren el servidor de descarga, todavía sin conectar.');
+
+byId('use-frame').onclick = async () => {
+  if (busy || importing || !visual || visual.kind==='image' || !audio) return;
+  stopSourcePreview();
+  try {
+    const cut = mode==='video' ? trimmed('v') : trimmed('a');
+    const original = visual;
+    const at = Math.max(0,Math.min(original.duration-.01,Number(byId('scrub').value)||0));
+    await previewFrame(at);
+    if (visual!==original) return;
+    const blob = await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+    if (!blob || visual!==original) return;
+    selectMediaMode('image',false,true);
+    byId('fit').value='contain';
+    byId('zoom').value=100;
+    byId('pan-x').value=byId('pan-y').value=0;
+    const loaded = await chooseVisual(new File([blob],'fotograma.png',{type:'image/png'}));
+    if (loaded && audio) {
+      byId('as').value=cut.start.toFixed(2);
+      byId('ae').value=(cut.start+cut.duration).toFixed(2);
+      sync();
+      status.textContent='Fotograma seleccionado con el audio original. Puedes ajustar el tramo sonoro.';
+    }
+  } catch (error) { status.textContent=error.message; }
+};

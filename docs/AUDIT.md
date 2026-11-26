@@ -42,3 +42,9 @@ Se retiran la exportación secundaria de vídeo, la descarga independiente WebP/
 ## Calidad y alternativa de importación — 2026.11.26.24
 
 Perfiles de calidad con ranking de resolución/FPS, captura adaptativa y hasta cuatro reintentos por tamaño; los límites de 1 MB permanecen. El modo nitidez rechaza animaciones inferiores a 192 px en lugar de degradarlas silenciosamente. Se incrementa la tasa solicitada de codificación del vídeo intermedio de 1,2 a 4 Mbps; no se elimina la doble codificación ni se implementan regiones diferenciales en esta versión. El botón SnapTik solo se muestra ante errores de importación de TikTok y abre el servicio externo manualmente. Se documenta la investigación móvil sin afirmar que exista un método nativo verificado.
+
+## 2026.11.26.30 — Simplificación / Simplification
+
+Editor y puente: sin límite fijo de 60 s; todos los perfiles de animación mantienen al menos 9 FPS. Presupuesto ampliado predeterminado de 4.000.000 bytes combinados. Compatible sigue disponible para WhatsApp. Las imágenes fijas no son animaciones. Los límites de importación, memoria y aceptación externa son independientes. La envoltura JSON pesa más. La publicación requiere confirmar CI y dispositivos reales.
+
+Editor and local bridge: no fixed 60-second cutoff; every animation quality profile targets at least 9 FPS. Default extended budget: 4,000,000 combined WebP and Ogg bytes. Optional compatible profile remains for WhatsApp. Static images are not animations. Source import limits, browser memory and external acceptance remain separate constraints. The JSON envelope is larger than the media. Deployment and physical-device tests remain required.

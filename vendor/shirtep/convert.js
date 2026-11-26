@@ -20,15 +20,15 @@
   const SAMPLE_RATE = 48000;
   const CAPTURE_MEM_BYTES = 320e6;     // memoria máxima para los cuadros capturados (10 s a 30 fps caben a 512 px)
   const SIDES = [512, 448, 384, 320, 256, 224, 192, 160, 128, 96, 64];
-  const FPS_LIST = [30, 25, 20, 15, 12, 10, 9, 8, 6, 5, 4, 3, 2];
+  const FPS_LIST = [30, 25, 20, 15, 12, 10, 9];
   const Q_MIN = 0.15;
   // Calidad WebP por lado: con menos píxeles conviene comprimir menos.
   const Q_BY_SIDE = { 512: 0.75, 448: 0.7, 384: 0.65, 320: 0.6, 256: 0.55, 224: 0.55, 192: 0.5, 160: 0.5, 128: 0.45, 96: 0.45, 64: 0.4 };
 
   const PROFILES = {
-    sharp: { minSide: 192, minFps: 9 },
-    balanced: { minSide: 128, minFps: 5 },
-    smooth: { minSide: 64, minFps: 8 }
+    sharp: { minSide: 64, minFps: 9 },
+    balanced: { minSide: 64, minFps: 9 },
+    smooth: { minSide: 64, minFps: 9 }
   };
   function profileOf(value) { return Object.hasOwn(PROFILES,value) ? value : "sharp"; }
   function score(side, fps, profile = "sharp") {
@@ -39,7 +39,7 @@
   function captureFpsFor(dur, profile = "sharp", extended = false) {
     if (extended && profile === "sharp") return dur <= 10 ? 30 : dur <= 20 ? 20 : dur <= 30 ? 15 : 9;
     if (profile === "sharp") return dur <= 10 ? 20 : dur <= 20 ? 12 : dur <= 30 ? 10 : 9;
-    if (profile === "balanced") return dur <= 10 ? 25 : dur <= 20 ? 20 : dur <= 40 ? 12 : 8;
+    if (profile === "balanced") return dur <= 10 ? 25 : dur <= 20 ? 20 : dur <= 40 ? 12 : 9;
     return dur <= 10 ? 30 : dur <= 20 ? 25 : dur <= 40 ? 20 : 15;
   }
   function rankedCells(cells, profile, isImage = false) {
@@ -559,7 +559,7 @@
     }
     log("info", "webp:intentos", { side, fps, intentos: attempts });
     if (!best || best.bytes.length > maxBytes) {
-      const error = new Error(`No cabe en el límite de tamaño ni con la calidad mínima (${Math.round(best?.bytes.length / 1000 || 0)} KB). Elige menos fps o menos resolución.`);
+      const error = new Error(`No cabe en el límite de tamaño ni con la calidad mínima (${Math.round(best?.bytes.length / 1000 || 0)} KB). Acorta el tramo o reduce la resolución.`);
       error.code = "STICKER_SIZE"; throw error;
     }
     return best;
@@ -930,8 +930,10 @@
     log("info", "crear:parametros", { side, fps, compensacionMs: syncMs, estatico: still, estimado: cell && cell.est, estado: cell && cell.estado });
 
     // Audio: la tasa de bits baja en clips largos para no pasar de 1 MB (límite de WhatsApp).
-    const bitrate = Math.max(12000, Math.min(32000, Math.floor((0.9 * MAX_AUDIO_BYTES * 8) / A.dur)));
-    if ((bitrate / 8) * A.dur > 0.97 * MAX_AUDIO_BYTES) throw new Error(`Con ${Math.round(A.dur)} s el audio no cabe en 1 MB (límite de WhatsApp). Máximo unos ${Math.floor((0.9 * MAX_AUDIO_BYTES * 8) / 12000 / 60)} minutos.`);
+    const audioBudget = an.extended ? MAX_TOTAL_BYTES - 65536 : MAX_AUDIO_BYTES;
+    const bitrate = Math.max(6000, Math.min(32000, Math.floor((0.9 * audioBudget * 8) / A.dur)));
+    if ((bitrate / 8) * A.dur > 0.97 * audioBudget) throw new Error('El audio no cabe en el presupuesto de tamaño. Reduce el tramo.');
+    if (an.visual.kind !== 'image' && !(fps >= 9)) throw new Error('Las animaciones requieren al menos 9 FPS.');
     prog("Extrayendo audio…", 0);
     // Un audio aparte se corta donde el usuario quiera: se suaviza el corte para evitar clics.
     const pcm = await extractAudio(A.file, A.start, A.dur, A.file !== an.visual.file ? 8 : 0);
@@ -939,7 +941,7 @@
     prog("Codificando audio…", 0.05);
     const { packets, preSkip, config } = await encodeOpus(pcm, bitrate);
     const ogg = buildOggOpus(packets, preSkip, pcm.length);
-    if (ogg.length > MAX_AUDIO_BYTES) throw new Error(`El audio pesa ${Math.round(ogg.length / 1000)} KB (máximo 1000 KB)`);
+    if (ogg.length > audioBudget) throw new Error('El audio no cabe en el presupuesto de tamaño. Reduce el tramo.');
     const soundSha = await sha256b64(ogg);
     const oggCheck = await verifyOgg(ogg);
     log(oggCheck.ok ? "info" : "error", "audio:ogg", { bytes: ogg.length, paquetes: packets.length, preSkip, config, verificacion: oggCheck, soundSha256: soundSha });
@@ -968,10 +970,11 @@
       const cells = rankedCells(an.cells, profile, an.visual.kind === "image")
         .filter(c => (side === "auto" || c.side === +side) && (fps === "auto" || c.fps === +fps));
       const sharpMotion = profile === "sharp" && an.visual.kind !== "image";
-      const sharpLimitMessage = extended ? "El tramo no cabe en 4 MB con al menos 9 FPS y 192 px. Acórtalo o cambia el modo de calidad." : "El tramo no cabe en 1 MB con al menos 9 FPS y 192 px. Acórtalo o cambia el modo de calidad.";
+      const sharpLimitMessage = "El tramo no cabe en el presupuesto de tamaño con al menos 9 FPS. Acórtalo o cambia el modo de calidad.";
       if (!cells.length) throw new Error(sharpMotion ? sharpLimitMessage : "El tramo no cabe con la calidad elegida. Acórtalo, cambia el modo de calidad o usa fotograma + audio.");
       let lastError;
-      for (const c of cells.slice(0,4)) {
+      const economical = [...cells].sort((a,b)=>a.side-b.side || a.fps-b.fps)[0];
+      for (const c of new Set([...cells.slice(0,4),economical])) {
         checkAbort(signal);
         try {
           const r = await create(an, { side: c.side, fps: c.fps, syncMs, still, packName, publisher, onProgress, signal });

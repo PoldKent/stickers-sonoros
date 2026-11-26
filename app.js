@@ -9,7 +9,6 @@ const labels = {
   image: ['Selecciona o arrastra una imagen', 'PNG, JPEG, WebP u otra imagen compatible', 'image/*'],
   mix: ['Selecciona o arrastra un video o GIF', 'MP4, WebM o GIF animado', 'video/*,image/gif']
 };
-const limit = 60;
 const maxLocalBytes = 80 * 1024 * 1024;
 const defaultTrim = 30;
 let mode = 'video';
@@ -428,7 +427,8 @@ byId('vs').addEventListener('change', () => { clearResult(); byId('scrub').value
 for (const id of ['ve','as','ae','motion','fit']) byId(id).addEventListener('change', clearResult);
 function updateScrub() { byId('scrub-time').textContent = Number(byId('scrub').value).toFixed(2) + ' s'; previewFrame(byId('scrub').valueAsNumber); }
 byId('scrub').addEventListener('change', updateScrub);
-byId('scrub').addEventListener('input', () => { byId('scrub-time').textContent = Number(byId('scrub').value).toFixed(2) + ' s'; });
+let scrubFrame = 0;
+byId('scrub').addEventListener('input', () => { byId('scrub-time').textContent = Number(byId('scrub').value).toFixed(2) + ' s'; cancelAnimationFrame(scrubFrame); scrubFrame = requestAnimationFrame(() => previewFrame(byId('scrub').valueAsNumber)); });
 
 function trimmed(prefix) {
   const start = byId(prefix + 's').valueAsNumber;
@@ -542,7 +542,7 @@ byId('project').addEventListener('submit', async event => {
     if (!window.MediaRecorder || !canvas.captureStream || !window.AudioContext) throw new Error('Este navegador no permite exportar el clip. Prueba con Chrome o Edge actualizado.');
     const videoTrim = visual.kind === 'image' ? null : trimmed('v');
     const soundTrim = mode === 'video' ? videoTrim : trimmed('a');
-    if (soundTrim.duration > limit + .0001) throw new Error('Selecciona un tramo de audio de hasta 60 segundos.');
+
     busy = true;
     clearResult();
     exportJob = new AbortController();
@@ -1028,14 +1028,14 @@ async function importLink(force) {
 
 function selectionInfo() {
   const info = byId('selection-info');
-  if (!visual || !audio) { info.textContent = 'Selecciona un archivo con audio. Máximo 60 segundos por sticker.'; return; }
+  if (!visual || !audio) { info.textContent = 'Selecciona un archivo con audio. Animaciones: mínimo 9 FPS; máximo 4 MB.'; return; }
   try {
     const t = mode === 'video' ? trimmed('v') : trimmed('a');
-    info.textContent = 'Duración: ' + t.duration.toFixed(2) + ' s de ' + limit + ' s permitidos.';
-    if (t.duration > 30 && t.duration <= limit) info.textContent += ' · La animación puede reducir su calidad para respetar el tamaño elegido.';
-    if (t.duration > limit + .0001) info.textContent += ' Reduce el tramo antes de generar.';
+    info.textContent = 'Duración: ' + t.duration.toFixed(2) + ' s.';
+    if (t.duration > 30) info.textContent += ' · La animación puede reducir su calidad para respetar el tamaño elegido.';
+
     if (visual.kind !== 'image' && mode !== 'video') trimmed('v');
-    if (t.duration > limit + .0001) byId('export').disabled = true;
+
   } catch (error) { info.textContent = error.message; byId('export').disabled = true; }
 }
 for (const id of ['vs','ve','as','ae']) byId(id).addEventListener('input', () => { clearResult(); sync(); });
@@ -1044,7 +1044,7 @@ byId('mark-start').onclick = () => {
   const start = byId('scrub').valueAsNumber;
   const max = Number(byId('ve').max);
   byId('vs').value = Math.min(start, max - .01).toFixed(2);
-  byId('ve').value = Math.min(max, Number(byId('vs').value) + limit).toFixed(2);
+  byId('ve').value = Math.max(Number(byId('ve').value), Math.min(max, Number(byId('vs').value) + .01)).toFixed(2);
   clearResult(); sync(); previewFrame(Number(byId('vs').value));
 };
 byId('mark-end').onclick = () => {
@@ -1053,7 +1053,7 @@ byId('mark-end').onclick = () => {
   const start = byId('vs').valueAsNumber;
   if (end <= start) { status.textContent = 'El final debe estar después del inicio.'; return; }
   byId('ve').value = end.toFixed(2);
-  if (mode === 'video' && end - start > limit) byId('vs').value = (end - limit).toFixed(2);
+
   clearResult(); sync();
 };
 const stickerAppUrl = 'https://poldkent.github.io/stickers-sonoros/';
@@ -1063,7 +1063,7 @@ function stickerAttribution() {
   return {packName:stickerPackName,publisher:signature ? signature+' · '+stickerAppUrl : stickerAppUrl,signature};
 }
 async function verifySticker(files) {
-  if (!files.webp?.size || !files.ogg?.size || files.ogg.size > 1000000 || (byId('size-budget').value === 'extended' ? files.webp.size + files.ogg.size > 4000000 : files.webp.size > 1000000)) throw new Error('Los archivos superan el límite del conversor o están vacíos.');
+  if (!files.webp?.size || !files.ogg?.size || files.webp.size + files.ogg.size > 4000000 || (byId('size-budget').value === 'compatible' && (files.webp.size > 1000000 || files.ogg.size > 1000000)) || (files.info?.tipo !== 'image' && !(files.info?.fps >= 9))) throw new Error('Los archivos superan el límite del conversor o están vacíos.');
   const webp = new Uint8Array(await files.webp.arrayBuffer());
   const ogg = new Uint8Array(await files.ogg.arrayBuffer());
   const read = (b,i,n) => String.fromCharCode(...b.subarray(i,i+n));
@@ -1124,7 +1124,7 @@ async function prepareSticker() {
     byId('quality-result').textContent = 'Calidad final: ' + info.lado + ' × ' + info.lado + ' px · ' + (info.fps || 1) + ' FPS' + (info.lado < 256 ? ' · Resolución reducida. Para mejorar la nitidez, elige un tramo más corto.' : '');
     byId('quality-result').hidden = false;
     byId('size-result').textContent = 'Peso total: '+((files.webp.size+files.ogg.size)/1000000).toFixed(2)+' MB';
-    byId('size-warning').hidden = files.webp.size <= 1000000;
+    byId('size-warning').hidden = files.webp.size <= 1000000 && files.ogg.size <= 1000000;
     byId('native-bridge').hidden = false;
     byId('sticker-files').hidden = false;
     state.textContent = 'Tu sticker está listo para enviar.';
@@ -1194,7 +1194,7 @@ byId('play-source').onclick = async () => {
   try {
     const v = item.kind === 'image' ? null : trimmed('v');
     const a = mode === 'video' ? v : trimmed('a');
-    if (a.duration > limit + .0001) throw new Error('Reduce el tramo a 60 segundos.');
+
     const context = new AudioContext();
     session = {context,item};
     previewSession = session;

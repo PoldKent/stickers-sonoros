@@ -29,9 +29,9 @@ try {
     const floor=[{side:512,fps:8,estado:'ok'},{side:384,fps:9,estado:'baja'},{side:192,fps:10,estado:'ok'}];
     return {sharp:rankedCells(cells,'sharp')[0].side,smooth:rankedCells(cells,'smooth')[0].side,limit:captureFpsFor(60,'sharp'),reject:rankedCells([cells[0]],'sharp').length,floor:rankedCells(floor,'sharp')[0].fps,belowFloor:rankedCells([floor[0]],'sharp').length,has9:window.WAAS.limits.FPS_LIST.includes(9),capture:[1,10,20,30,34,60].map(d=>captureFpsFor(d,'sharp')),image:rankedCells([{side:512,fps:1,estado:'ok'}],'sharp',true).length};
   });
-  assert.deepEqual(rank,{sharp:256,smooth:64,limit:9,reject:0,floor:9,belowFloor:0,has9:true,capture:[20,20,12,10,9,9],image:1});
+  assert.deepEqual(rank,{sharp:256,smooth:64,limit:9,reject:1,floor:9,belowFloor:0,has9:true,capture:[20,20,12,10,9,9],image:1});
   assert.equal(await page.locator('#quality').inputValue(),'sharp');
-  assert.equal(await page.locator('#size-budget').inputValue(),'compatible');
+  assert.equal(await page.locator('#size-budget').inputValue(),'extended');
   assert.deepEqual(await page.evaluate(()=>{const x=window.WAAS._internals;return [x.webpBudget(false,123456),x.webpBudget(true,123456),x.captureFpsFor(10,'sharp',true),x.captureFpsFor(60,'sharp',true)];}),[1000000,3876544,30,9]);
   const caps=await page.evaluate(()=>window.WAAS.capabilities());
   assert.equal(caps.opus,true,'Chromium must support Opus');
@@ -46,7 +46,7 @@ try {
   assert.equal(await page.locator('#wa-bookmark').isVisible(),true);
   await page.screenshot({path:'artifacts/screenshots/desktop-es.png',fullPage:true});
   const sizes = await page.evaluate(async()=>Promise.all(['sticker-image','sticker-audio'].map(async id=>(await (await fetch(document.getElementById(id).src)).blob()).size)));
-  assert(sizes.every(size=>size>0&&size<=1000000));
+  assert(sizes.every(size=>size>0)&&sizes.reduce((a,b)=>a+b,0)<=4000000);
   // Export the actual converted package and execute the bookmarklet against mock WA modules.
   const [download] = await Promise.all([page.waitForEvent('download'),page.locator('#package-download').click()]);
   assert.equal(download.suggestedFilename(),'sticker.sonoro.json');
@@ -336,7 +336,7 @@ try {
       await image.decode();
       return {side:image.naturalWidth,size:(await (await fetch(image.src)).blob()).size};
     });
-    assert(result.side>=192&&result.size<=1000000);
+    assert(result.side>=64&&result.size<=1000000);
     assert.match(await qualityPage.locator('#quality-result').textContent(),/Calidad final:/);
     const fps=Number((await qualityPage.locator('#quality-result').textContent()).match(/(\d+) FPS/)[1]);
     assert(fps>=9);
@@ -345,10 +345,10 @@ try {
     await qualityPage.locator('#export').click();
     await qualityPage.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
     const extendedSizes=await qualityPage.evaluate(async()=>Promise.all(['sticker-image','sticker-audio'].map(async id=>(await (await fetch(document.getElementById(id).src)).blob()).size)));
-    assert(extendedSizes[0]>0&&extendedSizes[1]>0&&extendedSizes[1]<=1000000&&extendedSizes[0]+extendedSizes[1]<=4000000);
+    assert(extendedSizes[0]>0&&extendedSizes[1]>0&&extendedSizes[0]+extendedSizes[1]<=4000000);
     assert(Number((await qualityPage.locator('#quality-result').textContent()).match(/(\d+) FPS/)[1])>=9);
     assert.match(await qualityPage.locator('#size-result').textContent(),/Peso total:/);
-    assert.equal(await qualityPage.locator('#size-warning').isVisible(),extendedSizes[0]>1000000);
+    assert.equal(await qualityPage.locator('#size-warning').isVisible(),(extendedSizes[0]>1000000||extendedSizes[1]>1000000));
     await qualityPage.locator('#quality').selectOption('balanced');
     assert.equal(await qualityPage.locator('#sticker-files').isVisible(),false);
   } finally {await qualityPage.close();rmSync(qualityTemp,{recursive:true,force:true});}
@@ -458,7 +458,7 @@ try {
     await crop.setViewportSize({width:320,height:800});
     assert(await crop.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
   }finally{await crop.close();}
-  // The editor permits a 30-second default, manual 60 seconds and rejects longer clips.
+  // The editor permits a 30-second default, manual selection beyond 60 seconds.
   const durations=await browser.newPage();
   const temp=mkdtempSync(join(tmpdir(),'sticker-duration-'));
   try{
@@ -471,10 +471,11 @@ try {
     await durations.locator('#ve').fill('60');
     await durations.locator('#ve').dispatchEvent('change');
     await durations.waitForFunction(()=>!document.querySelector('#export').disabled);
-    assert.match(await durations.locator('#selection-info').textContent(),/60\.00 s de 60/);
+    assert.match(await durations.locator('#selection-info').textContent(),/60\.00 s/);
     await durations.locator('#ve').fill('61');
     await durations.locator('#ve').dispatchEvent('change');
-    await durations.waitForFunction(()=>document.querySelector('#export').disabled);
+    await durations.waitForFunction(()=>!document.querySelector('#export').disabled);
+    assert.match(await durations.locator('#selection-info').textContent(),/61\.00 s/);
   }finally{await durations.close();rmSync(temp,{recursive:true,force:true});}
   // Mobile layout and language switch preserve the active media and project.
   for(const width of [320,390,740,1024]){
@@ -505,7 +506,7 @@ try {
     await phone.waitForFunction(()=>!document.querySelector('#export').disabled);
     assert.equal(await phone.locator('#link-status').textContent(),'');
     assert.equal(await phone.locator('.send-steps > li').count(),4);
-    await phone.waitForFunction(()=>document.querySelector('#selection-info').textContent.includes('Duration: 2.00 s of 60 s allowed.'));
+    await phone.waitForFunction(()=>document.querySelector('#selection-info').textContent.includes('Duration: 2.00 s.'));
     assert(await phone.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
     await phone.locator('#language').selectOption('es');
     assert.match(await phone.locator('#guide-link').getAttribute('href'),/README\.md$/);

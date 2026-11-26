@@ -3,7 +3,7 @@
 ![Stickers Sonoros — identidad visual](docs/images/brand.svg)
 
 **Crea stickers con sonido para WhatsApp desde tu navegador.**  
-Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
+Video, imagen o GIF + audio · sin duración fija · Español / English.
 
 [**Abrir aplicación**](https://poldkent.github.io/stickers-sonoros/) · [Servidor Render](https://stickers-sonoros.onrender.com/) · [English README](README.en.md) · [❤️ Apoyar el proyecto](SUPPORT.md)
 
@@ -32,9 +32,9 @@ Los controles de posición se expresan en píxeles del lienzo de 512 × 512 y ad
 
 ## Calidad del sticker
 
-**Calidad ampliada:** permite hasta 4.000.000 bytes combinados entre WebP y Ogg (audio hasta 1 MB), con mayor calidad inicial y más FPS de captura para clips cortos. El modo Compatible permanece predeterminado y limita cada componente a 1 MB. La aceptación de imágenes de más de 1 MB por WhatsApp no está verificada; el conversor original advierte de HTTP 413. Sustituye el favorito para probar paquetes grandes, primero en tu propio chat. Si falla, vuelve al modo Compatible. El JSON Base64 pesa más que los medios originales.
+**Calidad ampliada:** permite hasta 4.000.000 bytes combinados entre WebP y Ogg (sin límite separado de audio en modo ampliado), con mayor calidad inicial y más FPS de captura para clips cortos. El modo Compatible es opcional y limita cada componente a 1 MB. La aceptación de imágenes de más de 1 MB por WhatsApp no está verificada; el conversor original advierte de HTTP 413. Sustituye el favorito para probar paquetes grandes, primero en tu propio chat. Si falla, vuelve al modo Compatible. El JSON Base64 pesa más que los medios originales.
 
-El modo predeterminado **Máxima nitidez** prioriza la resolución (mínimo de salida 192 px para animaciones; objetivo 512 px), con una frecuencia de muestreo y codificación de al menos **9 FPS** en animaciones, también para clips largos. No se inventan fotogramas distintos si el origen es estático o tiene menos movimiento. Si no caben ambas condiciones, el modo nitidez no exporta el sticker. **Equilibrado** y **Máxima fluidez** permiten otras combinaciones. La calidad final depende del contenido y del límite elegido; no se garantiza HD en todos los vídeos de 60 s. Si no cabe, reduce la duración o usa fotograma + audio. La vista del resultado indica la resolución y los FPS reales.
+El modo predeterminado **Máxima nitidez** prioriza la resolución (objetivo 512 px, resolución adaptativa), con una frecuencia de muestreo y codificación de al menos **9 FPS** en animaciones, también para clips largos. No se inventan fotogramas distintos si el origen es estático o tiene menos movimiento. Todos los perfiles mantienen al menos 9 FPS; si no cabe en el presupuesto, no se exporta. **Equilibrado** y **Máxima fluidez** permiten otras combinaciones. La calidad final depende del contenido y del límite elegido; no se garantiza HD en todos los vídeos. Si no cabe, reduce la duración o usa fotograma + audio. La vista del resultado indica la resolución y los FPS reales.
 
 Si falla una importación de TikTok, se ofrece [SnapTik](https://snaptik.fi/) como alternativa manual externa: descarga únicamente contenido autorizado y selecciona el archivo local. No se envía el enlace automáticamente ni se integra su API.
 
@@ -43,7 +43,7 @@ Si falla una importación de TikTok, se ofrece [SnapTik](https://snaptik.fi/) co
 - Importación directa de video, imagen y audio; detección de recursos públicos en páginas compatibles.
 - Importador propio con yt-dlp y alternativa para direcciones públicas de descarga de TikTok.
 - Editor cuadrado de 512 × 512, reproducción previa, selección de fotograma, imagen o GIF con audio.
-- Recorte inicial de hasta 30 segundos, máximo de 60 segundos. Calidad ajustada para los límites del conversor: 1 MB por componente en Compatible, o 4 MB combinados en Calidad ampliada.
+- Recorte inicial de hasta 30 segundos, sin duración máxima fija. Calidad ajustada para los límites del conversor: 1 MB por componente en Compatible, o 4 MB combinados en Calidad ampliada.
 - Interfaz adaptable a celulares, tablets y computadoras. Selector Español/English persistente.
 - Edición y generación locales; no se requiere instalar programas ni extensiones.
 

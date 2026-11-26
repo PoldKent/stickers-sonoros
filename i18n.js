@@ -1,6 +1,22 @@
 /* Spanish/English presentation layer; does not change media or sending logic. */
 (() => {
   const pairs = [
+    ["Crea stickers sonoros para WhatsApp desde un video, imagen o GIF.","Create sound stickers for WhatsApp from video, images or GIFs."],
+    ["Elige un archivo, recorta y personaliza tu sticker con sonido.","Choose a file, trim and customize your sound sticker."],
+    ["Todos los modos mantienen al menos 9 FPS en animaciones. La resolución se adapta al tamaño.","All modes maintain at least 9 FPS for animations. Resolution adapts to the size."],
+    ["Hasta 4 MB de imagen y audio. Si WhatsApp rechaza un archivo grande, prueba el modo Compatible y actualiza el favorito.","Up to 4 MB of image and audio. If WhatsApp rejects a large file, try Compatible mode and update the bookmark."],
+    ["Un componente supera 1 MB. Prueba el envío en tu propio chat; si falla, usa Compatible.","One component exceeds 1 MB. Test in your own chat; if it fails, use Compatible."],
+    ["Esta es la calidad real del sticker. Los clips largos pueden necesitar una resolución menor.","This is the actual sticker quality. Long clips may need lower resolution."],
+    ["Selecciona un archivo con audio. Animaciones: mínimo 9 FPS; máximo 4 MB.","Choose a file with audio. Animations: at least 9 FPS; maximum 4 MB."],
+    ["El audio no cabe en el presupuesto de tamaño. Reduce el tramo.","Audio does not fit the size budget. Shorten the selection."],
+    ["Las animaciones requieren al menos 9 FPS.","Animations require at least 9 FPS."],
+    ["El tramo no cabe en el presupuesto de tamaño con al menos 9 FPS. Acórtalo o cambia el modo de calidad.","The selection does not fit the size budget at 9 FPS or more. Shorten it or change quality mode."],
+    ["Creado en Stickers Sonoros","Created with Stickers Sonoros"],
+    ["Flujo de trabajo","Workflow"],
+    ["1. Importar","1. Import"],
+    ["2. Editar","2. Edit"],
+    ["3. Crear","3. Create"],
+    ["4. Enviar","4. Send"],
     ["Stickers Sonoros · Editor web","Stickers Sonoros · Web editor"],
     ["Crea stickers sonoros de hasta 60 segundos para WhatsApp desde un video, imagen o GIF.","Create sound stickers up to 60 seconds long from video, images or GIFs for WhatsApp."],
     ["Edición local","Local editing"],
@@ -287,7 +303,7 @@
   pairs.push(...[["Límite de tamaño","Size limit"],["Compatible (imagen hasta 1 MB)","Compatible (image up to 1 MB)"],["Calidad ampliada (hasta 4 MB con audio)","Extended quality (up to 4 MB including audio)"],["WhatsApp podría rechazar imágenes de más de 1 MB. Si sucede, usa Compatible. Para enviar archivos grandes, sustituye el favorito de WhatsApp por el nuevo.","WhatsApp may reject images larger than 1 MB. If that happens, use Compatible. Replace your WhatsApp bookmark to send larger files."],["Este sticker supera 1 MB de imagen. Prueba el envío en tu propio chat. Si falla, usa Compatible.","This sticker exceeds 1 MB of image data. Test in your own chat. If it fails, use Compatible."],["La animación puede reducir su calidad para respetar el tamaño elegido.","Animation quality may be reduced to fit the selected size."],["Máxima nitidez: mínimo 9 FPS y 192 px en animaciones. Si no cabe en el tamaño elegido, reduce la duración o cambia de modo.","Maximum sharpness: at least 9 FPS and 192 px for animations. If it does not fit the selected size, shorten it or change mode."],["El tramo no cabe en 4 MB con al menos 9 FPS y 192 px. Acórtalo o cambia el modo de calidad.","The selection does not fit within 4 MB at 9 FPS or more and 192 px or more. Shorten it or change quality mode."]]);
   const exact = new Map(pairs);
   const fragments = [
-    [/^Duración: ([\d.]+) s de (\d+) s permitidos\./, "Duration: $1 s of $2 s allowed."],
+    [/^Duración: ([\d.]+) s\./, "Duration: $1 s."],
     [/^Cargando… /, "Loading… "],
     [/^Error de descarga \((\d+)\)\./, "Download error ($1)."],
     [/^No se puede conectar con Render \(([^)]+)\)\. Comprueba el servidor al pie de la página; puede estar suspendido o no permitir el origen de esta web\./,"Cannot connect to Render ($1). Check the server at the bottom of the page; it may be suspended or not allow this website."],
@@ -299,7 +315,7 @@
     [/^Leyendo cuadros del GIF /,"Reading GIF frames "],[/^Leyendo cuadros /,"Reading frames "],
     [/^Codificando \((\d+) px, (\d+) fps, calidad (\d+)\)/,"Encoding ($1 px, $2 fps, quality $3)"],
     [/^Tiempo agotado buscando el segundo /,"Timed out seeking to second "],
-    [/^No cabe en el límite de tamaño ni con la calidad mínima \(([^)]+)\)\. Elige menos fps o menos resolución\./,"Does not fit the size limit even at minimum quality ($1). Shorten the selection or reduce resolution."],
+    [/^No cabe en el límite de tamaño ni con la calidad mínima \(([^)]+)\)\. Acorta el tramo o reduce la resolución\./,"Does not fit the size limit even at minimum quality ($1). Shorten the selection or reduce resolution."],
     [/^El audio pesa (\d+) KB \(máximo 1000 KB\)/,"Audio is $1 KB (maximum 1000 KB)"],
     [/^El audio dura ([\d.]+) s y el tramo empieza en ([\d.]+) s/,"Audio is $1 s long and the selection starts at $2 s"],
     [/^El sitio no permite acceder al recurso público \(HTTP (\d+)\)\./,"The site does not allow access to the public resource (HTTP $1)."],
@@ -373,9 +389,10 @@
   new MutationObserver(records=>{
     for(const record of records){
       if(record.type==="characterData")translateText(record.target);
+      else if(record.type==="attributes")translateAttrs(record.target);
       else for(const node of record.addedNodes)scan(node);
     }
-  }).observe(document.documentElement,{childList:true,characterData:true,subtree:true});
+  }).observe(document.documentElement,{childList:true,characterData:true,subtree:true,attributes:true,attributeFilter:['title','aria-label','alt','placeholder','content']});
 
   // Move the same preview, not a second player or canvas, into the mobile editor.
   const media=document.getElementById("preview-media");

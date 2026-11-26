@@ -59,7 +59,7 @@
       if(!file||file.size>5500000)throw Error(t('Selecciona un paquete de hasta 5,5 MB.',"Choose a package up to 5.5 MB."));
       const p=JSON.parse(await file.text());
       if(p.format!=='stickers-sonoros/1')throw Error(t('Selecciona un archivo guardado desde Stickers Sonoros.',"Choose a file saved in Stickers Sonoros."));
-      const webp=decode(p.webp,4000000),ogg=decode(p.ogg,1000000);
+      const webp=decode(p.webp,4000000),ogg=decode(p.ogg,4000000);
       if(webp.length+ogg.length>4000000)throw Error(t('El sticker y su audio superan 4 MB.', 'The sticker and its audio exceed 4 MB.'));
       if(read(webp,0,4)!=='RIFF'||read(webp,8,4)!=='WEBP'||read(ogg,0,4)!=='OggS'||!new TextDecoder().decode(ogg.subarray(0,256)).includes('OpusHead'))throw Error(t('La imagen o el sonido del sticker no son válidos.',"The sticker image or sound is invalid."));
       const digest=await hash(ogg), view=new DataView(webp.buffer);
@@ -82,7 +82,7 @@
       }
       if(!linked||digest!==p.info?.soundSha256||!side||side!==p.info.lado||animated!==p.info.isAnimated)throw Error(t('El archivo del sticker está dañado. Vuelve a guardarlo desde la aplicación.',"The sticker file is damaged. Save it again from the editor."));
       const seconds=p.info.segundosAudio;
-      if(!Number.isInteger(seconds)||seconds<1||seconds>60)throw Error(t('Duración de audio no válida.',"Invalid audio duration."));
+      if(!Number.isInteger(seconds)||seconds<1)throw Error(t('Duración de audio no válida.',"Invalid audio duration."));
       return {webp:new Blob([webp],{type:'image/webp'}),ogg:new Blob([ogg],{type:'audio/ogg; codecs=opus'}),side,animated,seconds,digest};
     }
     function enableTemporaryCompatibility() {

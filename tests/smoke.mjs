@@ -1,10 +1,11 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {mkdtempSync,readFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,readFileSync,rmSync,mkdirSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 
+mkdirSync('artifacts/screenshots',{recursive:true});
 const browser = await chromium.launch({headless:true,args:['--autoplay-policy=no-user-gesture-required']});
 try {
   const page = await browser.newPage({acceptDownloads:true});
@@ -27,6 +28,7 @@ try {
   assert.equal(caps.webpEncode,'image/webp');
   await page.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
   assert.match(await page.locator('#sticker-state').textContent(),/verificada/);
+  await page.screenshot({path:'artifacts/screenshots/desktop-es.png',fullPage:true});
   const sizes = await page.evaluate(async()=>Promise.all(['webp-file','ogg-file'].map(async id=>(await (await fetch(document.getElementById(id).href)).blob()).size)));
   assert(sizes.every(size=>size>0&&size<=1000000));
   // Export the actual converted package and execute the bookmarklet against mock WA modules.
@@ -300,6 +302,10 @@ try {
       await phone.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
       assert.match(await phone.locator('#sticker-state').textContent(),/SHA-256 link verified/);
       assert.match(await phone.locator('#package-download').textContent(),/Save sound sticker package/);
+      await phone.screenshot({path:'artifacts/screenshots/mobile-en.png',fullPage:true});
+      await phone.locator('#language').selectOption('es');
+      await phone.screenshot({path:'artifacts/screenshots/mobile-es.png',fullPage:true});
+      await phone.locator('#language').selectOption('en');
       assert(await phone.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
     }
     await phone.reload();

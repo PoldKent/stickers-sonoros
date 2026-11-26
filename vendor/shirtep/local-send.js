@@ -19,12 +19,19 @@
     panel.setAttribute('aria-label','Enviar sticker sonoro');
     Object.assign(panel.style,{position:'fixed',zIndex:'2147483647',top:'18px',right:'18px',width:'min(370px,calc(100vw - 36px))',padding:'18px',background:'#202c33',color:'#fff',border:'1px solid #46565e',borderRadius:'12px',boxShadow:'0 8px 30px #0006',font:'14px system-ui,sans-serif',display:'grid',gap:'10px'});
     const add = (tag, text) => { const el=document.createElement(tag); if(text) el.textContent=text; panel.append(el); return el; };
-    add('strong','Stickers Sonoros · envío local experimental');
+    add('strong','Stickers Sonoros · puente v2 experimental');
     add('span','Abre tu propio chat para la primera prueba. Selecciona el paquete .sonoro.json que exportaste desde el editor.');
     const input = add('input'); input.type='file'; input.accept='.json,application/json';
     const status = add('p','No se enviará nada hasta que confirmes.');
     status.setAttribute('role','status');
     status.style.whiteSpace='pre-wrap';
+    const compatibility = add('label');
+    compatibility.style.display='flex';
+    compatibility.style.gap='8px';
+    const opt = document.createElement('input');
+    opt.type='checkbox'; opt.id='ss-experimental';
+    compatibility.append(opt,document.createTextNode('Probar compatibilidad experimental en esta pestaña (no oficial)'));
+    compatibility.hidden=true; compatibility.style.display='none';
     const send = add('button','Confirmar y enviar al chat abierto'); send.disabled=true;
     const close = add('button','Cerrar');
     for(const button of [send,close]) Object.assign(button.style,{padding:'9px',border:'1px solid #52646d',borderRadius:'7px',background:'#2a3942',color:'#fff',cursor:'pointer'});
@@ -76,6 +83,32 @@
       if(!Number.isInteger(seconds)||seconds<1||seconds>10)throw Error('Duración de audio no válida.');
       return {webp:new Blob([webp],{type:'image/webp'}),ogg:new Blob([ogg],{type:'audio/ogg; codecs=opus'}),side,animated,seconds,digest};
     }
+    function enableTemporaryCompatibility() {
+      // Mirror Shirtep's local UI feature switches only; no persistent settings or credentials.
+      const restore=[];
+      function patch(obj,key,fn) {
+        const original=Object.getOwnPropertyDescriptor(obj,key);
+        if(typeof obj[key]!=='function')return;
+        try {
+          Object.defineProperty(obj,key,{value:fn,writable:true,configurable:true,enumerable:original?.enumerable??true});
+          restore.push(()=>{if(original)Object.defineProperty(obj,key,original);else delete obj[key];});
+        } catch {}
+      }
+      function reset(){for(const undo of restore.reverse()){try{undo();}catch{}}restore.length=0;}
+      const gate=ns('WAWebSoundStickerGating');
+      try {
+        try {
+          const ab=ns('WAWebABProps'),original=ab.getABPropConfigValue;
+          const flags=new Set(['sound_stickers_consumption_enabled','sound_stickers_creation_enabled','sound_stickers_audio_playing_enabled']);
+          if(typeof original==='function')patch(ab,'getABPropConfigValue',function(key){return flags.has(key)?true:original.apply(this,arguments);});
+        }catch{}
+        if(gate.isSoundStickerCreationEnabled()!==true){
+          for(const key of ['isSoundStickerCreationEnabled','isSoundStickerConsumptionEnabled','isSoundStickerPlaybackEnabled'])patch(gate,key,()=>true);
+        }
+        if(gate.isSoundStickerCreationEnabled()!==true)throw Error('Esta versión de WhatsApp no admite la compatibilidad temporal.');
+        return reset;
+      }catch(e){reset();throw e;}
+    }
     function activeChat(){return ns('WAWebChatCollection').ChatCollection.getActive()||null;}
     function name(chat){return String(chat.formattedTitle||chat.name||'chat abierto').slice(0,100);}
     function asB64(v){
@@ -97,15 +130,20 @@
     };
     send.onclick=async()=>{
       if(!data||sending)return;
-      let chat;
+      let chat,restoreCompatibility;
       try{
         chat=activeChat();
         if(!chat)throw Error('Abre primero un chat de WhatsApp.');
         const gate=ns('WAWebSoundStickerGating');
-        if(gate.isSoundStickerCreationEnabled()!==true)throw Error('La creación de stickers sonoros no está habilitada en esta sesión de WhatsApp. El puente no modifica los permisos de tu cuenta.');
-        if(!confirm('¿Enviar un sticker con sonido al chat «'+name(chat)+'»?'))return;
+        const unavailable=gate.isSoundStickerCreationEnabled()!==true;
+        if(unavailable&&!opt.checked){
+          compatibility.hidden=false; compatibility.style.display='flex';
+          throw Error('La creación sonora no está habilitada. Puedes marcar la compatibilidad experimental para probar el mecanismo local de Shirtep.');
+        }
+        if(!confirm('¿Enviar un sticker con sonido al chat «'+name(chat)+'»?'+(unavailable?' Se probarán opciones experimentales locales, que se restaurarán al terminar. WhatsApp puede rechazar el mensaje.':'')))return;
         if(activeChat()!==chat)throw Error('El chat ha cambiado. Confirma de nuevo.');
-      }catch(e){msg(e.message);return;}
+        if(unavailable)restoreCompatibility=enableTemporaryCompatibility();
+      }catch(e){restoreCompatibility?.();msg(e.message);return;}
       sending=true;input.disabled=true;send.disabled=true;close.disabled=true;
       let attempted=false;
       try{
@@ -139,6 +177,7 @@
         msg((e.message||'Error del cliente WhatsApp')+(attempted?' Revisa el chat antes de volver a intentar.':' No se envió el sticker.'));
         if(attempted)data=undefined;
       }finally{
+        restoreCompatibility?.(); opt.checked=false;
         sending=false;input.disabled=false;close.disabled=false;send.disabled=!data;
       }
     };

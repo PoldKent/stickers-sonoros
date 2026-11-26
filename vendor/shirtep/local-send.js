@@ -82,7 +82,7 @@
       }
       if(!linked||digest!==p.info?.soundSha256||!side||side!==p.info.lado||animated!==p.info.isAnimated)throw Error(t('El archivo del sticker está dañado. Vuelve a guardarlo desde la aplicación.',"The sticker file is damaged. Save it again from the editor."));
       const seconds=p.info.segundosAudio;
-      if(!Number.isInteger(seconds)||seconds<1||seconds>60)throw Error(t('Duración de audio no válida.',"Invalid audio duration."));
+      if(!Number.isInteger(seconds)||seconds<1||seconds>180)throw Error(t('Duración de audio no válida.',"Invalid audio duration."));
       return {webp:new Blob([webp],{type:'image/webp'}),ogg:new Blob([ogg],{type:'audio/ogg; codecs=opus'}),side,animated,seconds,digest};
     }
     function enableTemporaryCompatibility() {
@@ -142,7 +142,7 @@
           compatibility.hidden=false; compatibility.style.display='flex';
           throw Error(t('El sonido no está habilitado en esta sesión. Marca Activar compatibilidad con sonido para continuar.',"Sound is not enabled in this session. Enable sound compatibility to continue."));
         }
-        if(!confirm(t('¿Enviar un sticker con sonido al chat «',"Send a sound sticker to chat «")+name(chat)+'»?'+(data.webp.size>1000000?t(' La imagen supera 1 MB; WhatsApp podría rechazar el envío.',' The image exceeds 1 MB; WhatsApp may reject the send.'):'')+(unavailable?t(' Se activará la compatibilidad temporal con sonido. Se desactivará al terminar. WhatsApp podría rechazar el envío.'," Temporary sound compatibility will be enabled and restored afterwards. WhatsApp may reject the send."):'')))return;
+        if(!confirm(t('¿Enviar un sticker con sonido al chat «',"Send a sound sticker to chat «")+name(chat)+'»?'+(data.webp.size>1000000?t(' La imagen supera 1 MB; WhatsApp podría rechazar el envío.',' The image exceeds 1 MB; WhatsApp may reject the send.'):'')+(data.seconds>60?t(' El sticker dura más de un minuto; WhatsApp podría rechazarlo.',' The sticker exceeds one minute; WhatsApp may reject it.'):'')+(unavailable?t(' Se activará la compatibilidad temporal con sonido. Se desactivará al terminar. WhatsApp podría rechazar el envío.'," Temporary sound compatibility will be enabled and restored afterwards. WhatsApp may reject the send."):'')))return;
         if(activeChat()!==chat)throw Error(t('El chat ha cambiado. Confirma de nuevo.',"The chat changed. Confirm again."));
         if(unavailable)restoreCompatibility=enableTemporaryCompatibility();
       }catch(e){restoreCompatibility?.();msg(e.message);return;}

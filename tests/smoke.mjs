@@ -22,7 +22,6 @@ try {
   await page.locator('#export').click();
   await page.locator('#output').waitFor({state:'visible',timeout:40000});
   await page.waitForFunction(()=>document.querySelector('#output').readyState>=2,{},{timeout:20000});
-  assert.match(await page.locator('#download').getAttribute('href'),/^blob:/);
   const caps=await page.evaluate(()=>window.WAAS.capabilities());
   assert.equal(caps.opus,true,'Chromium must support Opus');
   assert.equal(caps.webpEncode,'image/webp');
@@ -30,15 +29,11 @@ try {
   assert.match(await page.locator('#sticker-state').textContent(),/listo para enviar/);
   assert.equal(await page.locator('#package-download').isVisible(),true);
   assert.equal(await page.locator('.send-steps > li').count(),4);
-  assert.equal(await page.locator('#download').isVisible(),false);
+  assert.equal(await page.locator('#download').count(),0);
   assert.equal(await page.locator('#share').count(),0);
   assert.equal(await page.locator('#wa-bookmark').isVisible(),true);
-  await page.locator('#native summary').click();
-  assert.equal(await page.locator('#download').isVisible(),true);
-  await page.locator('#native summary').click();
-  assert.equal(await page.locator('#download').isVisible(),false);
   await page.screenshot({path:'artifacts/screenshots/desktop-es.png',fullPage:true});
-  const sizes = await page.evaluate(async()=>Promise.all(['webp-file','ogg-file'].map(async id=>(await (await fetch(document.getElementById(id).href)).blob()).size)));
+  const sizes = await page.evaluate(async()=>Promise.all(['sticker-image','sticker-audio'].map(async id=>(await (await fetch(document.getElementById(id).src)).blob()).size)));
   assert(sizes.every(size=>size>0&&size<=1000000));
   // Export the actual converted package and execute the bookmarklet against mock WA modules.
   const [download] = await Promise.all([page.waitForEvent('download'),page.locator('#package-download').click()]);
@@ -145,7 +140,7 @@ try {
   await page.unroute('**/health');
   assert.deepEqual(errors,[]);
   await page.locator('[data-mode="video"]').click();
-  assert.equal(await page.locator('#downloads').isVisible(),false);
+  assert.equal(await page.locator('#components').isVisible(),false);
   assert.equal(await page.locator('#export').isDisabled(),true);
   // Exercise paste-to-editor with a real playable video and a simulated API response.
   const dir = mkdtempSync(join(tmpdir(),'sticker-import-'));
@@ -319,7 +314,7 @@ try {
       assert.match(await phone.locator('#sticker-state').textContent(),/Your sticker is ready to send/);
       assert.equal(await phone.locator('#send-title').textContent(),'How to send your sticker to WhatsApp');
       assert.equal(await phone.locator('.send-steps > li').count(),4);
-      assert.equal(await phone.locator('#download').isVisible(),false);
+      assert.equal(await phone.locator('#download').count(),0);
       assert.equal(await phone.locator('#wa-bookmark').isVisible(),true);
       assert.match(await phone.locator('#package-download').textContent(),/Save sound sticker/);
       await phone.screenshot({path:'artifacts/screenshots/mobile-en.png',fullPage:true});

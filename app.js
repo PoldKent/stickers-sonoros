@@ -17,7 +17,6 @@ let visual;
 let audio;
 let result;
 let resultUrl;
-let compatibleClip, compatibleUrl, mp4Job;
 let visualRequest = 0;
 let audioRequest = 0;
 let loadingVisual = false;
@@ -48,15 +47,13 @@ function clearResult() {
   byId('native-bridge').hidden = true;
   byId('bridge-status').textContent = '';
   byId('bookmark-status').textContent = '';
-  mp4Job?.abort(); mp4Job = undefined;
-  if (compatibleUrl) URL.revokeObjectURL(compatibleUrl);
-  compatibleClip = compatibleUrl = undefined;
-  byId('convert-mp4').hidden = true;
-  byId('convert-mp4').disabled = false;
-  byId('mp4-consent').hidden = true;
   stopSourcePreview();
   stickerJob?.abort();
   stickerJob = undefined;
+  for (const id of ['sticker-image', 'sticker-audio']) {
+    const media = byId(id);
+    if (media.getAttribute('src')?.startsWith('blob:')) URL.revokeObjectURL(media.src);
+  }
   byId('sticker-image').removeAttribute('src');
   byId('sticker-audio').pause();
   byId('sticker-audio').removeAttribute('src');
@@ -68,20 +65,12 @@ function clearResult() {
   byId('prepare-sticker').disabled = false;
   byId('sticker-state').textContent = '';
   byId('sticker-files').hidden = true;
-  for (const id of ['webp-file', 'ogg-file']) {
-    const link = byId(id);
-    if (link.hasAttribute('href')) URL.revokeObjectURL(link.href);
-    link.removeAttribute('href');
-  }
   output.pause();
   output.removeAttribute('src');
+  output.removeAttribute('poster');
   output.load();
   output.hidden = true;
-  byId('native').hidden = true;
-  byId('native').open = false;
   byId('sticker-advanced').open = false;
-  byId('downloads').hidden = true;
-  byId('download').removeAttribute('href');
   if (resultUrl) URL.revokeObjectURL(resultUrl);
   result = resultUrl = undefined;
 }
@@ -490,16 +479,6 @@ byId('project').addEventListener('submit', async event => {
     resultUrl = URL.createObjectURL(result);
     output.src = resultUrl;
     output.hidden = false;
-    byId('native').hidden = false;
-    const download = byId('download');
-    download.href = resultUrl;
-    download.download = result.name;
-    download.textContent = 'Guardar vídeo (' + extension.toUpperCase() + ') ↓';
-    byId('format-note').textContent = extension === 'mp4' ? 'Vídeo MP4 listo para guardar en la galería.' : 'Este navegador exportó WebM. Si tu galería no lo admite, utiliza un navegador compatible con exportación MP4.';
-    byId('convert-mp4').hidden = extension==='mp4' || !importEndpoint;
-    byId('mp4-consent').hidden = byId('convert-mp4').hidden;
-    byId('downloads').hidden = false;
-    status.textContent = 'Vídeo preparado. Generando los archivos del sticker sonoro…';
   } catch (error) {
     status.textContent = error.name === 'AbortError' ? 'Generación cancelada.' : error.message || 'No pude crear el clip.';
   } finally {
@@ -954,7 +933,7 @@ async function prepareSticker() {
   try {
     if (!window.WAAS) throw new Error('No se cargó el conversor. Recarga la página.');
     const caps = await window.WAAS.capabilities();
-    if (caps.opus !== true || caps.webpEncode !== 'image/webp') throw new Error('Este navegador no puede codificar WebP y Opus. Prueba Chrome o Edge actualizado. El vídeo para WhatsApp sigue disponible.');
+    if (caps.opus !== true || caps.webpEncode !== 'image/webp') throw new Error('Este navegador no puede crear el sticker con sonido. Prueba Chrome o Edge actualizado.');
     if (controller.signal.aborted) return;
     const files = await window.WAAS.convert({
       file: source, duration, signal: controller.signal,
@@ -963,8 +942,9 @@ async function prepareSticker() {
     const info = await verifySticker(files);
     if (controller.signal.aborted || result !== source) return;
     const webpUrl = URL.createObjectURL(files.webp), oggUrl = URL.createObjectURL(files.ogg);
-    byId('webp-file').href = byId('sticker-image').src = webpUrl;
-    byId('ogg-file').href = byId('sticker-audio').src = oggUrl;
+    output.poster = webpUrl;
+    byId('sticker-image').src = webpUrl;
+    byId('sticker-audio').src = oggUrl;
     byId('sticker-info').textContent = (info.lado || '?') + ' px · ' + (info.fps || 1) + ' FPS · ' + Math.round(files.webp.size/1024) + ' KB + ' + Math.round(files.ogg.size/1024) + ' KB de audio';
     nativePackage = {webp:files.webp,ogg:files.ogg,info};
     byId('native-bridge').hidden = false;
@@ -973,7 +953,7 @@ async function prepareSticker() {
     status.textContent = 'Sticker listo. Sigue los pasos para enviarlo a WhatsApp.';
   } catch (error) {
     if (stickerJob === controller) {
-      state.textContent = controller.signal.aborted ? 'Conversión cancelada. Puedes reintentar.' : (error.message || 'No se pudo generar el sticker.') + ' Puedes reintentar o usar la alternativa para el teléfono.';
+      state.textContent = controller.signal.aborted ? 'Conversión cancelada. Puedes reintentar.' : (error.message || 'No se pudo generar el sticker.') + ' Puedes reintentar o elegir un tramo más corto.';
       status.textContent = controller.signal.aborted ? 'Conversión cancelada. Puedes reintentar.' : 'No se pudo preparar el sticker. Revisa el aviso junto a la vista previa.';
       button.hidden = false;
     }
@@ -1104,41 +1084,6 @@ byId('choose-original').onclick = () => {
   switchToVideo();
   byId('visual').click();
 };
-byId('convert-mp4').onclick = async () => {
-  if (!result || result.type !== 'video/webm' || mp4Job || busy || importing || !importEndpoint) return;
-  const original = result, controller = new AbortController(), button = byId('convert-mp4');
-  mp4Job = controller;
-  button.disabled = true;
-  const timer = setTimeout(()=>controller.abort(),120000);
-  byId('format-note').textContent='Preparando MP4 con sonido…';
-  try {
-    const health=await backendHealth(controller.signal);
-    if (clipDuration > (health.maxClipDuration || 10)) throw new Error('El servidor aún no admite clips de esta duración. Actualiza Render o guarda el vídeo original.');
-    const endpoint=new URL(importEndpoint);
-    const response=await fetch(endpoint.href.replace(/\/$/,'')+'/api/clip-mp4',{
-      method:'POST',body:original,headers:{'Content-Type':'video/webm'},signal:controller.signal,
-      credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store'
-    });
-    await checkResponse(response);
-    if (detectedType(response)!=='video/mp4') throw new Error('El servidor no devolvió un MP4.');
-    const chunks=await readBounded(response,controller.signal,16*1024*1024);
-    if (controller.signal.aborted || result!==original) return;
-    compatibleClip=new File(chunks,'sticker-sonoro.mp4',{type:'video/mp4'});
-    compatibleUrl=URL.createObjectURL(compatibleClip);
-    const link=byId('download');
-    link.href=compatibleUrl; link.download=compatibleClip.name;
-    link.textContent='Guardar vídeo MP4 ↓';
-    byId('format-note').textContent='MP4 preparado. En WhatsApp, usa Crear sticker y conserva el audio si la función está disponible.';
-    button.hidden=true;
-    byId('mp4-consent').hidden=true;
-  } catch(error) {
-    if (mp4Job===controller) byId('format-note').textContent=(error.name==='AbortError'?'Conversión cancelada o agotada.':error.message)+' Puedes seguir descargando el clip original.';
-  } finally {
-    clearTimeout(timer);
-    if(mp4Job===controller) { mp4Job=undefined;button.disabled=false; }
-  }
-};
-
 function bytesToBase64(bytes) {
   let raw='';
   for(let offset=0;offset<bytes.length;offset+=16384)raw+=String.fromCharCode(...bytes.subarray(offset,offset+16384));

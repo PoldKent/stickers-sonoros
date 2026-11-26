@@ -11,7 +11,7 @@ Video, image or GIF + audio · up to 60 seconds · Español / English.
 
 ![Illustrative desktop and phone editor layout](docs/images/interface.svg)
 
-[Real screenshots from the latest verified build](https://github.com/PoldKent/stickers-sonoros/actions/runs/45852351963#artifacts) (temporary CI artifacts).
+[Real screenshots from interface checks](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) (temporary artifacts per run).
 
 ## How it works
 
@@ -19,8 +19,8 @@ Video, image or GIF + audio · up to 60 seconds · Español / English.
 
 1. Paste a public HTTPS media link or choose a local file.
 2. Preview the selection, set start and end (up to 60 seconds), and adjust framing, position or zoom.
-3. Select **Create sound sticker**. The editor produces a video and, when supported, a package containing linked WebP and Ogg/Opus files.
-4. Follow the four sending steps under the preview. The sticker file is `.sonoro.json`, not an MP4 video.
+3. Select **Create sound sticker**. The editor locally creates a package containing linked WebP and Ogg/Opus files when the browser supports the required codecs.
+4. Follow the four sending steps under the preview. The editor's only download is `sticker.sonoro.json`.
 
 ## Features
 
@@ -30,7 +30,6 @@ Video, image or GIF + audio · up to 60 seconds · Español / English.
 - Initial selection up to 30 seconds; maximum 60 seconds. Quality adapts to the converter's 1 MB WebP and 1 MB Ogg limits.
 - Responsive phone, tablet and desktop layouts with a persistent Spanish/English setting.
 - Local editing and generation without installing applications or browser extensions.
-- MP4 or WebM as a secondary phone alternative only; optional server-side WebM-to-MP4 conversion.
 
 ## Send to WhatsApp
 
@@ -45,7 +44,7 @@ The bookmark uses an unofficial integration adapted from Shirtep inside your bro
 
 ### Android and iPhone
 
-Import, edit and generate in a supported browser. Expand **Phone alternative (video)** below the instructions, save the video to your gallery and use WhatsApp's sticker editor if your account offers sound. Sharing MP4 alone does not create a sound sticker. Bookmark-based sending is designed for desktop WhatsApp Web; native mobile sending and Safari codec support are not guaranteed.
+Import, edit and save the `.sonoro.json` file in a supported mobile browser. Transfer it to your computer and follow the four WhatsApp Web steps. Native sending from Android or iPhone is not implemented.
 
 ## Status and compatibility
 
@@ -62,14 +61,14 @@ Updated Chrome or Edge is recommended for WebCodecs, WebP and Opus. Animated GIF
 
 ## Development and deployment
 
-**Static editor:** run `python -m http.server 8000` at the repository root and visit `http://localhost:8000`. Use the full service for social links and server conversion.
+**Static editor:** run `python -m http.server 8000` at the repository root and visit `http://localhost:8000`. Use the full service for social links.
 
 ```sh
 docker build -t stickers-sonoros .
 docker run --rm -p 8080:8080 stickers-sonoros
 ```
 
-Visit `http://localhost:8080`. The root Dockerfile is canonical; the compatibility Dockerfile also uses the repository root as build context.
+Visit `http://localhost:8080`. The root Dockerfile is the only build file.
 
 - GitHub Pages serves the frontend from `main`; Render's URL is configured in `index.html`.
 - Render uses `render.yaml`, Docker and the free plan, with deployments after checks pass. If needed, use **Manual sync** in the Blueprint and **Manual Deploy** in the service.
@@ -80,7 +79,6 @@ Visit `http://localhost:8080`. The root Dockerfile is canonical; the compatibili
 | GET `/health` | Status and capabilities |
 | POST `/api/import` | Supported public social video |
 | POST `/api/media` | Public HTTPS resource or inert HTML |
-| POST `/api/clip-mp4` | Optional edited WebM clip conversion |
 
 ## Tests
 
@@ -88,15 +86,15 @@ Visit `http://localhost:8080`. The root Dockerfile is canonical; the compatibili
 node --check app.js
 node --check i18n.js
 python -m unittest discover -s importer -p 'test_*.py'
-python tests/test_clip_http.py
+python tests/test_http.py
 python tests/test_format_selection.py
 ```
 
-For browser tests, install Playwright and Chromium in the development environment, run the static server on port 8000 and execute `node tests/smoke.mjs`. Integration tests need FFmpeg; format-selection tests need yt-dlp. See [CI runs](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) and [live service diagnostics](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml). README images are illustrative diagrams; actual Chromium screenshots are attached as CI artifacts when generated.
+For browser tests, install Playwright and Chromium in the development environment, run the static server on port 8000 and execute `node tests/smoke.mjs`. Browser tests use FFmpeg to create media fixtures; format-selection tests need yt-dlp. See [CI runs](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) and [live service diagnostics](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml). README images are illustrative diagrams; actual Chromium screenshots are attached as CI artifacts when generated.
 
 ## Privacy and limits
 
-File processing is local by default. The importer accesses the supplied public URL and removes temporary files after responding. Optional MP4 conversion uploads only the edited clip. The service limits size, time and concurrency; its HTTPS reader validates domains, public DNS and TLS. CORS is not authentication or a replacement for network egress restrictions and infrastructure isolation. Do not store secrets in the public importer. See [audit and security notes](docs/AUDIT.md).
+File processing is local by default. The importer accesses the supplied public URL and removes temporary files after responding. Edited clips are not uploaded to the server. The service limits size, time and concurrency; its HTTPS reader validates domains, public DNS and TLS. CORS is not authentication or a replacement for network egress restrictions and infrastructure isolation. Do not store secrets in the public importer. See [audit and security notes](docs/AUDIT.md).
 
 ## ❤️ Support the project
 

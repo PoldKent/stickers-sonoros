@@ -11,7 +11,7 @@ Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
 
 ![Esquema ilustrativo del editor en computadora y teléfono](docs/images/interface.svg)
 
-[Capturas reales de la última versión verificada](https://github.com/PoldKent/stickers-sonoros/actions/runs/45852351963#artifacts) (artefactos temporales de CI).
+[Capturas reales de las pruebas de interfaz](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) (artefactos temporales de cada ejecución).
 
 ## Cómo funciona
 
@@ -19,8 +19,8 @@ Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
 
 1. Pega un enlace multimedia HTTPS o selecciona un archivo de tu dispositivo.
 2. Reproduce el tramo, elige el inicio y el final (hasta 60 s) y ajusta el encuadre, posición o zoom.
-3. Pulsa **Crear sticker sonoro**. El editor prepara un video y, si el navegador dispone de los códecs necesarios, un paquete con WebP y Ogg/Opus vinculados.
-4. Sigue los cuatro pasos de envío que aparecen debajo de la vista previa. El archivo del sticker es `.sonoro.json`, no un vídeo MP4.
+3. Pulsa **Crear sticker sonoro**. El editor prepara localmente un paquete con WebP y Ogg/Opus vinculados, si el navegador dispone de los códecs necesarios.
+4. Sigue los cuatro pasos de envío que aparecen debajo de la vista previa. La única descarga del editor es `sticker.sonoro.json`.
 
 ## Funciones
 
@@ -30,7 +30,6 @@ Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
 - Recorte inicial de hasta 30 segundos, máximo de 60 segundos. Calidad ajustada para los límites del conversor: 1 MB para WebP y 1 MB para Ogg.
 - Interfaz adaptable a celulares, tablets y computadoras. Selector Español/English persistente.
 - Edición y generación locales; no se requiere instalar programas ni extensiones.
-- MP4 o WebM únicamente como alternativa secundaria para el teléfono; conversión opcional de WebM a MP4 en Render.
 
 ## Enviar a WhatsApp
 
@@ -45,7 +44,7 @@ El marcador usa una integración no oficial basada en Shirtep, dentro de la sesi
 
 ### Android y iPhone
 
-Puedes importar, editar y generar desde el navegador si admite las funciones multimedia necesarias. Abre **Alternativa para el teléfono (vídeo)** debajo de las instrucciones, guarda el vídeo en la galería y utiliza el editor de stickers de WhatsApp si tu cuenta permite conservar el sonido. Compartir un MP4 no lo convierte por sí solo en un sticker sonoro. El envío mediante marcador está diseñado para computadora; no se garantiza el envío nativo desde el móvil ni todos los códecs en Safari.
+Puedes importar, editar y guardar el archivo `.sonoro.json` desde un navegador compatible. Transfiérelo a tu computadora y sigue los cuatro pasos de WhatsApp Web. El envío nativo desde Android o iPhone no está implementado.
 
 ## Estado y compatibilidad
 
@@ -62,14 +61,14 @@ Usa Chrome o Edge actualizados para la mejor compatibilidad con WebCodecs, WebP 
 
 ## Desarrollo y despliegue
 
-**Editor estático:** desde la raíz, ejecuta `python -m http.server 8000` y abre `http://localhost:8000`. Para importar redes sociales o convertir en servidor, usa el servicio completo.
+**Editor estático:** desde la raíz, ejecuta `python -m http.server 8000` y abre `http://localhost:8000`. Para importar redes sociales, usa el servicio completo.
 
 ```sh
 docker build -t stickers-sonoros .
 docker run --rm -p 8080:8080 stickers-sonoros
 ```
 
-Abre `http://localhost:8080`. El Dockerfile de la raíz es el canónico; el Dockerfile secundario se debe construir con contexto de la raíz.
+Abre `http://localhost:8080`. El Dockerfile de la raíz es el único archivo de construcción.
 
 - GitHub Pages sirve el frontend desde `main`; la URL de Render se define en `index.html`.
 - Render utiliza `render.yaml`, Docker y el plan gratuito con despliegue tras superar las comprobaciones. Si no se actualiza automáticamente, usa **Manual sync** en el Blueprint y **Manual Deploy** en el servicio.
@@ -80,7 +79,6 @@ Abre `http://localhost:8080`. El Dockerfile de la raíz es el canónico; el Dock
 | GET `/health` | Estado y capacidades |
 | POST `/api/import` | Video social público compatible |
 | POST `/api/media` | Recurso HTTPS público o HTML inerte |
-| POST `/api/clip-mp4` | Conversión opcional del clip WebM editado |
 
 ## Pruebas
 
@@ -88,15 +86,15 @@ Abre `http://localhost:8080`. El Dockerfile de la raíz es el canónico; el Dock
 node --check app.js
 node --check i18n.js
 python -m unittest discover -s importer -p 'test_*.py'
-python tests/test_clip_http.py
+python tests/test_http.py
 python tests/test_format_selection.py
 ```
 
-Para las pruebas de navegador instala Playwright y Chromium en el entorno de desarrollo, inicia el servidor estático en el puerto 8000 y ejecuta `node tests/smoke.mjs`. Las pruebas de integración necesitan FFmpeg y las de selección necesitan yt-dlp. [Consulta las ejecuciones de CI](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) y [el diagnóstico del servicio real](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml). Las imágenes del README son esquemas ilustrativos; las capturas reales de Chromium se adjuntan a las ejecuciones de CI como artefactos cuando se generan.
+Para las pruebas de navegador instala Playwright y Chromium en el entorno de desarrollo, inicia el servidor estático en el puerto 8000 y ejecuta `node tests/smoke.mjs`. Las pruebas de navegador utilizan FFmpeg para crear medios de prueba; las de selección necesitan yt-dlp. [Consulta las ejecuciones de CI](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) y [el diagnóstico del servicio real](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml). Las imágenes del README son esquemas ilustrativos; las capturas reales de Chromium se adjuntan a las ejecuciones de CI como artefactos cuando se generan.
 
 ## Privacidad y límites
 
-El procesamiento de archivos ocurre localmente por defecto. La importación mediante servidor consulta la URL pública y elimina los archivos temporales después de responder; la conversión MP4 opcional transmite exclusivamente el clip editado. El importador limita tamaño, tiempo y concurrencia, y el lector HTTPS comprueba dominios, DNS público y TLS. CORS no es autenticación ni sustituye controles de salida de red y aislamiento de infraestructura. No se deben configurar secretos en la instancia pública de importación. Véase [auditoría y seguridad](docs/AUDIT.md).
+El procesamiento de archivos ocurre localmente por defecto. La importación mediante servidor consulta la URL pública y elimina los archivos temporales después de responder. Los clips editados no se suben al servidor. El importador limita tamaño, tiempo y concurrencia, y el lector HTTPS comprueba dominios, DNS público y TLS. CORS no es autenticación ni sustituye controles de salida de red y aislamiento de infraestructura. No se deben configurar secretos en la instancia pública de importación. Véase [auditoría y seguridad](docs/AUDIT.md).
 
 ## ❤️ Apoya el proyecto
 

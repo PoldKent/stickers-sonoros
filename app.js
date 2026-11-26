@@ -43,6 +43,7 @@ let stickerJob;
 let nativePackage;
 let clipDuration;
 function clearResult() {
+  hideCropGuides();
   byId('quality-result').hidden = true;
   byId('quality-result').textContent = '';
   nativePackage = undefined;
@@ -86,6 +87,8 @@ function sync() {
   byId('motion-row').hidden = mode !== 'mix';
   byId('empty').hidden = !!visual;
   byId('position').hidden = !visual;
+  for (const id of ['pan-x','pan-y','zoom','pan-x-value','pan-y-value','zoom-value','center-crop']) byId(id).disabled = busy || importing || !!stickerJob || !visual;
+  if (!visual) hideCropGuides();
   byId('scrub-row').hidden = !visual || visual.kind === 'image';
   byId('source-preview').hidden = !visual || !audio || loadingVisual || loadingAudio || busy || importing || !!result;
   byId('play-source').disabled = busy || importing;
@@ -99,16 +102,83 @@ function sync() {
   canvas.classList.toggle('ready', !!visual);
 }
 
-function paint(media) {
+// All crop positions are in output-canvas pixels; guides never enter the canvas.
+const cropSide = 512;
+const cropAxes = ['pan-x','pan-y'];
+let cropKey = '';
+let guideTimer;
+const clampCrop = (n,min,max) => Math.max(min,Math.min(max,n));
+const quantizeCrop = (n,step) => Math.round(n/step)*step;
+function cropGeometry(media = visual?.frame || visual?.media, zoom = Number(byId('zoom').value)) {
+  if (!media) return null;
   const width = media.videoWidth || media.naturalWidth || media.displayWidth;
   const height = media.videoHeight || media.naturalHeight || media.displayHeight;
-  if (!width || !height) return;
-  const scale = Math[byId('fit').value === 'cover' ? 'max' : 'min'](512 / width, 512 / height);
-  const w = width * scale * byId('zoom').value / 100;
-  const h = height * scale * byId('zoom').value / 100;
-  drawing.fillStyle = '#14101d';
-  drawing.fillRect(0, 0, 512, 512);
-  drawing.drawImage(media, (512 - w) / 2 + 2.56 * byId('pan-x').value, (512 - h) / 2 + 2.56 * byId('pan-y').value, w, h);
+  if (!width || !height) return null;
+  const base = Math[byId('fit').value === 'cover' ? 'max' : 'min'](cropSide/width,cropSide/height);
+  return {baseW:width*base,baseH:height*base,w:width*base*zoom/100,h:height*base*zoom/100};
+}
+function cropTargets(id,g) {
+  if (!g) return [];
+  if (id === 'zoom') {
+    const x = Number(byId('pan-x').value), y = Number(byId('pan-y').value);
+    return [100,100*cropSide/g.baseW,100*cropSide/g.baseH,
+      100*(cropSide+2*x)/g.baseW,100*(cropSide-2*x)/g.baseW,
+      100*(cropSide+2*y)/g.baseH,100*(cropSide-2*y)/g.baseH];
+  }
+  const edge = (cropSide - (id === 'pan-x' ? g.w : g.h))/2;
+  return [0,edge,-edge];
+}
+function cropReadouts() {
+  for (const id of [...cropAxes,'zoom']) {
+    const input=byId(id), number=byId(id+'-value');
+    number.min=input.min; number.max=input.max;
+    if (document.activeElement!==number) number.value=Number(input.value).toFixed(id==='zoom'?2:1);
+  }
+}
+function refreshCrop(g) {
+  if (!g) return;
+  const key=[g.w,g.h,g.baseW,g.baseH].join('/');
+  if (cropKey!==key) {
+    cropKey=key;
+    cropAxes.forEach((id,index)=>{
+      const input=byId(id), current=Number(input.value);
+      const extent=Math.ceil(Math.max(256,Math.abs(cropSide-(index?g.h:g.w))/2+64,Math.abs(current)));
+      input.min=-extent; input.max=extent; input.value=current;
+    });
+  }
+  cropReadouts();
+}
+function paint(media) {
+  const g=cropGeometry(media);
+  if (!g) return;
+  refreshCrop(g);
+  drawing.fillStyle='#14101d';
+  drawing.fillRect(0,0,cropSide,cropSide);
+  drawing.drawImage(media,(cropSide-g.w)/2+Number(byId('pan-x').value),
+    (cropSide-g.h)/2+Number(byId('pan-y').value),g.w,g.h);
+}
+function hideCropGuides() {
+  clearTimeout(guideTimer);
+  byId('crop-guides').hidden=true;
+  byId('crop-guide-lines').setAttribute('d','');
+}
+function showCropGuides() {
+  const g=cropGeometry();
+  if(!g || busy || !visual) return;
+  const x=Number(byId('pan-x').value), y=Number(byId('pan-y').value);
+  const left=(cropSide-g.w)/2+x, top=(cropSide-g.h)/2+y;
+  const near=(a,b)=>Math.abs(a-b)<=0.18;
+  const lines=[];
+  if(near(x,0))lines.push('M256 0V512');
+  if(near(y,0))lines.push('M0 256H512');
+  if(near(left,0))lines.push('M2 0V512');
+  if(near(left+g.w,cropSide))lines.push('M510 0V512');
+  if(near(top,0))lines.push('M0 2H512');
+  if(near(top+g.h,cropSide))lines.push('M0 510H512');
+  byId('crop-guide-lines').setAttribute('d',lines.join(' '));
+  byId('crop-guides').hidden=!lines.length;
+  clearTimeout(guideTimer);
+  guideTimer=setTimeout(hideCropGuides,700);
 }
 
 function range(prefix, duration) {
@@ -340,7 +410,7 @@ async function previewFrame(at) {
     if (visual === item && !busy) status.textContent = error.message;
   }
 }
-byId('fit').addEventListener('change', () => previewFrame(byId('scrub').valueAsNumber));
+byId('fit').addEventListener('change', () => { if (visual) { paint(visual.frame || visual.media); } previewFrame(byId('scrub').valueAsNumber); });
 byId('vs').addEventListener('change', () => { clearResult(); byId('scrub').value = byId('vs').value; updateScrub(); });
 for (const id of ['ve','as','ae','motion','fit']) byId(id).addEventListener('change', clearResult);
 function updateScrub() { byId('scrub-time').textContent = Number(byId('scrub').value).toFixed(2) + ' s'; previewFrame(byId('scrub').valueAsNumber); }
@@ -499,27 +569,79 @@ byId('cancel-export').onclick = () => exportJob?.abort();
 
 sync();
 
-const axes = ['pan-x', 'pan-y'];
-for (const id of [...axes, 'zoom']) {
-  byId(id).addEventListener('input', () => {
-    clearResult();
-    if (visual) paint(visual.frame || visual.media);
-  });
-}
+// Small magnetic detents, with a wider release radius. Keyboard and numeric fields bypass snapping.
+const locks = new Map();
+const activeSliders = new Set();
 let drag;
-canvas.addEventListener('pointerdown', event => {
-  if (!visual || busy) return;
-  canvas.setPointerCapture(event.pointerId);
-  clearResult();
-  drag = [event.clientX, event.clientY, ...axes.map(id => +byId(id).value)];
-});
-canvas.addEventListener('pointermove', event => {
-  if (!drag || busy) return;
-  const delta = [event.clientX - drag[0], event.clientY - drag[1]];
-  axes.forEach((id, i) => { byId(id).value = drag[i + 2] + 200 * delta[i] / canvas.clientWidth; });
+function cropAvailable() { return visual && !busy && !importing && !stickerJob; }
+function snapCrop(id,raw,magnetic) {
+  const input=byId(id), min=Number(input.min),max=Number(input.max), step=Number(input.step);
+  raw=clampCrop(raw,min,max);
+  if(!magnetic){locks.delete(id);return quantizeCrop(raw,step);}
+  const targets=cropTargets(id,cropGeometry()).filter(n=>n>=min-0.001&&n<=max+0.001);
+  // Use a small preview-space radius, not a percentage of the full slider range.
+  const radius=id==='zoom'?0.6:clampCrop(2*cropSide/Math.max(1,canvas.clientWidth),2,4);
+  const old=locks.get(id);
+  if(old!==undefined && targets.some(n=>Math.abs(n-old)<0.02) && Math.abs(raw-old)<=radius*1.65)
+    return clampCrop(quantizeCrop(old,step),min,max);
+  locks.delete(id);
+  let nearest;
+  for(const n of targets)if(nearest===undefined||Math.abs(n-raw)<Math.abs(nearest-raw))nearest=n;
+  if(nearest!==undefined && Math.abs(nearest-raw)<=radius){locks.set(id,nearest);raw=nearest;}
+  return clampCrop(quantizeCrop(raw,step),min,max);
+}
+function editCrop() {
+  if(!cropAvailable())return;
+  if(result || previewSession || nativePackage)clearResult();
   paint(visual.frame || visual.media);
+  cropReadouts();
+  showCropGuides();
+  sync();
+}
+for(const id of [...cropAxes,'zoom']){
+  const input=byId(id),number=byId(id+'-value');
+  input.addEventListener('pointerdown',()=>{activeSliders.add(id);locks.delete(id);});
+  const release=()=>{activeSliders.delete(id);locks.delete(id);};
+  input.addEventListener('pointerup',release);
+  input.addEventListener('pointercancel',release);
+  input.addEventListener('lostpointercapture',release);
+  input.addEventListener('blur',release);
+  input.addEventListener('keydown',release);
+  input.addEventListener('input',event=>{
+    if(!cropAvailable())return;
+    input.value=snapCrop(id,Number(input.value),activeSliders.has(id)&&!event.shiftKey);
+    editCrop();
+  });
+  number.addEventListener('change',()=>{
+    if(!cropAvailable())return;
+    const n=number.valueAsNumber;
+    if(Number.isFinite(n)){input.value=snapCrop(id,n,false);editCrop();}
+    number.value=Number(input.value).toFixed(id==='zoom'?2:1);
+  });
+  number.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();number.blur();}});
+}
+byId('center-crop').onclick=()=>{
+  if(!cropAvailable())return;
+  locks.clear();cropAxes.forEach(id=>{byId(id).value=0;});
+  editCrop();
+};
+canvas.addEventListener('pointerdown',event=>{
+  if(!cropAvailable()||drag||event.button!==0)return;
+  canvas.setPointerCapture(event.pointerId);
+  locks.clear();
+  drag={pointer:event.pointerId,x:event.clientX,y:event.clientY,values:cropAxes.map(id=>Number(byId(id).value))};
 });
-canvas.addEventListener('lostpointercapture', () => { drag = undefined; });
+canvas.addEventListener('pointermove',event=>{
+  if(!drag||event.pointerId!==drag.pointer||!cropAvailable())return;
+  const rect=canvas.getBoundingClientRect();
+  const delta=[(event.clientX-drag.x)*cropSide/rect.width,(event.clientY-drag.y)*cropSide/rect.height];
+  cropAxes.forEach((id,index)=>{byId(id).value=snapCrop(id,drag.values[index]+delta[index],!event.shiftKey);});
+  editCrop();
+});
+const endCropDrag=event=>{if(drag?.pointer===event.pointerId){drag=undefined;locks.clear();}};
+canvas.addEventListener('pointerup',endCropDrag);
+canvas.addEventListener('pointercancel',endCropDrag);
+canvas.addEventListener('lostpointercapture',endCropDrag);
 const linkStatus = byId('link-status');
 function showLinkState(message, state = 'info') {
   const fallback = byId('tiktok-alternative');
@@ -938,7 +1060,7 @@ async function prepareSticker() {
   const button = byId('prepare-sticker'), state = byId('sticker-state'), progress = byId('sticker-progress');
   const controller = new AbortController();
   stickerJob = controller;
-  byId('quality').disabled = true;
+  sync();
   button.hidden = true;
   button.disabled = true;
   byId('cancel-sticker').hidden = false;

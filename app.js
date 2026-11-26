@@ -101,7 +101,7 @@ function sync() {
   updateTimeline();
   // Hidden trim fields must not block form submission.
   for (const [ids,hidden] of [[['vs','ve'],byId('visual-trim').hidden],[['as','ae'],byId('audio-trim').hidden]]) for (const id of ids) { byId(id).required = !hidden; byId(id).disabled = hidden || busy; }
-  for (const id of ['mark-start','mark-end','demo']) byId(id).disabled = busy || importing;
+  for (const id of ['mark-start','mark-end','demo','v-full','a-full']) byId(id).disabled = busy || importing;
   for (const id of ['vs','ve','as','ae']) {
     const field=byId(id), slider=byId(id+'-slider');
     slider.max=field.max || 1; slider.value=field.value;
@@ -1065,6 +1065,11 @@ for (const id of ['vs','ve','as','ae']) {
     if(prefix==='v'){byId('scrub').value=field.value;updateScrub();}
   });
 }
+for(const prefix of ['v','a']) byId(prefix+'-full').onclick=()=>{
+  if(busy||importing||stickerJob)return;
+  byId(prefix+'s').value='0';byId(prefix+'e').value=byId(prefix+'e').max;
+  clearResult();sync();if(prefix==='v'){byId('scrub').value='0';updateScrub();}
+};
 byId('mark-start').onclick = () => {
   if (busy || !visual) return;
   const start = byId('scrub').valueAsNumber;

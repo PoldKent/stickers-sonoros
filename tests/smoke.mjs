@@ -155,6 +155,8 @@ try {
     for(let i=0;i<samples;i++)d.setInt16(44+i*2,Math.round(Math.sin(2*Math.PI*440*i/48000)*3000),true);
     const audio=new File([bytes],'long.wav',{type:'audio/wav'});
     const out=await window.WAAS.convert({visual:{kind:'image',file:image,start:0,dur:240},audio:{file:audio,start:0,dur:240},fit:'repetir',extended:true});
+    const decoded=await new OfflineAudioContext(1,48000,48000).decodeAudioData(await out.ogg.arrayBuffer());
+    if(Math.abs(decoded.duration-240)>0.1)throw Error('Unexpected decoded audio duration: '+decoded.duration);
     const encode=async blob=>{const u=new Uint8Array(await blob.arrayBuffer());let s='';for(let i=0;i<u.length;i+=16384)s+=String.fromCharCode(...u.subarray(i,i+16384));return btoa(s);};
     return {format:'stickers-sonoros/1',webp:await encode(out.webp),ogg:await encode(out.ogg),info:out.info};
   });
@@ -475,12 +477,12 @@ try {
   const temp=mkdtempSync(join(tmpdir(),'sticker-duration-'));
   try{
     const path=join(temp,'source.webm');
-    execFileSync('ffmpeg',['-v','error','-f','lavfi','-i','color=c=blue:s=128x128:r=5:d=61','-f','lavfi','-i','sine=frequency=440:sample_rate=48000:duration=61','-c:v','libvpx','-c:a','libopus','-shortest',path]);
+    execFileSync('ffmpeg',['-v','error','-f','lavfi','-i','color=c=blue:s=128x128:r=5:d=241','-f','lavfi','-i','sine=frequency=440:sample_rate=48000:duration=241','-c:v','libvpx','-c:a','libopus','-shortest',path]);
     await durations.goto('http://127.0.0.1:8000');
     await durations.locator('#visual').setInputFiles(path);
     await durations.waitForFunction(()=>!document.querySelector('#export').disabled);
     const full=Number(await durations.locator('#ve').inputValue());
-    assert(full>60 && full===Number(await durations.locator('#ve').getAttribute('max')),`Full source selection: ${full}`);
+    assert(full>=240 && full===Number(await durations.locator('#ve').getAttribute('max')),`Full source selection: ${full}`);
     assert.equal(await durations.locator('#scrub-row').evaluate(e=>e.parentElement.id),'preview-media');
     await durations.locator('#ve').fill('60');
     await durations.locator('#ve').dispatchEvent('change');
@@ -493,9 +495,12 @@ try {
     await durations.locator('#ve-slider').fill('45');
     assert.equal(Number(await durations.locator('#ve').inputValue()),45);
     await durations.locator('#scrub').fill('10');
-    assert.match(await durations.locator('#scrub-time').textContent(),/10\.00 \/ (60|61)\./);
+    assert.match(await durations.locator('#scrub-time').textContent(),/10\.00 \/ (240|241)\./);
     await durations.locator('#mark-start').click();
     assert.equal(Number(await durations.locator('#vs').inputValue()),10);
+    await durations.locator('#v-full').click();
+    assert.equal(Number(await durations.locator('#vs').inputValue()),0);
+    assert.equal(Number(await durations.locator('#ve').inputValue()),full);
   }finally{await durations.close();rmSync(temp,{recursive:true,force:true});}
   // Mobile layout and language switch preserve the active media and project.
   for(const width of [320,390,740,1024]){

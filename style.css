@@ -105,3 +105,5 @@ footer a{overflow-wrap:anywhere}#visual-label{max-width:100%;overflow-wrap:anywh
 
 /* Give signature the same field treatment as the rest of the editor. */
 #signature{width:100%;min-width:0;background:#171221;color:var(--text);border:1px solid var(--line);border-radius:9px;padding:9px 11px;min-height:40px}#signature::placeholder{color:var(--muted)}
+
+.trim-full{grid-column:1/-1;justify-self:end;min-height:32px;padding:5px 8px}.trim-full:hover{color:var(--accent)}

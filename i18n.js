@@ -1,6 +1,8 @@
 /* Spanish/English presentation layer; does not change media or sending logic. */
 (() => {
   const pairs = [
+    ["Usar completo","Use full source"],
+    ["Si ya tienes el favorito de esta versión, salta este paso. Actualiza los favoritos antiguos.","Skip this step if you have the bookmark for this version. Update older bookmarks."],
     ["En el celular, guarda el archivo del sticker y pásalo a una computadora. El paquete se envía desde WhatsApp Web. Si tu WhatsApp móvil ya ofrece el botón de audio al crear stickers, también puedes crear uno desde su editor nativo.","On a phone, save the sticker file and transfer it to a computer. Send the package from WhatsApp Web. If your mobile WhatsApp already offers an audio button when creating stickers, you can also create one in its native editor."],
     ["Línea de tiempo","Timeline"],
     ["El tramo supera la memoria de captura disponible. Reduce la resolución del archivo original o acorta el tramo.","The selection exceeds available capture memory. Reduce the source resolution or shorten the selection."],

@@ -932,7 +932,7 @@
 
     // Audio: la tasa de bits baja en clips largos para no pasar de 1 MB (límite de WhatsApp).
     const audioBudget = an.extended ? MAX_TOTAL_BYTES - 65536 : MAX_AUDIO_BYTES;
-    const bitrate = Math.max(6000, Math.min(32000, Math.floor((0.9 * audioBudget * 8) / A.dur)));
+    let bitrate = Math.max(6000, Math.min(32000, Math.floor((0.9 * audioBudget * 8) / A.dur)));
     if ((bitrate / 8) * A.dur > 0.97 * audioBudget) throw new Error('El audio no cabe en el presupuesto de tamaño. Reduce el tramo.');
     if (an.visual.kind !== 'image' && !(fps >= 9)) throw new Error('Las animaciones requieren al menos 9 FPS.');
     prog("Extrayendo audio…", 0);
@@ -940,8 +940,13 @@
     const pcm = await extractAudio(A.file, A.start, A.dur, A.file !== an.visual.file ? 8 : 0);
     checkAbort(signal);
     prog("Codificando audio…", 0.05);
-    const { packets, preSkip, config } = await encodeOpus(pcm, bitrate);
-    const ogg = buildOggOpus(packets, preSkip, pcm.length);
+    let packets, preSkip, config, ogg;
+    for(const rate of new Set([bitrate,24000,16000,12000,8000,6000].filter(r=>r<=bitrate))){
+      checkAbort(signal);bitrate=rate;
+      ({packets,preSkip,config}=await encodeOpus(pcm,bitrate));
+      ogg=buildOggOpus(packets,preSkip,pcm.length);
+      if(ogg.length<=audioBudget)break;
+    }
     if (ogg.length > audioBudget) throw new Error('El audio no cabe en el presupuesto de tamaño. Reduce el tramo.');
     const soundSha = await sha256b64(ogg);
     const oggCheck = await verifyOgg(ogg);

@@ -64,3 +64,7 @@ Pages .32 deployed; browser CI failed at 320px after generating a rotated sticke
 ### 2026.11.26.34
 
 CI .33 passed the previously failing 320px crop check but failed a strict 61s fixture assertion (browser decoding/rounding). The updated test asserts full selection against the actual max and explicitly selects 60.5s. Added early ES/EN desktop and mobile screenshot capture, a 240s image/audio conversion and mock send test, native mobile research update and post-CI production diagnostics. No real WhatsApp send or Render production result is asserted here.
+
+### 2026.11.26.35 — PR #29 reconciliation
+
+Preserved the useful changes from the obsolete branch without restoring its 1 MB audio cap, 192px fixed resolution floor or 10-minute import cap. Added full-source reset controls, long/large-send compatibility warning, bounded Opus bitrate retries, 241s source selection and decoded 240s audio test. Existing numeric precision controls remain instead of replacing them with range-only fields. The earlier branch remains in Git history for reference. Production and real WhatsApp acceptance still require verification.

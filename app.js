@@ -38,6 +38,7 @@ function clearResult() {
   output.removeAttribute('src');
   output.load();
   output.hidden = true;
+  byId('native').hidden = true;
   byId('downloads').hidden = true;
   if (resultUrl) URL.revokeObjectURL(resultUrl);
   result = resultUrl = undefined;
@@ -50,6 +51,7 @@ function sync() {
   byId('audio-trim').hidden = mode === 'video' || !audio;
   byId('motion-row').hidden = mode !== 'mix';
   byId('empty').hidden = !!visual;
+  byId('position').hidden = !visual;
   canvas.classList.toggle('ready', !!visual);
 }
 
@@ -58,9 +60,11 @@ function paint(media) {
   const height = media.videoHeight || media.naturalHeight || media.displayHeight;
   if (!width || !height) return;
   const scale = Math[byId('fit').value === 'cover' ? 'max' : 'min'](512 / width, 512 / height);
+  const w = width * scale * byId('zoom').value / 100;
+  const h = height * scale * byId('zoom').value / 100;
   drawing.fillStyle = '#14101d';
   drawing.fillRect(0, 0, 512, 512);
-  drawing.drawImage(media, (512 - width * scale) / 2, (512 - height * scale) / 2, width * scale, height * scale);
+  drawing.drawImage(media, (512 - w) / 2 + 2.56 * byId('pan-x').value, (512 - h) / 2 + 2.56 * byId('pan-y').value, w, h);
 }
 
 function range(prefix, duration) {
@@ -126,8 +130,12 @@ async function readVisual(file, selectedMode) {
     media.playsInline = true;
     media.preload = 'auto';
     await loadVideo(media, url);
-    if (!Number.isFinite(media.duration) || !media.videoWidth) throw new Error('No pude obtener la duración o imagen del video.');
-    return { kind: 'video', media, url, duration: media.duration };
+    let duration = media.duration;
+    if (!Number.isFinite(duration) && selectedMode === 'video') {
+      duration = (await readAudio(file)).duration;
+    }
+    if (!Number.isFinite(duration) || !media.videoWidth) throw new Error('No pude obtener la duración o imagen del video.');
+    return { kind: 'video', media, url, duration };
   } catch (error) {
     URL.revokeObjectURL(url);
     throw error;
@@ -332,6 +340,8 @@ async function render(context, videoTrim, soundTrim) {
         } else if (item.kind === 'gif') {
           const time = loop ? elapsed % videoTrim.duration : Math.min(elapsed, videoTrim.duration - .001);
           paint(await gifAt(item, videoTrim.start + time));
+        } else {
+          paint(item.media);
         }
       } catch (error) {
         failure = error;
@@ -381,6 +391,7 @@ byId('project').addEventListener('submit', async event => {
     resultUrl = URL.createObjectURL(result);
     output.src = resultUrl;
     output.hidden = false;
+    byId('native').hidden = false;
     const download = byId('download');
     download.href = resultUrl;
     download.download = result.name;
@@ -408,3 +419,96 @@ byId('share').addEventListener('click', async () => {
   }
 });
 sync();
+
+const axes = ['pan-x', 'pan-y'];
+for (const id of [...axes, 'zoom']) {
+  byId(id).addEventListener('input', () => {
+    clearResult();
+    if (visual) paint(visual.frame || visual.media);
+  });
+}
+let drag;
+canvas.addEventListener('pointerdown', event => {
+  if (!visual || busy) return;
+  canvas.setPointerCapture(event.pointerId);
+  drag = [event.clientX, event.clientY, ...axes.map(id => +byId(id).value)];
+});
+canvas.addEventListener('pointermove', event => {
+  if (!drag || busy) return;
+  const delta = [event.clientX - drag[0], event.clientY - drag[1]];
+  axes.forEach((id, i) => { byId(id).value = drag[i + 2] + 200 * delta[i] / canvas.clientWidth; });
+  paint(visual.frame || visual.media);
+});
+canvas.addEventListener('lostpointercapture', () => { drag = undefined; });
+const linkStatus = byId('link-status');
+let capturing;
+function switchToVideo() {
+  if (mode !== 'video') modes.find(button => button.dataset.mode === 'video').click();
+}
+byId('load-link').onclick = async () => {
+  if (busy || capturing) return;
+  const button = byId('load-link');
+  button.disabled = true;
+  byId('social').hidden = true;
+  try {
+    const url = new URL(byId('link-input').value.trim());
+    if (url.protocol !== 'https:' || url.username || url.password) throw new Error('Introduce un enlace HTTPS válido.');
+    if (/(^|\.)(tiktok\.com|instagram\.com|youtube\.com|youtu\.be)$/.test(url.hostname)) {
+      byId('original').href = url.href;
+      byId('social').hidden = false;
+      linkStatus.textContent = navigator.mediaDevices?.getDisplayMedia ? '' : 'Este navegador requiere descargar el video y seleccionarlo en el editor.';
+      return;
+    }
+    linkStatus.textContent = 'Importando video…';
+    const response = await fetch(url, { credentials: 'omit', referrerPolicy: 'no-referrer' });
+    if (!response.ok) throw new Error('No se pudo descargar el archivo.');
+    const blob = await response.blob();
+    if (busy) throw new Error('Espera a que termine la exportación.');
+    switchToVideo();
+    await chooseVisual(new File([blob], 'Video del enlace', { type: blob.type }));
+    linkStatus.textContent = '';
+  } catch (error) {
+    linkStatus.textContent = 'No se pudo importar el enlace. Comprueba la URL o selecciona el archivo descargado.';
+  } finally { button.disabled = false; }
+};
+byId('capture').onclick = async () => {
+  if (busy || capturing) return;
+  let stream;
+  const button = byId('capture');
+  button.disabled = true;
+  try {
+    if (!navigator.mediaDevices?.getDisplayMedia || !window.MediaRecorder) throw new Error('La captura requiere un navegador de escritorio compatible.');
+    stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true, preferCurrentTab: false, selfBrowserSurface: 'exclude' });
+    if (!stream.getAudioTracks().length) throw new Error('Selecciona una pestaña con Compartir audio activado.');
+    const chunks = [];
+    const recorder = new MediaRecorder(stream);
+    capturing = recorder;
+    switchToVideo();
+    const finish = byId('finish');
+    finish.hidden = false;
+    const stop = () => { if (recorder.state !== 'inactive') recorder.stop(); };
+    finish.onclick = stop;
+    stream.getVideoTracks()[0].addEventListener('ended', stop, { once: true });
+    const timer = setTimeout(stop, 60000);
+    recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
+    recorder.onstop = async () => {
+      clearTimeout(timer);
+      stream.getTracks().forEach(track => track.stop());
+      finish.hidden = true;
+      capturing = undefined;
+      button.disabled = false;
+      if (busy) { linkStatus.textContent = 'Termina la exportación antes de capturar otra pestaña.'; return; }
+      switchToVideo();
+      linkStatus.textContent = '';
+      await chooseVisual(new File(chunks, 'Captura de la publicación', { type: recorder.mimeType }));
+    };
+    recorder.start(250);
+    linkStatus.textContent = 'Capturando hasta 60 segundos. Puedes terminar antes desde esta pestaña o desde el navegador.';
+  } catch (error) {
+    stream?.getTracks().forEach(track => track.stop());
+    capturing = undefined;
+    button.disabled = false;
+    byId('finish').hidden = true;
+    linkStatus.textContent = error.name === 'NotAllowedError' ? 'Captura cancelada o sin permiso.' : error.message;
+  }
+};

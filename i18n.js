@@ -236,6 +236,7 @@
     const target=narrow.matches?mobile:desktop;
     if(media.parentElement!==target)target.append(media);
   }
+  if(narrow.matches)document.querySelector("#native-bridge details").open=false;
   narrow.addEventListener?.("change",layout);
   layout();
 })();

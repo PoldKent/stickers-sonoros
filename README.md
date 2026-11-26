@@ -22,6 +22,10 @@ Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
 3. Pulsa **Crear sticker sonoro**. El editor prepara localmente un paquete con WebP y Ogg/Opus vinculados, si el navegador dispone de los códecs necesarios.
 4. Sigue los cuatro pasos de envío que aparecen debajo de la vista previa. La única descarga del editor es `sticker.sonoro.json`.
 
+## Firma del sticker
+
+Añade opcionalmente tu nombre o alias (hasta 40 caracteres). Cada sticker generado contiene en el EXIF el nombre de paquete **Creado en Stickers Sonoros** y el enlace de la aplicación en el campo de autor, junto con tu firma si la indicas. No se modifica la imagen ni el audio; se conserva la vinculación SHA-256. La firma es pública para quienes reciban el sticker. WhatsApp puede variar cómo muestra esos campos y si el enlace es pulsable. No se simulan enlaces de tiendas de aplicaciones.
+
 ## Encuadre preciso
 
 Los controles de posición se expresan en píxeles del lienzo de 512 × 512 y admiten pasos de 0,1 px; el zoom admite pasos de 0,01 %. Al arrastrar el vídeo o un deslizador, un imán suave ayuda a alinear el centro o los bordes reales con el lienzo, según el modo de encuadre y el zoom. Sigue arrastrando para liberar el ajuste; también puedes introducir un valor exacto o utilizar las flechas del teclado sin el imán. **Centrar** restablece solo la posición. Las guías visibles son temporales y no aparecen en el sticker. Gira el contenido 90° a la izquierda o derecha, 180°, o selecciona 0°, 90°, 180° o 270°. El encuadre magnético se adapta a la orientación y la rotación se conserva al generar el sticker. El zoom y la posición se mantienen al girar; usa **Centrar** si lo necesitas.

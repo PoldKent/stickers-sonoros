@@ -19,6 +19,7 @@ try {
   await page.locator('#demo').click();
   await page.waitForFunction(()=>!document.querySelector('#export').disabled);
   assert.match(await page.locator('#selection-info').textContent(),/2\.00 s/);
+  await page.locator('#signature').fill('Mi firma 🎵');
   await page.locator('#export').click();
   await page.locator('#output').waitFor({state:'visible',timeout:40000});
   await page.waitForFunction(()=>document.querySelector('#output').readyState>=2,{},{timeout:20000});
@@ -50,6 +51,28 @@ try {
   const pack=JSON.parse(packageBytes.toString('utf8'));
   assert.equal(pack.format,'stickers-sonoros/1');
   assert.equal(pack.info.segundosAudio,2);
+  const appUrl='https://poldkent.github.io/stickers-sonoros/';
+  assert.equal(pack.info.packName,'Creado en Stickers Sonoros');
+  assert.equal(pack.info.publisher,'Mi firma 🎵 · '+appUrl);
+  assert.equal(pack.info.signature,'Mi firma 🎵');
+  assert.equal(pack.info.appUrl,appUrl);
+  function readAttribution(pack) {
+    const bytes=Buffer.from(pack.webp,'base64');
+    for(let at=12;at+8<=bytes.length;){
+      const n=bytes.readUInt32LE(at+4);
+      if(bytes.toString('ascii',at,at+4)==='EXIF'){
+        const exif=bytes.subarray(at+8,at+8+n);
+        return JSON.parse(exif.subarray(26,26+exif.readUInt32BE(14)).toString('utf8'));
+      }
+      at+=8+n+(n%2);
+    }
+    throw Error('Missing EXIF');
+  }
+  const metadata=readAttribution(pack);
+  assert.equal(metadata['sticker-pack-name'],pack.info.packName);
+  assert.equal(metadata['sticker-pack-publisher'],pack.info.publisher);
+  assert.equal(metadata['sound-sha256'],pack.info.soundSha256);
+  assert.match(await page.locator('#attribution-result').textContent(),/Mi firma/);
   const bookmarklet=await page.locator('#wa-bookmark').getAttribute('href');
   assert.match(bookmarklet,/^javascript:/);
   const wa=await browser.newPage();
@@ -433,6 +456,7 @@ try {
     await phone.locator('#language').selectOption('en');
     assert.equal(await phone.locator('html').getAttribute('lang'),'en');
     assert.match(await phone.locator('#export').textContent(),/Create sound sticker/);
+    assert.equal(await phone.locator('#signature').getAttribute('placeholder'),'Your name or nickname');
     assert.equal(await phone.locator('#link-input').getAttribute('placeholder'),'Web page, video, image or audio');
     assert.equal(await phone.locator('#support-link').textContent(),'Support the project');
     assert.match(await phone.locator('#support-link').getAttribute('href'),/#english$/);
@@ -468,6 +492,15 @@ try {
       assert.equal(await phone.locator('#download').count(),0);
       assert.equal(await phone.locator('#wa-bookmark').isVisible(),true);
       assert.match(await phone.locator('#package-download').textContent(),/Save sound sticker/);
+      assert.equal(await phone.locator('#signature').inputValue(),'');
+      const unsigned=await phone.evaluate(async()=>{
+        const bytes=new Uint8Array(await (await fetch(document.querySelector('#sticker-image').src)).arrayBuffer());
+        let raw='';for(let at=0;at<bytes.length;at+=16384)raw+=String.fromCharCode(...bytes.subarray(at,at+16384));
+        return {webp:btoa(raw)};
+      });
+      const unsignedMeta=readAttribution(unsigned);
+      assert.equal(unsignedMeta['sticker-pack-name'],'Creado en Stickers Sonoros');
+      assert.equal(unsignedMeta['sticker-pack-publisher'],appUrl);
       await phone.screenshot({path:'artifacts/screenshots/mobile-en.png',fullPage:true});
       await phone.locator('#language').selectOption('es');
       await phone.screenshot({path:'artifacts/screenshots/mobile-es.png',fullPage:true});

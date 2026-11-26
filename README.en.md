@@ -22,6 +22,10 @@ Video, image or GIF + audio · up to 60 seconds · Español / English.
 3. Select **Create sound sticker**. The editor locally creates a package containing linked WebP and Ogg/Opus files when the browser supports the required codecs.
 4. Follow the four sending steps under the preview. The editor's only download is `sticker.sonoro.json`.
 
+## Sticker signature
+
+Optionally enter your name or nickname (up to 40 characters). Every sticker contains **Creado en Stickers Sonoros** as its EXIF pack name and the app URL in its publisher field, alongside your signature if provided. No text is painted on the image and the audio SHA-256 linkage is preserved. Recipients may see this public attribution. WhatsApp determines how fields are displayed and whether the URL is clickable. No app-store links are impersonated.
+
 ## Precision framing
 
 Position controls use pixels of the 512 × 512 canvas, with 0.1 px steps; zoom uses 0.01% steps. Drag the media or slider to softly snap to its center or actual canvas edges, depending on framing mode and zoom. Continue dragging to release the snap, or enter exact numbers or use arrow keys to bypass it. **Center** resets position only. Temporary guides are not part of the sticker. Rotate media 90° left or right, 180°, or select 0°, 90°, 180° or 270°. Magnetic alignment adapts to orientation and rotation is applied to the actual exported sticker. Zoom and screen-space position are preserved when rotating; use **Center** as needed.

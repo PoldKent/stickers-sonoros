@@ -9,9 +9,7 @@ const labels = {
   image: ['Selecciona o arrastra una imagen', 'PNG, JPEG, WebP u otra imagen compatible', 'image/*'],
   mix: ['Selecciona o arrastra un video o GIF', 'MP4, WebM o GIF animado', 'video/*,image/gif']
 };
-const limit = 180;
 const maxLocalBytes = 80 * 1024 * 1024;
-const defaultTrim = 30;
 let mode = 'video';
 let visual;
 let audio;
@@ -100,8 +98,9 @@ function sync() {
   byId('use-frame').disabled = busy || importing || loadingVisual || loadingAudio;
   byId('trim-actions').hidden = byId('scrub-row').hidden;
   // Hidden trim fields must not block form submission.
-  for (const [ids,hidden] of [[['vs','ve'],byId('visual-trim').hidden],[['as','ae'],byId('audio-trim').hidden]]) for (const id of ids) { byId(id).required = !hidden; byId(id).disabled = hidden || busy; }
-  for (const id of ['mark-start','mark-end','demo']) byId(id).disabled = busy || importing;
+  for (const [ids,hidden] of [[['vs','ve'],byId('visual-trim').hidden],[['as','ae'],byId('audio-trim').hidden]]) for (const id of ids) { byId(id).disabled = hidden || busy || importing || !!stickerJob; }
+  for (const id of ['mark-start','mark-end','demo','v-full','a-full']) byId(id).disabled = busy || importing || !!stickerJob;
+  updateTrimReadouts();
   selectionInfo();
   canvas.classList.toggle('ready', !!visual);
 }
@@ -193,13 +192,31 @@ function showCropGuides() {
   guideTimer=setTimeout(hideCropGuides,700);
 }
 
+function formatTrimTime(seconds) {
+  const cs=Math.round(Math.max(0,seconds)*100);
+  return Math.floor(cs/6000)+':'+String(Math.floor(cs/100)%60).padStart(2,'0')+'.'+String(cs%100).padStart(2,'0');
+}
+function updateTrimReadouts(){
+  for(const prefix of ['v','a']){
+    const start=byId(prefix+'s'),end=byId(prefix+'e'),max=Number(end.max)||1;
+    for(const field of [start,end]) {
+      byId(field.id+'-time').textContent=formatTrimTime(Number(field.value));
+      field.setAttribute('aria-valuetext',formatTrimTime(Number(field.value)));
+    }
+    const bar=byId(prefix+'-trim-track');
+    bar.style.setProperty('--start',(Number(start.value)/max*100)+'%');
+    bar.style.setProperty('--end',(Number(end.value)/max*100)+'%');
+    byId(prefix+'-trim-duration').textContent=formatTrimTime(Math.max(0,Number(end.value)-Number(start.value)));
+  }
+}
 function range(prefix, duration) {
   const max = Math.floor(duration * 100) / 100;
   if (max < .01) throw new Error('El archivo es demasiado corto.');
   byId(prefix + 's').max = max;
   byId(prefix + 's').value = 0;
   byId(prefix + 'e').max = max;
-  byId(prefix + 'e').value = Math.min(defaultTrim, max);
+  byId(prefix + 'e').value = max;
+  updateTrimReadouts();
   if (prefix === 'v') { byId('scrub').max = max; byId('scrub').value = 0; byId('scrub-time').textContent = '0.00 s'; }
 }
 
@@ -240,7 +257,7 @@ async function readVisual(file, selectedMode) {
       const count = decoder.tracks.selectedTrack.frameCount;
       const ends = [];
       let duration = 0;
-      for (let frameIndex = 0; frameIndex < Math.min(count, 1200) && duration < 120; frameIndex++) {
+      for (let frameIndex = 0; frameIndex < count; frameIndex++) {
         const { image } = await decoder.decode({ frameIndex });
         duration += Math.max(.02, (image.duration || 100000) / 1e6);
         ends.push(duration);
@@ -424,8 +441,9 @@ async function previewFrame(at) {
   }
 }
 byId('fit').addEventListener('change', () => { if (visual) { paint(visual.frame || visual.media); } previewFrame(byId('scrub').valueAsNumber); });
-byId('vs').addEventListener('change', () => { clearResult(); byId('scrub').value = byId('vs').value; updateScrub(); });
-for (const id of ['ve','as','ae','motion','fit']) byId(id).addEventListener('change', clearResult);
+byId('vs').addEventListener('change', () => { editTrim('vs'); byId('scrub').value = byId('vs').value; updateScrub(); });
+byId('ve').addEventListener('change', () => { editTrim('ve'); byId('scrub').value = byId('ve').value; updateScrub(); });
+for (const id of ['motion','fit']) byId(id).addEventListener('change', clearResult);
 function updateScrub() { byId('scrub-time').textContent = Number(byId('scrub').value).toFixed(2) + ' s'; previewFrame(byId('scrub').valueAsNumber); }
 byId('scrub').addEventListener('change', updateScrub);
 byId('scrub').addEventListener('input', () => { byId('scrub-time').textContent = Number(byId('scrub').value).toFixed(2) + ' s'; });
@@ -542,7 +560,6 @@ byId('project').addEventListener('submit', async event => {
     if (!window.MediaRecorder || !canvas.captureStream || !window.AudioContext) throw new Error('Este navegador no permite exportar el clip. Prueba con Chrome o Edge actualizado.');
     const videoTrim = visual.kind === 'image' ? null : trimmed('v');
     const soundTrim = mode === 'video' ? videoTrim : trimmed('a');
-    if (soundTrim.duration > limit + .0001) throw new Error('Selecciona un tramo de audio de hasta 180 segundos.');
     busy = true;
     clearResult();
     exportJob = new AbortController();
@@ -753,7 +770,12 @@ async function readMedia(response, signal, hint = '') {
   if (!kind || type === 'image/svg+xml') throw new Error('El recurso no devolvió un video, imagen o audio compatible.');
   const chunks = await readBounded(response,signal,maxImportBytes,true);
   const ext = Object.keys(mediaExtensions).find(key => mediaExtensions[key] === type) || kind;
-  return new File(chunks,kind+'-importado.'+ext,{type});
+  let name=kind+'-importado.'+ext;
+  try {
+    const url=new URL(response.url), path=decodeURIComponent(url.pathname.split('/').pop()||'');
+    if(inferredType(url.href)&&path)name=path;
+  } catch {}
+  return new File(chunks,name,{type});
 }
 function findMedia(markup, pageUrl) {
   const template = document.createElement('template');
@@ -1028,23 +1050,36 @@ async function importLink(force) {
 
 function selectionInfo() {
   const info = byId('selection-info');
-  if (!visual || !audio) { info.textContent = 'Selecciona un archivo con audio. Máximo 180 segundos por sticker.'; return; }
+  if (!visual || !audio) { info.textContent = 'Selecciona un archivo con audio.'; return; }
   try {
     const t = mode === 'video' ? trimmed('v') : trimmed('a');
-    info.textContent = 'Duración: ' + t.duration.toFixed(2) + ' s de ' + limit + ' s permitidos.';
-    if (t.duration > 30 && t.duration <= limit) info.textContent += ' · La animación puede reducir su calidad para respetar el tamaño elegido.';
-    if (t.duration > limit + .0001) info.textContent += ' Reduce el tramo antes de generar.';
+    info.textContent = 'Duración seleccionada: ' + t.duration.toFixed(2) + ' s.';
+    if (t.duration > 30) info.textContent += ' · La animación puede reducir su calidad para respetar el tamaño elegido.';
     if (visual.kind !== 'image' && mode !== 'video') trimmed('v');
-    if (t.duration > limit + .0001) byId('export').disabled = true;
   } catch (error) { info.textContent = error.message; byId('export').disabled = true; }
 }
-for (const id of ['vs','ve','as','ae']) byId(id).addEventListener('input', () => { clearResult(); sync(); });
+function editTrim(id){
+  const prefix=id[0],start=byId(prefix+'s'),end=byId(prefix+'e');
+  if(Number(start.value)>=Number(end.value)){
+    if(id.endsWith('s'))start.value=Math.max(0,Number(end.value)-.01).toFixed(2);
+    else end.value=Math.min(Number(end.max),Number(start.value)+.01).toFixed(2);
+  }
+  if(result||nativePackage||previewSession||stickerJob)clearResult();
+  sync();
+}
+for (const id of ['vs','ve','as','ae']) byId(id).addEventListener('input',()=>editTrim(id));
+for (const prefix of ['v','a'])byId(prefix+'-full').onclick=()=>{
+  if(busy||importing||stickerJob)return;
+  byId(prefix+'s').value=0;byId(prefix+'e').value=byId(prefix+'e').max;
+  clearResult();sync();
+  if(prefix==='v'){byId('scrub').value=0;updateScrub();}
+};
 byId('mark-start').onclick = () => {
   if (busy || !visual) return;
   const start = byId('scrub').valueAsNumber;
   const max = Number(byId('ve').max);
   byId('vs').value = Math.min(start, max - .01).toFixed(2);
-  byId('ve').value = Math.min(max, Number(byId('vs').value) + limit).toFixed(2);
+  if(Number(byId('ve').value)<=Number(byId('vs').value))byId('ve').value=max;
   clearResult(); sync(); previewFrame(Number(byId('vs').value));
 };
 byId('mark-end').onclick = () => {
@@ -1053,7 +1088,6 @@ byId('mark-end').onclick = () => {
   const start = byId('vs').valueAsNumber;
   if (end <= start) { status.textContent = 'El final debe estar después del inicio.'; return; }
   byId('ve').value = end.toFixed(2);
-  if (mode === 'video' && end - start > limit) byId('vs').value = (end - limit).toFixed(2);
   clearResult(); sync();
 };
 const stickerAppUrl = 'https://poldkent.github.io/stickers-sonoros/';
@@ -1194,7 +1228,6 @@ byId('play-source').onclick = async () => {
   try {
     const v = item.kind === 'image' ? null : trimmed('v');
     const a = mode === 'video' ? v : trimmed('a');
-    if (a.duration > limit + .0001) throw new Error('Reduce el tramo a 180 segundos.');
     const context = new AudioContext();
     session = {context,item};
     previewSession = session;
@@ -1252,7 +1285,7 @@ byId('use-frame').onclick = async () => {
     byId('rotation').value='0';
     byId('zoom').value=100;
     byId('pan-x').value=byId('pan-y').value=0;
-    const loaded = await chooseVisual(new File([blob],'fotograma.png',{type:'image/png'}));
+    const loaded = await chooseVisual(new File([blob],(original.name||'fotograma').replace(/\.[^.]+$/,'')+'.png',{type:'image/png'}));
     if (loaded && audio) {
       byId('as').value=cut.start.toFixed(2);
       byId('ae').value=(cut.start+cut.duration).toFixed(2);
@@ -1266,6 +1299,10 @@ byId('choose-original').onclick = () => {
   switchToVideo();
   byId('visual').click();
 };
+function stickerFilename(name) {
+  const base=String(name||'sticker').replace(/\.sonoro\.json$/i,'').replace(/\.[^.]+$/,'').replace(/[<>:"/\\|?*\u0000-\u001f]/g,'_').trim().replace(/[. ]+$/,'');
+  return (base.slice(0,180)||'sticker')+'.sonoro.json';
+}
 function bytesToBase64(bytes) {
   let raw='';
   for(let offset=0;offset<bytes.length;offset+=16384)raw+=String.fromCharCode(...bytes.subarray(offset,offset+16384));
@@ -1282,7 +1319,7 @@ byId('package-download').onclick=async()=>{
     const {lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl}=files.info;
     const blob=new Blob([JSON.stringify({format:'stickers-sonoros/1',webp,ogg,info:{lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl}})],{type:'application/json'});
     const url=URL.createObjectURL(blob), link=document.createElement('a');
-    link.href=url;link.download='sticker.sonoro.json';document.body.append(link);link.click();link.remove();
+    link.href=url;link.download=stickerFilename(visual?.name);document.body.append(link);link.click();link.remove();
     setTimeout(()=>URL.revokeObjectURL(url),30000);
     byId('bridge-status').textContent='Archivo preparado para descargar. Continúa con el paso 2 si es tu primera vez, o con el paso 3 si ya tienes el favorito.';
   }catch(e){byId('bridge-status').textContent=e.message||'No se pudo guardar el paquete.';}

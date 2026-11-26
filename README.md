@@ -22,6 +22,12 @@ Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
 3. Pulsa **Crear sticker sonoro**. El editor prepara localmente un paquete con WebP y Ogg/Opus vinculados, si el navegador dispone de los códecs necesarios.
 4. Sigue los cuatro pasos de envío que aparecen debajo de la vista previa. La única descarga del editor es `sticker.sonoro.json`.
 
+## Calidad del sticker
+
+El modo predeterminado **Máxima nitidez** prioriza la resolución (mínimo de salida 192 px para animaciones; objetivo 512 px), con menos FPS para clips largos. **Equilibrado** y **Máxima fluidez** permiten otras combinaciones. La calidad final depende del contenido y del límite de 1 MB; no se garantiza HD en todos los vídeos de 60 s. Si no cabe, reduce la duración o usa fotograma + audio. La vista del resultado indica la resolución y los FPS reales.
+
+Si falla una importación de TikTok, se ofrece [SnapTik](https://snaptik.fi/) como alternativa manual externa: descarga únicamente contenido autorizado y selecciona el archivo local. No se envía el enlace automáticamente ni se integra su API.
+
 ## Funciones
 
 - Importación directa de video, imagen y audio; detección de recursos públicos en páginas compatibles.
@@ -103,3 +109,7 @@ Si deseas apoyar voluntariamente el mantenimiento no comercial, consulta [las in
 ## Créditos y licencia
 
 El conversor y el mecanismo de publicación adaptado proceden de [Shirtep/WA-audio-stickers, commit 25f7909](https://github.com/Shirtep/WA-audio-stickers/tree/25f790945134f395c4bed4f0deea380ac3a2b778). Se conserva el [aviso de autoría y licencia PolyForm Noncommercial 1.0.0](vendor/shirtep/LICENSE.md); no se otorgan derechos de uso comercial ni se implica asociación oficial con WhatsApp, TikTok o Binance. Confirma con el titular de los derechos cualquier uso o financiación que pueda constituir explotación comercial.
+
+## Investigación móvil
+
+Consulta [envío móvil sin WhatsApp Web](docs/MOBILE.md). El envío directo con sonido desde Android/iOS aún no está implementado; se mantiene el flujo verificado de escritorio.

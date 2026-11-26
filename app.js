@@ -1157,14 +1157,16 @@ byId('package-download').onclick=async()=>{
 };
 const bookmark=byId('wa-bookmark');
 if(window.StickersSonorosBridge){
-  const address=window.StickersSonorosBridge.bookmarklet();
-  bookmark.href=address;
+  const address=()=>window.StickersSonorosBridge.bookmarklet(window.StickerUI?.language()||'es');
+  const updateBookmark=()=>{bookmark.href=address();};
+  updateBookmark();
+  document.addEventListener('sticker-language',updateBookmark);
   bookmark.addEventListener('click',event=>{
     event.preventDefault();
     byId('bridge-status').textContent='Arrastra el marcador a tu barra de favoritos. Luego úsalo dentro de WhatsApp Web.';
   });
   byId('copy-bookmark').onclick=async()=>{
-    try{await navigator.clipboard.writeText(address);byId('bridge-status').textContent='Dirección copiada. Crea un marcador nuevo y pega esta dirección en su campo URL.';}
+    try{await navigator.clipboard.writeText(address());byId('bridge-status').textContent='Dirección copiada. Crea un marcador nuevo y pega esta dirección en su campo URL.';}
     catch{byId('bridge-status').textContent='No se pudo copiar. Arrastra el enlace a la barra de marcadores.';}
   };
 }else{

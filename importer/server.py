@@ -85,10 +85,10 @@ def classify_download_error(log, returncode=1):
         return ImportFailure("SOURCE_BLOCKED", "La plataforma rechazó la solicitud del servidor (acceso limitado o demasiadas peticiones). Prueba con otro video autorizado o importa el archivo.")
     if any(x in msg for x in ("javascript runtime", "signature solving", "challenge solving", "ejs")):
         return ImportFailure("SOURCE_JS", "El descargador no pudo procesar la respuesta de la plataforma. Requiere revisión de compatibilidad.")
-    if any(x in msg for x in ("video unavailable", "not available", "removed", "deleted", "not found")):
-        return ImportFailure("SOURCE_UNAVAILABLE", "La publicación no está disponible para el servidor.")
     if any(x in msg for x in ("requested format is not available", "no video formats", "no suitable formats")):
         return ImportFailure("SOURCE_FORMAT", "La plataforma no ofrece un formato de video y audio compatible con el editor.")
+    if any(x in msg for x in ("video unavailable", "not available", "removed", "deleted", "not found")):
+        return ImportFailure("SOURCE_UNAVAILABLE", "La publicación no está disponible para el servidor.")
     if returncode < 0:
         return ImportFailure("RESOURCE_LIMIT", "La descarga superó un límite de recursos del servidor.")
     return ImportFailure("DOWNLOAD_FAILED", "No se pudo obtener el video. El servidor no recibió un archivo válido; prueba otro enlace autorizado.")

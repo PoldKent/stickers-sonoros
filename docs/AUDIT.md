@@ -112,3 +112,5 @@ User reported that 4 MB stickers do not work. Reduced the new-generation combine
 ### 2026.11.26.44 — Mobile-only private trial
 
 Previous real-package adapter CI passed. Added an optional bearer-protected one-shot service and mobile UI in both Send and saved-package reader; fixed secondary/receiver numbers configured only by the operator, explicit confirmation, ephemeral session, no inbox access, separate Docker deployment, no real account linkage. The official editor and public importer are not provisioned with this bridge. Browser and policy tests pending; dependency installation and real WhatsApp pairing/delivery not verified.
+
+Follow-up .44: actual generated package adaptation and web policy tests passed; simulated pairing and single JSON upload reached later browser checks. Full smoke failed at an old assertion counting all URL inputs (new private panel adds one). Scoped the assertion to the media importer, included private-panel assets in the simulated Pages routes and guarded async send preparation against repeated taps or configuration changes. New CI pending. Private hosting and real WhatsApp acceptance remain unverified.

@@ -19,9 +19,9 @@ function mount(root,getPackage){
   const send=add('button','send');send.type='button';send.className='primary';send.disabled=true;
   const message=add('p');message.setAttribute('role','status');message.setAttribute('aria-live','polite');
   const docs=add('a','docs');docs.href='https://github.com/PoldKent/stickers-sonoros/tree/main/experiments/mobile-bridge#prueba-web-móvil--mobile-web-trial';
-  let phase='idle',msg='idle',working=false,locked=false;
+  let phase='idle',msg='idle',working=false,locked=false,preparing=false;
   const t=k=>strings[k]?.[document.documentElement.lang==='en'?1:0]||strings.error[document.documentElement.lang==='en'?1:0];
-  function update(){panel.querySelectorAll('[data-private-msg]').forEach(e=>e.textContent=t(e.dataset.privateMsg));message.textContent=t(msg);send.disabled=working||locked||phase!=='ready'||!confirm.checked;connect.disabled=working||locked||!['idle','failed','closed'].includes(phase);refresh.disabled=working;stop.disabled=working;}
+  function update(){panel.querySelectorAll('[data-private-msg]').forEach(e=>e.textContent=t(e.dataset.privateMsg));message.textContent=t(msg);send.disabled=working||preparing||locked||phase!=='ready'||!confirm.checked;connect.disabled=working||preparing||locked||!['idle','failed','closed'].includes(phase);refresh.disabled=working||preparing;stop.disabled=working||preparing;url.disabled=key.disabled=confirm.disabled=working||preparing;}
   function reset(){phase='idle';msg='idle';locked=false;confirm.checked=false;pairing.hidden=true;code.textContent='';update()}
   url.onchange=key.onchange=reset;confirm.onchange=update;
   function endpoint(){let u;try{u=new URL(url.value.trim())}catch{}if(!u||u.protocol!=='https:'||!/^([a-z0-9-]+)\.onrender\.com$/.test(u.hostname)||u.port||u.username||u.password||u.pathname!=='/'||u.search||u.hash||key.value.length<32)throw Error('config');return u.origin}
@@ -40,7 +40,7 @@ function mount(root,getPackage){
     finally{working=false;update()}
   }
   connect.onclick=()=>request('/v1/connect','POST');refresh.onclick=()=>request('/v1/status');stop.onclick=()=>request('/v1/stop','POST');
-  send.onclick=async()=>{if(working||locked||phase!=='ready'||!confirm.checked)return;send.disabled=true;try{const body=await getPackage();if(!body){msg='missing';update();return}locked=true;await request('/v1/send','POST',body)}catch{msg='missing';update()}};
+  send.onclick=async()=>{if(working||preparing||locked||phase!=='ready'||!confirm.checked)return;preparing=true;update();try{const body=await getPackage();if(!body){msg='missing';return}locked=true;await request('/v1/send','POST',body)}catch{msg='missing'}finally{preparing=false;update()}};
   document.addEventListener('sticker-language',update);document.getElementById('mobile-language')?.addEventListener('change',()=>queueMicrotask(update));update();
 }
 window.SonoroPrivateMobile={mount};

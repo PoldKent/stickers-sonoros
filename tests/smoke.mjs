@@ -309,7 +309,7 @@ try {
     });
     await page.waitForFunction(()=>document.querySelector('#link-status').textContent.includes('Video listo'),{},{timeout:20000});
     assert.equal(requested,'https://www.youtube.com/watch?v=YBB4FHPFVmM');
-    assert.equal(await page.locator('input[type=url]').count(),1);
+    assert.equal(await page.locator('#links input[type=url]').count(),1);
     assert.equal(await page.locator('#export').isDisabled(),false);
     await page.locator('#wizard-next').click();
     assert.equal(await page.locator('#play-source').isVisible(),true);
@@ -321,7 +321,7 @@ try {
     const backend='https://stickers-sonoros.onrender.com';
     await pages.route(origin+'/**',route=>{
       const path=new URL(route.request().url()).pathname.replace(/^\/stickers-sonoros\//,'')||'index.html';
-      if (!['index.html','app.js','style.css','vendor/shirtep/convert.js','vendor/shirtep/local-send.js','i18n.js'].includes(path)) return route.abort();
+      if (!['index.html','app.js','style.css','vendor/shirtep/convert.js','vendor/shirtep/local-send.js','i18n.js','private-mobile.js','private-mobile.css'].includes(path)) return route.abort();
       const type=path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':'text/html';
       return route.fulfill({status:200,contentType:type,body:readFileSync(path)});
     });

@@ -60,3 +60,7 @@ El editor puede exportar un paquete local `sticker.sonoro.json` que reúne WebP,
 ## Estabilización y despliegue (2026.11.26.13)
 
 La prueba de navegador de la versión anterior fallaba porque seleccionaba cualquier input del puente (archivo y casilla experimental). El selector ahora identifica específicamente el archivo. Se mantiene sin cambios el código del puente v2 validado por el usuario. Se añaden cancelación de importaciones durante la lectura del archivo, plazo de carga de vídeo y comprobación de la versión de Render desde el pie de página. El Blueprint define `autoDeployTrigger: checksPass` en `main`, sin cambio de plan. Si Render no aplica la sincronización automáticamente, revisa Blueprint > Manual sync y el servicio > Manual Deploy > Deploy latest commit. No se requiere compartir claves ni volver a guardar el marcador v2.
+
+## Diagnóstico de importación real (2026.11.26.14)
+
+El editor comprueba /health antes de recurrir a /api/media. Distingue servidor inaccesible, servidor antiguo sin la capacidad publicMedia y errores HTTP devueltos por la fuente. El workflow Diagnóstico público de Render consulta el servicio real, comprueba CORS y realiza una importación de prueba con un MP4 público; no utiliza secretos ni cambia el servicio. Es diagnóstico, no una prueba que exija que Render ya tenga el nuevo commit antes del despliegue. El puente de WhatsApp v2 no se modifica.

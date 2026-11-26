@@ -77,13 +77,13 @@ try {
   const panel=wa.locator('#ss-local-bridge');
   await panel.waitFor();
   await panel.locator('input[type=file]').setInputFiles({name:'sticker.sonoro.json',mimeType:'application/json',buffer:packageBytes});
-  const send=panel.getByRole('button',{name:'Confirmar y enviar al chat abierto'});
+  const send=panel.getByRole('button',{name:'Enviar sticker con sonido'});
   await wa.waitForFunction(()=>!document.querySelector('#ss-local-bridge button').disabled);
   await send.click();
   assert.equal(await wa.evaluate(()=>window.mockCalls.uploads),0);
   await wa.evaluate(()=>{window.mockCalls.confirm=true;window.mockCalls.enabled=false;});
   await send.click();
-  assert.match(await panel.locator('[role=status]').textContent(),/no está habilitada/);
+  assert.match(await panel.locator('[role=status]').textContent(),/no está habilitado/);
   assert.equal(await wa.evaluate(()=>window.mockCalls.uploads),0);
   await panel.locator('#ss-experimental').check();
   await send.click();

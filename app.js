@@ -87,7 +87,7 @@ function sync() {
   byId('motion-row').hidden = mode !== 'mix';
   byId('empty').hidden = !!visual;
   byId('position').hidden = !visual;
-  for (const id of ['pan-x','pan-y','zoom','pan-x-value','pan-y-value','zoom-value','center-crop']) byId(id).disabled = busy || importing || !!stickerJob || !visual;
+  for (const id of ['pan-x','pan-y','zoom','pan-x-value','pan-y-value','zoom-value','center-crop','rotation','rotate-left','rotate-right','rotate-half']) byId(id).disabled = busy || importing || !!stickerJob || !visual;
   if (!visual) hideCropGuides();
   byId('scrub-row').hidden = !visual || visual.kind === 'image';
   byId('source-preview').hidden = !visual || !audio || loadingVisual || loadingAudio || busy || importing || !!result;
@@ -114,8 +114,12 @@ function cropGeometry(media = visual?.frame || visual?.media, zoom = Number(byId
   const width = media.videoWidth || media.naturalWidth || media.displayWidth;
   const height = media.videoHeight || media.naturalHeight || media.displayHeight;
   if (!width || !height) return null;
-  const base = Math[byId('fit').value === 'cover' ? 'max' : 'min'](cropSide/width,cropSide/height);
-  return {baseW:width*base,baseH:height*base,w:width*base*zoom/100,h:height*base*zoom/100};
+  const angle=Number(byId('rotation').value);
+  const quarter=angle===90||angle===270;
+  const orientedW=quarter?height:width, orientedH=quarter?width:height;
+  const base=Math[byId('fit').value==='cover'?'max':'min'](cropSide/orientedW,cropSide/orientedH);
+  const scale=base*zoom/100;
+  return {angle,baseW:orientedW*base,baseH:orientedH*base,w:orientedW*scale,h:orientedH*scale,drawW:width*scale,drawH:height*scale};
 }
 function cropTargets(id,g) {
   if (!g) return [];
@@ -154,8 +158,12 @@ function paint(media) {
   refreshCrop(g);
   drawing.fillStyle='#14101d';
   drawing.fillRect(0,0,cropSide,cropSide);
-  drawing.drawImage(media,(cropSide-g.w)/2+Number(byId('pan-x').value),
-    (cropSide-g.h)/2+Number(byId('pan-y').value),g.w,g.h);
+  drawing.save();
+  try {
+    drawing.translate(cropSide/2+Number(byId('pan-x').value),cropSide/2+Number(byId('pan-y').value));
+    drawing.rotate(g.angle*Math.PI/180);
+    drawing.drawImage(media,-g.drawW/2,-g.drawH/2,g.drawW,g.drawH);
+  } finally { drawing.restore(); }
 }
 function hideCropGuides() {
   clearTimeout(guideTimer);
@@ -287,6 +295,7 @@ async function chooseVisual(file, signal) {
     if (item.duration) range('v', item.duration);
     item.name = file.name;
     visual = item;
+    byId('rotation').value='0';
     paint(item.frame || item.media);
     if (selectedMode === 'video') {
       const buffer = await readAudio(file);
@@ -625,6 +634,17 @@ byId('center-crop').onclick=()=>{
   locks.clear();cropAxes.forEach(id=>{byId(id).value=0;});
   editCrop();
 };
+// Rotate the actual canvas content, not a CSS preview. Pan stays in screen coordinates.
+function changeRotation(angle) {
+  if(!cropAvailable())return;
+  byId('rotation').value=String((angle%360+360)%360);
+  locks.clear();cropKey='';
+  editCrop();
+}
+byId('rotation').addEventListener('change',()=>changeRotation(Number(byId('rotation').value)));
+for(const [id,delta] of [['rotate-left',-90],['rotate-right',90],['rotate-half',180]]) {
+  byId(id).onclick=()=>changeRotation(Number(byId('rotation').value)+delta);
+}
 canvas.addEventListener('pointerdown',event=>{
   if(!cropAvailable()||drag||event.button!==0)return;
   canvas.setPointerCapture(event.pointerId);
@@ -1208,6 +1228,7 @@ byId('use-frame').onclick = async () => {
     if (!blob || visual!==original) return;
     selectMediaMode('image',false,true);
     byId('fit').value='contain';
+    byId('rotation').value='0';
     byId('zoom').value=100;
     byId('pan-x').value=byId('pan-y').value=0;
     const loaded = await chooseVisual(new File([blob],'fotograma.png',{type:'image/png'}));

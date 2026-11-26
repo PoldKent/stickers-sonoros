@@ -39,8 +39,12 @@ function closeVisual(item) {
 }
 
 let stickerJob;
+let nativePackage;
 let clipDuration;
 function clearResult() {
+  nativePackage = undefined;
+  byId('native-bridge').hidden = true;
+  byId('bridge-status').textContent = '';
   mp4Job?.abort(); mp4Job = undefined;
   if (compatibleUrl) URL.revokeObjectURL(compatibleUrl);
   compatibleClip = compatibleUrl = undefined;
@@ -915,6 +919,8 @@ async function prepareSticker() {
     byId('webp-file').href = byId('sticker-image').src = webpUrl;
     byId('ogg-file').href = byId('sticker-audio').src = oggUrl;
     byId('sticker-info').textContent = (info.lado || '?') + ' px · ' + (info.fps || 1) + ' FPS · ' + Math.round(files.webp.size/1024) + ' KB + ' + Math.round(files.ogg.size/1024) + ' KB de audio';
+    nativePackage = {webp:files.webp,ogg:files.ogg,info};
+    byId('native-bridge').hidden = false;
     byId('sticker-files').hidden = false;
     state.textContent = 'Animación y audio generados. Vinculación SHA-256 verificada.';
   } catch (error) {
@@ -1083,3 +1089,42 @@ byId('convert-mp4').onclick = async () => {
     if(mp4Job===controller) { mp4Job=undefined;button.disabled=false; }
   }
 };
+
+function bytesToBase64(bytes) {
+  let raw='';
+  for(let offset=0;offset<bytes.length;offset+=16384)raw+=String.fromCharCode(...bytes.subarray(offset,offset+16384));
+  return btoa(raw);
+}
+byId('package-download').onclick=async()=>{
+  const files=nativePackage;
+  if(!files)return;
+  const button=byId('package-download');button.disabled=true;
+  try{
+    const webp=bytesToBase64(new Uint8Array(await files.webp.arrayBuffer()));
+    const ogg=bytesToBase64(new Uint8Array(await files.ogg.arrayBuffer()));
+    if(nativePackage!==files)return;
+    const {lado,isAnimated,segundosAudio,soundSha256}=files.info;
+    const blob=new Blob([JSON.stringify({format:'stickers-sonoros/1',webp,ogg,info:{lado,isAnimated,segundosAudio,soundSha256}})],{type:'application/json'});
+    const url=URL.createObjectURL(blob), link=document.createElement('a');
+    link.href=url;link.download='sticker.sonoro.json';document.body.append(link);link.click();link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),30000);
+    byId('bridge-status').textContent='Paquete preparado. Selecciónalo con el marcador en WhatsApp Web.';
+  }catch(e){byId('bridge-status').textContent=e.message||'No se pudo guardar el paquete.';}
+  finally{button.disabled=false;}
+};
+const bookmark=byId('wa-bookmark');
+if(window.StickersSonorosBridge){
+  const address=window.StickersSonorosBridge.bookmarklet();
+  bookmark.href=address;
+  bookmark.addEventListener('click',event=>{
+    event.preventDefault();
+    byId('bridge-status').textContent='Arrastra el marcador a tu barra de favoritos. Luego úsalo dentro de WhatsApp Web.';
+  });
+  byId('copy-bookmark').onclick=async()=>{
+    try{await navigator.clipboard.writeText(address);byId('bridge-status').textContent='Dirección copiada. Crea un marcador nuevo y pega esta dirección en su campo URL.';}
+    catch{byId('bridge-status').textContent='No se pudo copiar. Arrastra el enlace a la barra de marcadores.';}
+  };
+}else{
+  bookmark.removeAttribute('href');byId('copy-bookmark').disabled=true;
+  byId('bridge-status').textContent='No se cargó el puente. Recarga el editor.';
+}

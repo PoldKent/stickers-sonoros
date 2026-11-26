@@ -63,6 +63,7 @@ function clearResult() {
   output.hidden = true;
   byId('native').hidden = true;
   byId('downloads').hidden = true;
+  byId('download').removeAttribute('href');
   if (resultUrl) URL.revokeObjectURL(resultUrl);
   result = resultUrl = undefined;
 }
@@ -78,8 +79,8 @@ function sync() {
   byId('scrub-row').hidden = !visual || visual.kind === 'image';
   byId('trim-actions').hidden = byId('scrub-row').hidden;
   // Hidden trim fields must not block form submission.
-  for (const id of ['vs','ve']) byId(id).required = !byId('visual-trim').hidden;
-  for (const id of ['as','ae']) byId(id).required = !byId('audio-trim').hidden;
+  for (const [ids,hidden] of [[['vs','ve'],byId('visual-trim').hidden],[['as','ae'],byId('audio-trim').hidden]]) for (const id of ids) { byId(id).required = !hidden; byId(id).disabled = hidden || busy; }
+  for (const id of ['mark-start','mark-end','demo']) byId(id).disabled = busy || importing;
   selectionInfo();
   canvas.classList.toggle('ready', !!visual);
 }
@@ -211,8 +212,7 @@ async function chooseVisual(file) {
   }
 }
 
-byId('sound').addEventListener('change', async event => {
-  const file = event.target.files[0];
+async function chooseAudio(file) {
   if (!file || busy) return;
   const request = ++audioRequest;
   clearResult();
@@ -234,7 +234,8 @@ byId('sound').addEventListener('change', async event => {
       sync();
     }
   }
-});
+}
+byId('sound').addEventListener('change', event => chooseAudio(event.target.files[0]));
 
 for (const button of modes) {
   button.addEventListener('click', () => {
@@ -390,7 +391,7 @@ async function render(context, videoTrim, soundTrim, signal) {
         }
       } catch (error) {
         failure = error;
-        sound.stop();
+        try { sound.stop(); } catch {}
       } finally {
         updating = false;
       } })();
@@ -411,7 +412,7 @@ async function render(context, videoTrim, soundTrim, signal) {
     try { sound.stop(); } catch {}
     await pendingUpdate;
     video?.pause();
-    if (encoding?.recorder.state === 'recording') encoding.recorder.stop();
+    if (encoding && encoding.recorder.state !== 'inactive') encoding.recorder.stop();
     for (const track of stream.getTracks()) track.stop();
   }
 }
@@ -457,7 +458,7 @@ byId('project').addEventListener('submit', async event => {
     byId('downloads').hidden = false;
     status.textContent = 'Vídeo preparado. Generando los archivos del sticker sonoro…';
   } catch (error) {
-    status.textContent = error.message || 'No pude crear el clip.';
+    status.textContent = error.name === 'AbortError' ? 'Generación cancelada.' : error.message || 'No pude crear el clip.';
   } finally {
     if (context) await context.close().catch(() => {});
     exportJob = undefined;
@@ -467,7 +468,7 @@ byId('project').addEventListener('submit', async event => {
     for (const field of document.querySelectorAll('input, select, .modes button')) field.disabled = false;
     sync();
   }
-  if (result) { status.textContent = 'Vídeo listo para WhatsApp.'; await prepareSticker(); }
+  if (result) { status.textContent = 'Vídeo preparado para el editor de stickers de WhatsApp.'; await prepareSticker(); }
 });
 byId('cancel-export').onclick = () => exportJob?.abort();
 
@@ -616,6 +617,7 @@ function selectionInfo() {
 }
 for (const id of ['vs','ve','as','ae']) byId(id).addEventListener('input', () => { clearResult(); sync(); });
 byId('mark-start').onclick = () => {
+  if (busy || !visual) return;
   const start = byId('scrub').valueAsNumber;
   const max = Number(byId('ve').max);
   byId('vs').value = Math.min(start, max - .01).toFixed(2);
@@ -623,6 +625,7 @@ byId('mark-start').onclick = () => {
   clearResult(); sync(); previewFrame(Number(byId('vs').value));
 };
 byId('mark-end').onclick = () => {
+  if (busy || !visual) return;
   const end = byId('scrub').valueAsNumber;
   const start = byId('vs').valueAsNumber;
   if (end <= start) { status.textContent = 'El final debe estar después del inicio.'; return; }
@@ -697,3 +700,27 @@ async function prepareSticker() {
 }
 byId('prepare-sticker').onclick = prepareSticker;
 byId('cancel-sticker').onclick = () => stickerJob?.abort();
+
+function demoAudio() {
+  const rate = 48000, count = rate * 2, buffer = new ArrayBuffer(44 + count * 2), view = new DataView(buffer);
+  function ascii(offset, text) { for (let i=0;i<text.length;i++) view.setUint8(offset+i,text.charCodeAt(i)); }
+  ascii(0,'RIFF'); view.setUint32(4,36+count*2,true); ascii(8,'WAVE'); ascii(12,'fmt ');
+  view.setUint32(16,16,true); view.setUint16(20,1,true); view.setUint16(22,1,true);
+  view.setUint32(24,rate,true); view.setUint32(28,rate*2,true); view.setUint16(32,2,true); view.setUint16(34,16,true);
+  ascii(36,'data'); view.setUint32(40,count*2,true);
+  for(let i=0;i<count;i++){
+    const t=i/rate, part=t<.5?t:t<1?t-.5:t-1, frequency=t<.5?440:t<1?554.37:659.25;
+    const fade=Math.max(0,Math.min(1,part/.025,(.45-part)/.08));
+    view.setInt16(44+2*i,Math.round(9500*fade*Math.sin(2*Math.PI*frequency*part)),true);
+  }
+  return new File([buffer],'ejemplo.wav',{type:'audio/wav'});
+}
+byId('demo').onclick = async () => {
+  if (busy || importing) return;
+  modes.find(button=>button.dataset.mode==='image').click();
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="#211832"/><circle cx="256" cy="220" r="140" fill="#ddb5ff"/><path d="M178 190h40l50-44v148l-50-44h-40zM290 188q45 32 0 64m25-91q78 59 0 118" fill="none" stroke="#241331" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/><text x="256" y="420" text-anchor="middle" font-family="sans-serif" font-size="48" font-weight="bold" fill="#f7f0ff">¡Suena!</text></svg>';
+  const selected = chooseVisual(new File([svg],'ejemplo.svg',{type:'image/svg+xml'}));
+  const track = chooseAudio(demoAudio());
+  await Promise.all([selected,track]);
+  if (mode==='image' && visual && audio) status.textContent='Ejemplo preparado. Pulsa Crear sticker sonoro.';
+};

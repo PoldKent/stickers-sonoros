@@ -334,6 +334,24 @@ try {
   await fallback.locator('#demo').click();
   assert.equal(await fallback.locator('#tiktok-alternative').isVisible(),false);
   await fallback.close();
+  // Inspect actual ANMF chunks, not the nominal FPS label, over a 38-second moving source.
+  const cadencePage=await browser.newPage();
+  const cadenceTemp=mkdtempSync(join(tmpdir(),'sticker-cadence-'));
+  try{
+    const file=join(cadenceTemp,'cadence.webm');
+    execFileSync('ffmpeg',['-v','error','-f','lavfi','-i','testsrc2=s=128x128:r=15:d=38','-f','lavfi','-i','sine=frequency=440:sample_rate=48000:duration=38','-c:v','libvpx','-c:a','libopus','-shortest',file]);
+    await cadencePage.goto('http://127.0.0.1:8000');
+    await cadencePage.locator('#visual').setInputFiles(file);
+    const checked=await cadencePage.evaluate(async()=>{
+      const file=document.querySelector('#visual').files[0];
+      const out=await WAAS.convert({visual:{kind:'video',file,start:0,dur:38},audio:{file,start:0,dur:38},mode:{fit:'contain',rotation:0,zoom:100,x:0,y:0},side:96,fps:9,extended:true});
+      const chunks=WAAS._internals.readChunks(new Uint8Array(await out.webp.arrayBuffer())).filter(c=>c.fourcc==='ANMF');
+      const times=chunks.map(c=>c.data[12]+256*c.data[13]+65536*c.data[14]);
+      const unique=[0,1,2].map(i=>new Set(chunks.slice(i*114,(i+1)*114).map(c=>Array.from(c.data.subarray(16)).join(','))).size);
+      return {frames:chunks.length,ms:times.reduce((a,b)=>a+b,0),max:Math.max(...times),unique,bytes:out.webp.size+out.ogg.size};
+    });
+    assert.equal(checked.frames,342);assert.equal(checked.ms,38000);assert(checked.max<=112);assert(checked.unique.every(n=>n>50));assert(checked.bytes<=4000000);
+  }finally{await cadencePage.close();rmSync(cadenceTemp,{recursive:true,force:true});}
   const qualityPage=await browser.newPage();
   const qualityTemp=mkdtempSync(join(tmpdir(),'sticker-quality-'));
   try {

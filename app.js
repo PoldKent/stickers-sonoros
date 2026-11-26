@@ -40,6 +40,7 @@ function closeVisual(item) {
 let stickerJob;
 let nativePackage;
 let clipDuration;
+let directVideo;
 function clearResult() {
   hideCropGuides();
   byId('quality-result').hidden = true;
@@ -47,6 +48,7 @@ function clearResult() {
   byId('size-result').textContent = '';
   byId('size-warning').hidden = true;
   nativePackage = undefined;
+  directVideo = undefined;
   byId('native-bridge').hidden = true;
   byId('bridge-status').textContent = '';
   byId('bookmark-status').textContent = '';
@@ -305,6 +307,7 @@ async function chooseVisual(file, signal) {
     if (request !== visualRequest || signal?.aborted) return;
     if (item.duration) range('v', item.duration);
     item.name = file.name;
+    item.file = file;
     visual = item;
     byId('rotation').value='0';
     paint(item.frame || item.media);
@@ -577,6 +580,10 @@ byId('project').addEventListener('submit', async event => {
     const extension = type === 'video/mp4' ? 'mp4' : 'webm';
     result = new File([blob], 'sticker-sonoro.' + extension, { type });
     clipDuration = soundTrim.duration;
+    // Final video is sampled from the original file, not the real-time preview recording.
+    if(mode==='video' && visual.file){
+      directVideo={visual:{kind:'video',file:visual.file,start:videoTrim.start,dur:videoTrim.duration},audio:{file:visual.file,start:soundTrim.start,dur:soundTrim.duration},mode:{fit:byId('fit').value,rotation:Number(byId('rotation').value),zoom:Number(byId('zoom').value),x:Number(byId('pan-x').value),y:Number(byId('pan-y').value)},fit:'independiente'};
+    }
     byId('components').hidden = false;
     resultUrl = URL.createObjectURL(result);
     output.src = resultUrl;
@@ -1140,7 +1147,7 @@ async function prepareSticker() {
     if (caps.opus !== true || caps.webpEncode !== 'image/webp') throw new Error('Este navegador no puede crear el sticker con sonido. Prueba Chrome o Edge actualizado.');
     if (controller.signal.aborted) return;
     const files = await window.WAAS.convert({
-      file: source, duration, profile: byId('quality').value, extended: byId('size-budget').value === 'extended', ...stickerAttribution(), signal: controller.signal,
+      file: source, duration, ...directVideo, profile: byId('quality').value, extended: byId('size-budget').value === 'extended', ...stickerAttribution(), signal: controller.signal,
       onProgress(message, fraction) { if (!controller.signal.aborted) { state.textContent = message; if (Number.isFinite(fraction)) progress.value = Math.max(0, Math.min(1, fraction)); } }
     });
     const info = await verifySticker(files);
@@ -1311,8 +1318,8 @@ byId('package-download').onclick=async()=>{
     const webp=bytesToBase64(new Uint8Array(await files.webp.arrayBuffer()));
     const ogg=bytesToBase64(new Uint8Array(await files.ogg.arrayBuffer()));
     if(nativePackage!==files)return;
-    const {lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl}=files.info;
-    const blob=new Blob([JSON.stringify({format:'stickers-sonoros/1',webp,ogg,info:{lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl}})],{type:'application/json'});
+    const {lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl,fps,cuadros,duracion,fpsEfectivos}=files.info;
+    const blob=new Blob([JSON.stringify({format:'stickers-sonoros/1',webp,ogg,info:{lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl,fps,cuadros,duracion,fpsEfectivos}})],{type:'application/json'});
     const url=URL.createObjectURL(blob), link=document.createElement('a');
     const name=(visual?.name || 'sticker').replace(/\.[^.]+$/,'').replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/g,'_').trim().slice(0,120) || 'sticker';
     link.href=url;link.download=name+'.sonoro.json';document.body.append(link);link.click();link.remove();

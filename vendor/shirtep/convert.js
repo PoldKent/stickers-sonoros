@@ -119,6 +119,13 @@
   function drawFrame(ctx, v, mode, side) {
     const vw = srcW(v), vh = srcH(v);
     ctx.clearRect(0, 0, side, side);
+    if(mode && typeof mode==='object'){
+      const angle=Number(mode.rotation)||0, quarter=angle===90||angle===270;
+      const scale=Math[mode.fit==='cover'?'max':'min'](side/(quarter?vh:vw),side/(quarter?vw:vh))*(Number(mode.zoom)||100)/100;
+      ctx.fillStyle='#14101d';ctx.fillRect(0,0,side,side);ctx.save();
+      ctx.translate(side/2+(Number(mode.x)||0)*side/512,side/2+(Number(mode.y)||0)*side/512);
+      ctx.rotate(angle*Math.PI/180);ctx.drawImage(v,-vw*scale/2,-vh*scale/2,vw*scale,vh*scale);ctx.restore();return;
+    }
     const s = mode === "recortar" ? Math.max(side / vw, side / vh) : Math.min(side / vw, side / vh);
     const w = vw * s, h = vh * s;
     ctx.drawImage(v, (side - w) / 2, (side - h) / 2, w, h);
@@ -231,7 +238,7 @@
     try {
       if (!v.videoWidth || !v.videoHeight) throw new Error("El video no tiene imagen (¿es solo audio?)");
       const offset = v._waasOffset || 0;
-      const methods = method === "reproduccion" ? ["reproduccion", "saltos"] : ["saltos", "reproduccion"];
+      const methods = typeof mode==='object' ? ['saltos'] : method === "reproduccion" ? ["reproduccion", "saltos"] : ["saltos", "reproduccion"];
       let res, metodo;
       for (let i = 0; i < methods.length; i++) {
         metodo = methods[i];
@@ -503,12 +510,12 @@
   // Elige qué cuadros capturados usar para un fps y cuánto dura cada uno.
   function plan(nCaptured, dur, fps, captureFps) {
     const totalMs = Math.round(dur * 1000);
-    const count = Math.max(1, Math.round(dur * fps));
+    const count = Math.max(1, Math.ceil(dur * fps));
     const out = [];
     for (let k = 0; k < count; k++) {
-      const startMs = Math.round((k * 1000) / fps);
-      const endMs = k === count - 1 ? totalMs : Math.min(totalMs, Math.round(((k + 1) * 1000) / fps));
-      const idx = Math.min(nCaptured - 1, Math.round((k * captureFps) / fps));
+      const startMs = Math.round(k * totalMs / count);
+      const endMs = Math.round((k + 1) * totalMs / count);
+      const idx = Math.min(nCaptured - 1, Math.floor((k + .5) * nCaptured / count));
       out.push({ idx, durationMs: Math.max(1, endMs - startMs) });
     }
     return out;
@@ -521,6 +528,7 @@
     const canvas = new OffscreenCanvas(side, side);
     const ctx = canvas.getContext("2d");
     const p = plan(frames.length, dur, fps, captureFps);
+    const fixedCadence = an.visual.kind !== 'image';
     const qStart = an.extended ? Math.min(0.95,(Q_BY_SIDE[side] || 0.5)+0.15) : (Q_BY_SIDE[side] || 0.5);
     const qList = [];
     for (let q = qStart; q >= Q_MIN - 1e-9; q -= 0.1) qList.push(+q.toFixed(2));
@@ -542,11 +550,11 @@
         const f = frames[p[k].idx];
         const prev = out[out.length - 1];
         // Cuadro repetido (mismo criterio que la estimación): se alarga el anterior y no se codifica.
-        if (prev && prevF && (f === prevF || sameBytes(f.fp, prevF.fp))) { prev.durationMs += p[k].durationMs; continue; }
+        if (!fixedCadence && prev && prevF && (f === prevF || sameBytes(f.fp, prevF.fp))) { prev.durationMs += p[k].durationMs; continue; }
         let enc = cache.get(f);
         if (!enc) { enc = await encodeStaticFrame(f.bmp, q, canvas, ctx); cache.set(f, enc); }
         prevF = f;
-        if (prev && sameBytes(prev.payload, enc.payload)) prev.durationMs += p[k].durationMs;
+        if (!fixedCadence && prev && sameBytes(prev.payload, enc.payload)) prev.durationMs += p[k].durationMs;
         else out.push({ payload: enc.payload, hasAlpha: enc.hasAlpha, durationMs: p[k].durationMs });
         if (onProgress && k % 10 === 0) onProgress(`Codificando (${side} px, ${fps} fps, calidad ${Math.round(q * 100)}) ${k + 1}/${p.length}`, (k + 1) / p.length);
       }
@@ -891,7 +899,7 @@
     const cells = [];
     for (const side of SIDES) for (const fps of FPS_LIST) {
       if (!sampleBytes[side] || distinct[fps] == null) { cells.push({ side, fps, estado: "fuera" }); continue; }
-      const n = distinct[fps];
+      const n = plan(frames.length, dur, fps, captureFps).length;
       const est = (sampleBytes[side][Q_BY_SIDE[side]] + overhead) * n + 400;
       const estMin = (sampleBytes[side][Q_MIN] + overhead) * n + 400;
       const estado = est <= safeBytes ? "ok" : estMin <= safeBytes ? "baja" : "no";
@@ -955,10 +963,11 @@
 
     const exifMeta = await stickerMeta({ packName, publisher, soundSha });
     const w = await encodeWebp(an, side, fps, exifMeta, { onProgress: prog, signal, syncMs, still, maxBytes: webpBudget(an.extended, ogg.length) });
+    if(an.visual.kind!=='image' && w.frames/dur<9-1e-6)throw new Error('Las animaciones requieren al menos 9 FPS.');
     const info = {
       tipo: an.visual.kind, ajuste: an.fit,
       duracion: dur, duracionAudio: A.dur, segundosAudio: Math.max(1, Math.round(A.dur)),
-      fps: an.visual.kind === "image" ? null : w.fps, calidad: w.q, lado: w.side, cuadros: w.frames, isAnimated: !still,
+      fps: an.visual.kind === "image" ? null : w.fps, fpsEfectivos: an.visual.kind === 'image' ? null : w.frames / dur, calidad: w.q, lado: w.side, cuadros: w.frames, isAnimated: !still,
       compensacionMs: syncMs, webpBytes: w.bytes.length, estimado: cell && cell.est,
       oggBytes: ogg.length, audioKbps: Math.round(bitrate / 1000), soundSha256: soundSha, paquete: exifMeta["sticker-pack-name"] || "", autor: exifMeta["sticker-pack-publisher"] || "",
       msTotal: Math.round(performance.now() - t0),

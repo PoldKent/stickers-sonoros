@@ -131,3 +131,5 @@ See [mobile sending without WhatsApp Web](docs/MOBILE.md). Direct sound sticker 
 The bar under the preview shows current position and total duration. Inspect frames, play from the cursor inside the selection and mark its start and end.
 
 **Mobile update (2026-11-26):** some accounts now have WhatsApp's native sound sticker editor. See [mobile research and acceptance matrix](docs/MOBILE.md); direct `.sonoro.json` import is still unverified.
+
+**Animation cadence:** Video mode creates WebP directly from the original file using the editor crop; the intermediate recording is preview only. Animation frames are no longer merged into long intervals. Resolution and quality adapt to the budget without dropping below 9 FPS. Repeated source frames do not gain artificial motion.

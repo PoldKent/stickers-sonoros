@@ -68,3 +68,7 @@ CI .33 passed the previously failing 320px crop check but failed a strict 61s fi
 ### 2026.11.26.35 — PR #29 reconciliation
 
 Preserved the useful changes from the obsolete branch without restoring its 1 MB audio cap, 192px fixed resolution floor or 10-minute import cap. Added full-source reset controls, long/large-send compatibility warning, bounded Opus bitrate retries, 241s source selection and decoded 240s audio test. Existing numeric precision controls remain instead of replacing them with range-only fields. The earlier branch remains in Git history for reference. Production and real WhatsApp acceptance still require verification.
+
+### 2026.11.26.36 — Frame cadence regression
+
+User reported progressive motion loss on a 38s 448px/9FPS sticker. Final Video-mode conversion now reads the original rather than the real-time canvas recording, uses crop/zoom/rotation at capture time, disables playback fallback for exact source sampling, and writes each animation interval without merging repeated frames. Budget estimates count actual frame chunks; physical frame cadence and size are checked. Added a 38s moving-fixture regression inspecting ANMF durations, frame count and changing content in all thirds. User clip itself not available for reproduction. / Se conserva la cadencia y se adapta la calidad sin inventar movimiento.

@@ -492,6 +492,15 @@ try {
       assert.equal(await phone.locator('#download').count(),0);
       assert.equal(await phone.locator('#wa-bookmark').isVisible(),true);
       assert.match(await phone.locator('#package-download').textContent(),/Save sound sticker/);
+      assert.equal(await phone.locator('#signature').inputValue(),'');
+      const unsigned=await phone.evaluate(async()=>{
+        const bytes=new Uint8Array(await (await fetch(document.querySelector('#sticker-image').src)).arrayBuffer());
+        let raw='';for(let at=0;at<bytes.length;at+=16384)raw+=String.fromCharCode(...bytes.subarray(at,at+16384));
+        return {webp:btoa(raw)};
+      });
+      const unsignedMeta=readAttribution(unsigned);
+      assert.equal(unsignedMeta['sticker-pack-name'],'Creado en Stickers Sonoros');
+      assert.equal(unsignedMeta['sticker-pack-publisher'],appUrl);
       await phone.screenshot({path:'artifacts/screenshots/mobile-en.png',fullPage:true});
       await phone.locator('#language').selectOption('es');
       await phone.screenshot({path:'artifacts/screenshots/mobile-es.png',fullPage:true});

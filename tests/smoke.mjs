@@ -1,3 +1,4 @@
+import { preparePackage } from '../experiments/mobile-bridge/package-adapter.mjs';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
@@ -80,6 +81,14 @@ try {
   const pack=JSON.parse(packageBytes.toString('utf8'));
   assert.equal(pack.format,'stickers-sonoros/1');
   assert.equal(pack.info.segundosAudio,2);
+  const adapted=preparePackage(packageBytes);
+  assert.deepEqual(adapted.webpBuffer,Buffer.from(pack.webp,'base64'));
+  assert.deepEqual(adapted.audioBuffer,Buffer.from(pack.ogg,'base64'));
+  assert.equal(adapted.soundSha256,pack.info.soundSha256);
+  assert.equal(adapted.audioSeconds,2);
+  assert.equal(adapted.width,pack.info.lado);
+  assert(adapted.webpBuffer.length<500000&&adapted.audioBuffer.length<500000);
+  console.log('Mobile bridge: real editor package preserved byte-for-byte');
   // Real generated JSON, mobile handoff and invalid linkage; no WhatsApp device claim.
   const mobileBridge=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});
   try{

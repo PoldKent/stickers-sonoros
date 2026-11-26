@@ -1,0 +1,5 @@
+node_modules/
+*.sonoro.json
+*.log
+.env*
+auth*/

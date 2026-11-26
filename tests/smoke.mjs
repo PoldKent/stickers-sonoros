@@ -95,6 +95,39 @@ try {
     await mobileBridge.goto('http://127.0.0.1:8000/mobile.html');
     await mobileBridge.locator('#mobile-package').setInputFiles({name:'ejemplo.sonoro.json',mimeType:'application/json',buffer:packageBytes});
     await mobileBridge.locator('#mobile-result').waitFor({state:'visible'});
+    // Mobile-only private bridge: simulate transport, never connect WhatsApp in CI.
+    const endpoint='https://sonoro-private-ci.onrender.com', token='test-token-'+('x'.repeat(32));
+    let posts=0, paired=false;
+    await mobileBridge.route(endpoint+'/**',async route=>{
+      const request=route.request(),path=new URL(request.url()).pathname;
+      const headers={'Access-Control-Allow-Origin':'http://127.0.0.1:8000','Access-Control-Allow-Headers':'authorization, content-type','Access-Control-Allow-Methods':'GET, POST, OPTIONS'};
+      if(request.method()==='OPTIONS')return route.fulfill({status:204,headers});
+      assert.equal(request.headers().authorization,'Bearer '+token);
+      let body;
+      if(path==='/v1/connect'){paired=true;body={phase:'pairing',pairingCode:'TEST1234'};}
+      else if(path==='/v1/status'){assert(paired);body={phase:'ready'};}
+      else if(path==='/v1/send'){posts++;assert.deepEqual(request.postDataBuffer(),packageBytes);body={phase:'relayed',deliveryConfirmed:false};}
+      else throw Error('Unexpected private endpoint');
+      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify(body)});
+    });
+    const privatePanel=mobileBridge.locator('.private-bridge');
+    await privatePanel.locator('summary').click();
+    await privatePanel.locator('input[type=url]').fill(endpoint);
+    await privatePanel.locator('input[type=password]').fill(token);
+    const privateSend=privatePanel.getByRole('button',{name:'Enviar un sticker de prueba',exact:true});
+    assert.equal(await privateSend.isDisabled(),true);
+    await privatePanel.getByRole('button',{name:'Vincular cuenta de prueba',exact:true}).click();
+    await privatePanel.getByText('TEST1234',{exact:true}).waitFor();
+    await privatePanel.getByRole('button',{name:'Comprobar estado',exact:true}).click();
+    await privatePanel.getByText('Vinculado. Confirma el envío de prueba.',{exact:true}).waitFor();
+    assert.equal(await privateSend.isDisabled(),true);
+    await privatePanel.locator('input[type=checkbox]').check();
+    await privateSend.click();
+    await privatePanel.getByText(/El puente procesó el envío/).waitFor();
+    assert.equal(posts,1);assert.equal(await privateSend.isDisabled(),true);
+    await privatePanel.locator('summary').click();
+    await mobileBridge.unroute(endpoint+'/**');
+
     const saved=await mobileBridge.evaluate(async()=>{const p=await SonoroMobile.validate(document.querySelector('#mobile-package').files[0]);const image=await SonoroMobile.png(p),audio=await SonoroMobile.wav(p);return {side:p.side,seconds:p.seconds,image:image.type,audio:audio.type,audioHeader:new TextDecoder().decode((new Uint8Array(await audio.arrayBuffer())).subarray(0,4))}});
     assert.equal(saved.seconds,2);assert.equal(saved.image,'image/png');assert.equal(saved.audio,'audio/wav');assert.equal(saved.audioHeader,'RIFF');
     await mobileBridge.locator('#prepare-video').click();

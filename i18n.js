@@ -284,6 +284,7 @@
   pairs.push(...[["Posición, zoom y rotación","Position, zoom and rotation"],["Rotación","Rotation"],["Girar 90° a la izquierda","Rotate 90° left"],["Girar 90° a la derecha","Rotate 90° right"],["Girar 180°","Rotate 180°"],["Ángulo de rotación","Rotation angle"]]);
   pairs.push(...[["Firma del creador (opcional)","Creator signature (optional)"],["Tu nombre o alias","Your name or nickname"],["La firma se incluye en los datos del sticker. Todos incluyen la atribución y el enlace de la app. No se añade texto sobre la imagen.","The signature is included in sticker metadata. All stickers include the app credit and link. No text is added over the image."],["Metadatos del sticker no válidos.","Invalid sticker metadata."],["No se pudo verificar la firma del sticker.","Could not verify the sticker signature."]]);
   pairs.push(["El tramo no cabe en 1 MB con al menos 9 FPS y 192 px. Acórtalo o cambia el modo de calidad.","The selection does not fit within 1 MB at 9 FPS or more and 192 px or more. Shorten it or change quality mode."]);
+  pairs.push(...[["Límite de tamaño","Size limit"],["Compatible (imagen hasta 1 MB)","Compatible (image up to 1 MB)"],["Calidad ampliada (hasta 4 MB con audio)","Extended quality (up to 4 MB including audio)"],["WhatsApp podría rechazar imágenes de más de 1 MB. Si sucede, usa Compatible. Para enviar archivos grandes, sustituye el favorito de WhatsApp por el nuevo.","WhatsApp may reject images larger than 1 MB. If that happens, use Compatible. Replace your WhatsApp bookmark to send larger files."],["Este sticker supera 1 MB de imagen. Prueba el envío en tu propio chat. Si falla, usa Compatible.","This sticker exceeds 1 MB of image data. Test in your own chat. If it fails, use Compatible."],["La animación puede reducir su calidad para respetar el tamaño elegido.","Animation quality may be reduced to fit the selected size."],["Máxima nitidez: mínimo 9 FPS y 192 px en animaciones. Si no cabe en el tamaño elegido, reduce la duración o cambia de modo.","Maximum sharpness: at least 9 FPS and 192 px for animations. If it does not fit the selected size, shorten it or change mode."],["El tramo no cabe en 4 MB con al menos 9 FPS y 192 px. Acórtalo o cambia el modo de calidad.","The selection does not fit within 4 MB at 9 FPS or more and 192 px or more. Shorten it or change quality mode."]]);
   const exact = new Map(pairs);
   const fragments = [
     [/^Duración: ([\d.]+) s de (\d+) s permitidos\./, "Duration: $1 s of $2 s allowed."],
@@ -298,7 +299,7 @@
     [/^Leyendo cuadros del GIF /,"Reading GIF frames "],[/^Leyendo cuadros /,"Reading frames "],
     [/^Codificando \((\d+) px, (\d+) fps, calidad (\d+)\)/,"Encoding ($1 px, $2 fps, quality $3)"],
     [/^Tiempo agotado buscando el segundo /,"Timed out seeking to second "],
-    [/^No cabe en 1 MB ni con la calidad mínima \(([^)]+)\)\. Elige menos fps o menos resolución\./,"Does not fit within 1 MB even at minimum quality ($1). Shorten the selection or reduce resolution."],
+    [/^No cabe en el límite de tamaño ni con la calidad mínima \(([^)]+)\)\. Elige menos fps o menos resolución\./,"Does not fit the size limit even at minimum quality ($1). Shorten the selection or reduce resolution."],
     [/^El audio pesa (\d+) KB \(máximo 1000 KB\)/,"Audio is $1 KB (maximum 1000 KB)"],
     [/^El audio dura ([\d.]+) s y el tramo empieza en ([\d.]+) s/,"Audio is $1 s long and the selection starts at $2 s"],
     [/^El sitio no permite acceder al recurso público \(HTTP (\d+)\)\./,"The site does not allow access to the public resource (HTTP $1)."],
@@ -306,10 +307,10 @@
     [/^Este navegador no puede generar WebP \(devolvió ([^)]+)\)\. Usa Chrome o Edge\.$/,"This browser cannot generate WebP (returned $1). Use Chrome or Edge."],
     [/^No se pudo leer el audio\. ¿El archivo tiene sonido\? \((.*)\)$/,"Could not read audio. Does the file contain sound? ($1)"],
     [/^Con (\d+) s el audio no cabe en 1 MB \(límite de WhatsApp\)\. Máximo unos (\d+) minutos\.$/,"At $1 s the audio exceeds 1 MB (WhatsApp limit). Maximum about $2 minutes."],
-    [/^Calidad final: /,"Final quality: "],
+    [/^Calidad final: /,"Final quality: "], [/^Peso total: /,"Total size: "],
     [/ KB de audio$/," KB audio"],[/ · Versión /," · Version "], [/^Versión /,"Version "]
   ];
-  const dynamic = new Set(["link-status","status","selection-info","sticker-state","bridge-status","bookmark-status","service-status","sticker-info","quality-result","play-source"]);
+  const dynamic = new Set(["link-status","status","selection-info","sticker-state","bridge-status","bookmark-status","service-status","sticker-info","quality-result","size-result","play-source"]);
   const longPhrases = pairs.filter(([a,b]) => a!==b && a.length>=25).sort((a,b)=>b[0].length-a[0].length);
   function english(raw, allowFragments=false) {
     const trimmed=raw.trim();

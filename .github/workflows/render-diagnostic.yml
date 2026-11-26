@@ -1,5 +1,8 @@
 name: Diagnóstico público de Render
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/render-diagnostic.yml'
   workflow_dispatch:
     inputs:
       social_url:
@@ -12,6 +15,7 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     timeout-minutes: 8
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
     steps:
       - name: Comprobar servidor y acceso público
         shell: bash
@@ -21,13 +25,31 @@ jobs:
           set -euo pipefail
           base=https://stickers-sonoros.onrender.com
           origin=https://poldkent.github.io
+          pages=$origin/stickers-sonoros/
           tmp=$(mktemp -d)
           trap 'rm -rf "$tmp"' EXIT
+          echo '### Estado de las publicaciones (versiones activas, no la rama PR)' >> "$GITHUB_STEP_SUMMARY"
+          curl -fsSL --max-time 40 "$pages" -o "$tmp/pages.html"
+          curl -fsSL --max-time 100 "$base/" -o "$tmp/render.html"
+          python - "$tmp/pages.html" "$tmp/render.html" <<'PY'
+          import re,sys
+          for site,path in zip(("GitHub Pages","Render web"),sys.argv[1:]):
+              html=open(path,encoding="utf-8").read()
+              version=re.search(r'data-version="([^"]+)"',html)
+              print(site+" version: "+(version.group(1) if version else "unknown"))
+              assert 'id="export"' in html and 'id="language"' in html
+          PY
           echo '### Estado público de Render' >> "$GITHUB_STEP_SUMMARY"
           curl -sS --max-time 100 -D "$tmp/health-headers" -o "$tmp/health" -H "Origin: $origin" "$base/health"
           echo 'Estado /health:'
           cat "$tmp/health-headers" "$tmp/health" 2>/dev/null
           printf '\n'
+          python - "$tmp/health" "$tmp/pages.html" "$tmp/render.html" <<'PY'
+          import json,re,sys
+          health=json.load(open(sys.argv[1])); print('Render API version:',health.get('version'))
+          versions=[re.search(r'data-version="([^"]+)"',open(p).read()) for p in sys.argv[2:]]
+          if not all(v and v.group(1)==health.get('version') for v in versions): print('WARNING: publication versions differ')
+          PY
           if ! python -c 'import json,sys; sys.exit(0 if json.load(open(sys.argv[1])).get("publicMedia") is True else 1)' "$tmp/health"; then
             echo 'El servidor no anuncia publicMedia; revisar el despliegue o la conexión.' >> "$GITHUB_STEP_SUMMARY"
             exit 1

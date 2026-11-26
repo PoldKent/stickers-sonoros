@@ -35,3 +35,12 @@ jobs:
           for n in $(seq 1 20); do curl -fsS http://127.0.0.1:8000/ >/dev/null && break; sleep 1; done
           curl -fsS http://127.0.0.1:8000/ >/dev/null
           node tests/smoke.mjs
+
+      - name: Upload interface screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: interface-screenshots
+          path: artifacts/screenshots/*.png
+          if-no-files-found: warn
+          retention-days: 30

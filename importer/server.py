@@ -13,6 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit, parse_qs, urlencode
 from public_media import fetch_public, PublicFetchError, HTML_TYPES
+from tiktok_public import fetch_tiktok_download, TikTokDownloadUnavailable
 
 PORT = int(os.environ.get("PORT", "8080"))
 ORIGINS = {
@@ -37,7 +38,7 @@ MAX_DURATION = 600
 # Sort by the short edge; vertical videos must not be filtered by height.
 FORMAT_SELECTOR = "bv*+ba/b"
 FORMAT_SORT = "res:480,vcodec:h264,acodec:aac"
-SERVICE_VERSION = '2026.11.26.17'
+SERVICE_VERSION = '2026.11.26.18'
 MAX_CLIP_DURATION = 60
 MAX_CLIP_BYTES = 16 * 1024 * 1024
 try:
@@ -135,12 +136,19 @@ def fetch_video(url, directory):
     ], 100)
     files = [p for p in directory.glob("source.*") if p.suffix in (".mp4", ".mkv", ".webm", ".mov", ".m4v")]
     if rc or len(files) != 1:
-        raise classify_download_error(log, rc)
+        failure = classify_download_error(log, rc)
+        if urlsplit(url).hostname == 'www.tiktok.com' and failure.code in ('SOURCE_FORMAT', 'DOWNLOAD_FAILED'):
+            try:
+                files = [fetch_tiktok_download(url, directory)]
+            except TikTokDownloadUnavailable as error:
+                raise ImportFailure(failure.code, str(failure) + ' Alternativa de descarga pública: ' + str(error)) from None
+        else:
+            raise failure
     if not 0 < files[0].stat().st_size <= MAX_BYTES:
         raise ImportFailure("SOURCE_SIZE", "El archivo descargado está vacío o supera 80 MB.")
     # A compatible original can be remuxed instead of re-encoded.
     probe_rc, probe_log = run([
-        "ffprobe", "-v", "error", "-show_entries", "stream=codec_name,codec_type:format=duration",
+        "ffprobe", "-v", "error", "-protocol_whitelist", "file,pipe", "-show_entries", "stream=codec_name,codec_type:format=duration",
         "-of", "json", str(files[0]),
     ], 10)
     try:
@@ -159,7 +167,7 @@ def fetch_video(url, directory):
         raise ImportFailure("SOURCE_FORMAT", "El archivo no contiene video y audio compatibles.") from None
     output = directory / "video.mp4"
     base = [
-        "ffmpeg", "-nostdin", "-v", "error", "-i", str(files[0]),
+        "ffmpeg", "-nostdin", "-v", "error", "-protocol_whitelist", "file,pipe", "-i", str(files[0]),
         "-map", "0:v:0", "-map", "0:a:0",
     ]
     if video_codec == "h264" and audio_codec == "aac":
@@ -225,7 +233,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         route = urlsplit(self.path).path
         if route == "/health":
-            self.reply(200, {"ok": True, "version": SERVICE_VERSION, "maxDuration": MAX_DURATION, "downloader": DOWNLOADER_VERSION, "publicMedia": True, "clipMp4": True, "maxClipDuration": MAX_CLIP_DURATION})
+            self.reply(200, {"ok": True, "version": SERVICE_VERSION, "maxDuration": MAX_DURATION, "downloader": DOWNLOADER_VERSION, "publicMedia": True, "clipMp4": True, "maxClipDuration": MAX_CLIP_DURATION, "tiktokPublicDownload": True})
             return
         asset = STATIC_FILES.get(route)
         if not asset:

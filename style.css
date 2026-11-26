@@ -1,0 +1,26 @@
+:root{color-scheme:dark;--bg:#130f1b;--panel:#1d1729;--line:#3b304c;--text:#f7f0ff;--muted:#c0afcf;--accent:#ddb5ff;font-family:system-ui,sans-serif}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:radial-gradient(ellipse at 80% 0,#302043 0,transparent 49%),var(--bg);color:var(--text);min-height:100vh}
+header,main,footer{width:min(1120px,calc(100% - 40px));margin:auto}
+header{height:76px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:770}
+.logo{display:grid;place-items:center;width:36px;height:36px;background:var(--accent);border-radius:11px;color:#241331;font-size:22px}
+.privacy{font-size:.8rem;color:var(--muted);white-space:nowrap}.privacy i{display:inline-block;width:7px;height:7px;background:#b1e9c4;border-radius:50%;margin-right:5px}
+.intro{padding:50px 0 34px}.intro h1{font-size:clamp(2.25rem,6vw,4.8rem);line-height:1.05;letter-spacing:-.065em;margin:0}.intro em{color:var(--accent);font-style:normal}.intro p{color:var(--muted);margin:16px 0 0}
+.workspace{display:grid;grid-template-columns:1.16fr 1fr;gap:20px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:23px;padding:22px}
+h2{font-size:1.13rem;margin:0 0 17px}
+button,select,input,a{font:inherit}button,select,input[type=number],input[type=file]:not(#visual){border:1px solid var(--line);border-radius:9px;background:#171221;color:var(--text);padding:9px;min-width:0}
+button,a.primary{cursor:pointer}button:disabled{cursor:default;opacity:.55}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,.drop:focus-within{outline:2px solid var(--accent);outline-offset:3px}
+.modes{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}.modes button{font-size:.81rem}.modes [aria-pressed=true]{background:#432c57;border-color:#79519a;color:#f8eaff}
+form{display:grid;gap:15px}.drop{min-height:155px;position:relative;border:1px dashed #8164a1;border-radius:15px;background:#211832;display:grid;place-content:center;justify-items:center;text-align:center;gap:6px;padding:12px;overflow-wrap:anywhere}.drop:hover,.drop.over{background:#302044}.drop input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}.upload{display:grid;place-items:center;background:#48315d;color:var(--accent);border-radius:10px;width:36px;height:36px;font-size:21px}small,.note,footer{color:var(--muted)}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.row label,#sound-row{display:grid;gap:6px;font-size:.83rem;color:#e3d8ef}.row input,.row select,#sound{width:100%}
+.primary{background:var(--accent);color:#241331;border:0;border-radius:10px;padding:13px 14px;font-weight:750;text-decoration:none;text-align:center}.editor .primary{display:flex;justify-content:space-between}
+#status{margin:0;color:#e7caff;font-size:.87rem}#status:empty{display:none}progress{width:100%;accent-color:var(--accent)}
+.heading{display:flex;justify-content:space-between;gap:10px}.heading span{color:var(--muted);font-size:.82rem}
+.stage{margin:auto;width:min(100%,370px);aspect-ratio:1;border-radius:13px;overflow:hidden;background:radial-gradient(circle,#21182e,#120e1a 72%);position:relative;display:grid;place-items:center}.stage canvas,.stage video{width:100%;height:100%;position:absolute;inset:0}.stage canvas:not(.ready){visibility:hidden}.stage #empty{text-align:center;color:var(--muted);font-size:.9rem}.waves{height:64px;display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:10px}.waves b{width:6px;height:15px;background:#9e6ecc;border-radius:9px}.waves b:nth-child(even){height:32px}.waves b:nth-child(3),.waves b:nth-child(5){height:43px}.waves b:nth-child(4){height:58px;background:var(--accent)}
+#downloads{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:14px}.note{font-size:.82rem;margin:16px 0 0;line-height:1.5}a{color:var(--accent)}
+footer{padding:26px 0 34px;font-size:.82rem}
+@media(max-width:740px){.workspace{grid-template-columns:1fr}.intro{padding-top:34px}.panel{padding:16px}}

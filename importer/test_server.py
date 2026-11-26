@@ -1,5 +1,5 @@
 import unittest
-from server import normalize_url
+from server import normalize_url, classify_download_error
 
 class Links(unittest.TestCase):
     def test_allowed(self):
@@ -24,6 +24,24 @@ class Links(unittest.TestCase):
         ):
             with self.subTest(url=url), self.assertRaises(ValueError):
                 normalize_url(url)
+
+class Diagnostics(unittest.TestCase):
+    def test_errors(self):
+        for message, code in (
+            ("Sign in to confirm you’re not a bot", "SOURCE_BOT_CHECK"),
+            ("Private video", "SOURCE_ACCESS"),
+            ("does not pass filter", "SOURCE_DURATION"),
+            ("File is larger than max-filesize", "SOURCE_SIZE"),
+            ("HTTP Error 429: Too Many Requests", "SOURCE_BLOCKED"),
+            ("No supported JavaScript runtime", "SOURCE_JS"),
+            ("Video unavailable", "SOURCE_UNAVAILABLE"),
+            ("Requested format is not available", "SOURCE_FORMAT"),
+        ):
+            with self.subTest(code=code):
+                self.assertEqual(classify_download_error(message).code, code)
+    def test_no_secrets(self):
+        error = classify_download_error("unknown error token=private")
+        self.assertNotIn("private", str(error))
 
 if __name__ == "__main__":
     unittest.main()

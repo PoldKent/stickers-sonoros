@@ -626,7 +626,7 @@ async function importLink(force) {
     byId('cancel-link').hidden = false;
     linkInput.setAttribute('aria-busy','true');
     sync();
-    timer = setTimeout(() => controller.abort(), 150000);
+    timer = setTimeout(() => controller.abort(), 240000);
     showLinkState(social ? 'Conectando con el servidor de descarga…' : 'Conectando con el video…','loading');
     if (social) {
       const health = await fetch(request.replace(/\/api\/import$/, '/health'), {signal:controller.signal,credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer'});

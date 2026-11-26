@@ -97,7 +97,7 @@ El procesamiento de archivos ocurre localmente por defecto. La importación medi
 
 ## ❤️ Apoya el proyecto
 
-Si deseas apoyar voluntariamente el mantenimiento no comercial, consulta [las instrucciones de donación BBTC por Ethereum (ERC-20)](SUPPORT.md). No uses BTC nativo u otros tokens. La aplicación no vende funciones, no requiere pagos y no automatiza transferencias.
+Si deseas apoyar voluntariamente el mantenimiento no comercial, consulta [las instrucciones de donación USDC o BBTC por Ethereum (ERC-20)](SUPPORT.md). No uses BTC nativo, otros tokens ni otras redes. La aplicación no vende funciones, no requiere pagos y no automatiza transferencias.
 
 ## Créditos y licencia
 

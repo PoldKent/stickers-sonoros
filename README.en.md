@@ -11,7 +11,7 @@ Video, image or GIF + audio · up to 60 seconds · Español / English.
 
 ![Illustrative desktop and phone editor layout](docs/images/interface.svg)
 
-[Real screenshots from the latest verified build](https://github.com/PoldKent/stickers-sonoros/actions/runs/45852351963#artifacts) (temporary CI artifacts).
+[Real screenshots from interface checks](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) (temporary artifacts per run).
 
 ## How it works
 
@@ -19,8 +19,8 @@ Video, image or GIF + audio · up to 60 seconds · Español / English.
 
 1. Paste a public HTTPS media link or choose a local file.
 2. Preview the selection, set start and end (up to 60 seconds), and adjust framing, position or zoom.
-3. Select **Create sound sticker**. The editor produces a video and, when supported, a package containing linked WebP and Ogg/Opus files.
-4. Follow the four sending steps under the preview. The sticker file is `.sonoro.json`, not an MP4 video.
+3. Select **Create sound sticker**. The editor locally creates a package containing linked WebP and Ogg/Opus files when the browser supports the required codecs.
+4. Follow the four sending steps under the preview. The editor's only download is `sticker.sonoro.json`.
 
 ## Features
 
@@ -90,7 +90,7 @@ python tests/test_http.py
 python tests/test_format_selection.py
 ```
 
-For browser tests, install Playwright and Chromium in the development environment, run the static server on port 8000 and execute `node tests/smoke.mjs`. Integration tests need FFmpeg; format-selection tests need yt-dlp. See [CI runs](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) and [live service diagnostics](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml). README images are illustrative diagrams; actual Chromium screenshots are attached as CI artifacts when generated.
+For browser tests, install Playwright and Chromium in the development environment, run the static server on port 8000 and execute `node tests/smoke.mjs`. Browser tests use FFmpeg to create media fixtures; format-selection tests need yt-dlp. See [CI runs](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) and [live service diagnostics](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml). README images are illustrative diagrams; actual Chromium screenshots are attached as CI artifacts when generated.
 
 ## Privacy and limits
 

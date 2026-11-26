@@ -80,3 +80,5 @@ footer a{overflow-wrap:anywhere}#visual-label{max-width:100%;overflow-wrap:anywh
 @media(max-width:740px){#native-bridge{padding:11px}#native-bridge h4{font-size:1.07rem}#native-bridge .send-steps>li{grid-template-columns:25px minmax(0,1fr);gap:8px}#native-bridge .send-steps>li::before{width:25px;height:25px}#native-bridge .setup-actions a,#native-bridge .setup-actions button{flex:1 1 100%;min-height:44px}#native-bridge .send-step-body p{font-size:.83rem}}
 
 #native-bridge #bookmark-status:empty{display:none}#native-bridge #bookmark-status:not(:empty){color:var(--accent);margin:6px 0 10px}
+
+#quality-row{display:grid;gap:7px}#quality-row small{font-size:.77rem;color:var(--muted);line-height:1.5}#quality-result{font-weight:600;line-height:1.5}.import-alternative{margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#21182e}.import-alternative strong{font-size:.9rem}.import-alternative p,.import-alternative small{font-size:.8rem;line-height:1.5;color:var(--muted)}.import-alternative .file-actions{margin:10px 0}.import-alternative a,.import-alternative button{flex:1 1 130px;text-align:center;min-height:40px}

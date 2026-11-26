@@ -2,11 +2,11 @@
 (() => {
   const pairs = [
     ["Stickers Sonoros · Editor web","Stickers Sonoros · Web editor"],
-    ["Crea stickers sonoros de hasta 60 segundos para WhatsApp desde un video, imagen o GIF.","Create sound stickers up to 60 seconds long from video, images or GIFs for WhatsApp."],
+    ["Crea stickers sonoros de hasta 3 minutos para WhatsApp desde un video, imagen o GIF.","Create sound stickers up to 3 minutes long from video, images or GIFs for WhatsApp."],
     ["Edición local","Local editing"],
     ["Dale sonido","Add sound"],
     ["a tu sticker.","to your sticker."],
-    ["Recorta hasta 60 segundos, ajusta el encuadre y prepara tu sticker con sonido.","Trim up to 60 seconds, adjust the frame and create your sticker with sound."],
+    ["Recorta hasta 3 minutos, ajusta el encuadre y prepara tu sticker con sonido.","Trim up to 3 minutes, adjust the frame and create your sticker with sound."],
     ["Tu proyecto","Your project"],
     ["Tipo de proyecto","Project type"],
     ["Video","Video"],
@@ -83,7 +83,7 @@
     ["Selecciona un tramo válido dentro de la duración del archivo.","Select a valid range within the file duration."],
     ["El navegador devolvió un video vacío.","The browser returned an empty video."],
     ["Este navegador no permite exportar el clip. Prueba con Chrome o Edge actualizado.","This browser cannot export the clip. Try an up-to-date Chrome or Edge browser."],
-    ["Selecciona un tramo de audio de hasta 60 segundos.","Select an audio range of up to 60 seconds."],
+    ["Selecciona un tramo de audio de hasta 180 segundos.","Select an audio range of up to 180 seconds."],
     ["Creando el clip. Mantén esta pestaña abierta…","Creating clip. Keep this tab open…"],
     ["Generación cancelada.","Creation canceled."],
     ["No pude crear el clip.","Could not create the clip."],
@@ -129,7 +129,7 @@
     ["Cargando en el editor…","Loading into the editor…"],
     ["Importación cancelada o tiempo agotado.","Import canceled or timed out."],
     ["No se pudo acceder al enlace. La página puede bloquear el acceso desde otras webs (CORS) o estar desconectada.","Could not access the link. The page may block cross-origin access (CORS) or be offline."],
-    ["Selecciona un archivo con audio. Máximo 60 segundos por sticker.","Choose a file with audio. Up to 60 seconds per sticker."],
+    ["Selecciona un archivo con audio. Máximo 180 segundos por sticker.","Choose a file with audio. Up to 180 seconds per sticker."],
     ["La animación puede reducir su calidad para caber en 1 MB.","Animation quality may be reduced to fit within 1 MB."],
     ["Reduce el tramo antes de generar.","Shorten the selection before creating."],
     ["El final debe estar después del inicio.","The end must be after the start."],
@@ -141,7 +141,7 @@
     ["No se cargó el conversor. Recarga la página.","The converter did not load. Reload the page."],
     ["No se pudo generar el sticker.","Could not create the sticker."],
     ["Ejemplo preparado. Pulsa Crear sticker sonoro.","Example ready. Click Create sound sticker."],
-    ["Reduce el tramo a 60 segundos.","Shorten the selection to 60 seconds."],
+    ["Reduce el tramo a 180 segundos.","Shorten the selection to 180 seconds."],
     ["Pega un enlace para detectar video, imagen o audio.","Paste a link to find video, image or audio."],
     ["Importa un archivo de video mediante un enlace directo. YouTube, TikTok e Instagram requieren el servidor de descarga, todavía sin conectar.","Import a video from a direct link. YouTube, TikTok and Instagram require the download server, which is not connected yet."],
     ["Fotograma seleccionado con el audio original. Puedes ajustar el tramo sonoro.","Frame selected with original audio. Adjust the sound selection."],
@@ -285,6 +285,7 @@
   pairs.push(...[["Firma del creador (opcional)","Creator signature (optional)"],["Tu nombre o alias","Your name or nickname"],["La firma se incluye en los datos del sticker. Todos incluyen la atribución y el enlace de la app. No se añade texto sobre la imagen.","The signature is included in sticker metadata. All stickers include the app credit and link. No text is added over the image."],["Metadatos del sticker no válidos.","Invalid sticker metadata."],["No se pudo verificar la firma del sticker.","Could not verify the sticker signature."]]);
   pairs.push(["El tramo no cabe en 1 MB con al menos 9 FPS y 192 px. Acórtalo o cambia el modo de calidad.","The selection does not fit within 1 MB at 9 FPS or more and 192 px or more. Shorten it or change quality mode."]);
   pairs.push(...[["Límite de tamaño","Size limit"],["Compatible (imagen hasta 1 MB)","Compatible (image up to 1 MB)"],["Calidad ampliada (hasta 4 MB con audio)","Extended quality (up to 4 MB including audio)"],["WhatsApp podría rechazar imágenes de más de 1 MB. Si sucede, usa Compatible. Para enviar archivos grandes, sustituye el favorito de WhatsApp por el nuevo.","WhatsApp may reject images larger than 1 MB. If that happens, use Compatible. Replace your WhatsApp bookmark to send larger files."],["Este sticker supera 1 MB de imagen. Prueba el envío en tu propio chat. Si falla, usa Compatible.","This sticker exceeds 1 MB of image data. Test in your own chat. If it fails, use Compatible."],["La animación puede reducir su calidad para respetar el tamaño elegido.","Animation quality may be reduced to fit the selected size."],["Máxima nitidez: mínimo 9 FPS y 192 px en animaciones. Si no cabe en el tamaño elegido, reduce la duración o cambia de modo.","Maximum sharpness: at least 9 FPS and 192 px for animations. If it does not fit the selected size, shorten it or change mode."],["El tramo no cabe en 4 MB con al menos 9 FPS y 192 px. Acórtalo o cambia el modo de calidad.","The selection does not fit within 4 MB at 9 FPS or more and 192 px or more. Shorten it or change quality mode."]]);
+  pairs.push(["Selecciona un tramo válido de hasta 180 segundos.","Choose a valid selection of up to 180 seconds."],["Si ya tienes el favorito de esta versión, salta este paso. Sustituye los favoritos anteriores para enviar stickers de más de 60 segundos.","If you already have this version of the bookmark, skip this step. Replace older bookmarks to send stickers longer than 60 seconds."]);
   const exact = new Map(pairs);
   const fragments = [
     [/^Duración: ([\d.]+) s de (\d+) s permitidos\./, "Duration: $1 s of $2 s allowed."],

@@ -18,6 +18,7 @@ jobs:
       - run: |
           node --check app.js
           node --check i18n.js
+          node --check vendor/shirtep/convert.js
           node --check vendor/shirtep/local-send.js
           node --check tests/smoke.mjs
           python -m compileall -q importer

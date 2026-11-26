@@ -4,6 +4,6 @@ Editor web en español para convertir un video, una imagen con audio o un video/
 
 La exportación es MP4 o WebM según el navegador. Para GIF animado se necesita ImageDecoder. Para exportar se necesita MediaRecorder, Web Audio y captura de canvas. Usar Chrome o Edge actualizado es la opción recomendada.
 
-Se puede compartir el clip como video en WhatsApp. Para enviar stickers con sonido como mensajes nativos, consulta la [extensión original de Shirtep](https://github.com/Shirtep/WA-audio-stickers/releases).
+El editor funciona sin extensiones. Puedes compartir el resultado como video. En las cuentas móviles que tengan habilitada la creación de stickers con sonido, guarda el clip en la galería y usa Stickers → Crear → Añadir sonido en WhatsApp para conservar su audio.
 
 Para servirlo localmente, ejecuta `python -m http.server 8000` desde esta carpeta y abre http://localhost:8000. En GitHub Pages, publica la rama principal desde la raíz. El sitio no requiere compilación.

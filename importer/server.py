@@ -11,6 +11,7 @@ from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit, parse_qs, urlencode
+from public_media import fetch_public, PublicFetchError, HTML_TYPES
 
 PORT = int(os.environ.get("PORT", "8080"))
 ORIGINS = {
@@ -31,7 +32,7 @@ STATIC_FILES = {
 }
 MAX_BYTES = 80 * 1024 * 1024
 MAX_DURATION = 600
-SERVICE_VERSION = '2026.11.26.7'
+SERVICE_VERSION = '2026.11.26.9'
 SLOTS = threading.BoundedSemaphore(1)
 LOCK = threading.Lock()
 RECENT = deque()
@@ -211,7 +212,7 @@ class Handler(BaseHTTPRequestHandler):
             pass
 
     def do_OPTIONS(self):
-        if self.path != "/api/import" or self.headers.get("Origin") not in ORIGINS:
+        if self.path not in ("/api/import", "/api/media") or self.headers.get("Origin") not in ORIGINS:
             self.reply(403, {"error": "Origen no permitido."})
             return
         self.send_response(204)
@@ -221,7 +222,7 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_POST(self):
-        if self.path != "/api/import" or self.headers.get("Origin") not in ORIGINS:
+        if self.path not in ("/api/import", "/api/media") or self.headers.get("Origin") not in ORIGINS:
             self.reply(403, {"error": "Origen o ruta no permitidos."})
             return
         try:
@@ -229,7 +230,11 @@ class Handler(BaseHTTPRequestHandler):
             if not 0 < length <= 4096 or self.headers.get_content_type() != "application/json":
                 raise ValueError("Solicitud no válida.")
             payload = json.loads(self.rfile.read(length))
-            url = normalize_url(payload.get("url") if isinstance(payload, dict) else None)
+            url = payload.get("url") if isinstance(payload, dict) else None
+            if self.path == "/api/import":
+                url = normalize_url(url)
+            elif not isinstance(url, str) or not url.startswith("https://"):
+                raise ValueError()
         except (ValueError, TypeError, TimeoutError):
             self.reply(400, {"error": "Introduce un enlace público válido de TikTok, Reels o Shorts."})
             return
@@ -249,9 +254,20 @@ class Handler(BaseHTTPRequestHandler):
                 return
             with tempfile.TemporaryDirectory(prefix="sticker-") as temp:
                 try:
-                    path = fetch_video(url, Path(temp))
+                    if self.path == "/api/media":
+                        path = Path(temp) / "resource"
+                        content_type, final_url = fetch_public(url, path)
+                        if content_type in HTML_TYPES:
+                            self.reply(200, {"html": path.read_bytes().decode("utf-8", errors="replace"), "url": final_url})
+                            return
+                    else:
+                        path = fetch_video(url, Path(temp))
+                        content_type = "video/mp4"
                 except subprocess.TimeoutExpired:
                     self.reply(504, {"error": "La descarga o conversión excedió el tiempo disponible."})
+                    return
+                except PublicFetchError as error:
+                    self.reply(422, {"error": str(error), "code": "PUBLIC_RESOURCE"})
                     return
                 except ImportFailure as error:
                     print("Importación fallida: " + error.code, flush=True)
@@ -265,7 +281,8 @@ class Handler(BaseHTTPRequestHandler):
                     return
                 self.send_response(200)
                 self.cors()
-                self.send_header("Content-Type", "video/mp4")
+                self.send_header("Content-Type", content_type)
+                self.send_header("Content-Disposition", "attachment")
                 self.send_header("Content-Length", str(path.stat().st_size))
                 self.end_headers()
                 with path.open("rb") as video:

@@ -41,6 +41,7 @@ let stickerJob;
 let nativePackage;
 let clipDuration;
 let directVideo;
+let wizardStep=1;
 function clearResult() {
   hideCropGuides();
   byId('quality-result').hidden = true;
@@ -93,9 +94,9 @@ function sync() {
   byId('position').hidden = !visual;
   for (const id of ['pan-x','pan-y','zoom','pan-x-value','pan-y-value','zoom-value','center-crop','rotation','rotate-left','rotate-right','rotate-half']) byId(id).disabled = busy || importing || !!stickerJob || !visual;
   if (!visual) hideCropGuides();
-  byId('scrub-row').hidden = !visual || visual.kind === 'image' || !!result;
-  byId('scrub').disabled = busy || importing || loadingVisual || loadingAudio || !!stickerJob || !!result;
-  byId('source-preview').hidden = !visual || !audio || loadingVisual || loadingAudio || busy || importing || !!result;
+  byId('scrub-row').hidden = !visual || visual.kind === 'image' || (wizardStep!==2 && !!result);
+  byId('scrub').disabled = busy || importing || loadingVisual || loadingAudio || !!stickerJob || (wizardStep!==2 && !!result);
+  byId('source-preview').hidden = !visual || !audio || loadingVisual || loadingAudio || busy || importing || (wizardStep!==2 && !!result);
   byId('play-source').disabled = busy || importing;
   byId('use-frame').hidden = !visual || visual.kind === 'image' || !audio;
   byId('use-frame').disabled = busy || importing || loadingVisual || loadingAudio;
@@ -109,11 +110,50 @@ function sync() {
     slider.max=field.max || 1; slider.value=field.value;
     slider.disabled=field.disabled || importing || !!stickerJob;
   }
-  const step=nativePackage?3:busy||stickerJob||result?2:visual?1:0;
-  document.querySelectorAll('.workflow-strip span').forEach((el,i)=>{if(i===step)el.setAttribute('aria-current','step');else el.removeAttribute('aria-current');});
   selectionInfo();
+  syncWizard();
   canvas.classList.toggle('ready', !!visual);
 }
+
+function wizardAvailable(step){
+  if(step===1)return true;
+  if(!visual || !audio || loadingVisual || loadingAudio)return false;
+  if(step===2)return true;
+  if(step===3)return !byId('export').disabled || !!result;
+  return !!nativePackage;
+}
+function syncWizard(){
+  const locked=busy||importing||loadingVisual||loadingAudio||!!stickerJob;
+  if(wizardStep>1 && (!visual||!audio) && !locked)wizardStep=1;
+  if(wizardStep===4 && !nativePackage)wizardStep=3;
+  document.documentElement.dataset.wizardStep=String(wizardStep);
+  const names=['Importar contenido','Editar sticker','Crear sticker','Enviar sticker'];
+  const heading=byId('editor');
+  const label=window.StickerUI?.language()==='en'?['Import content','Edit sticker','Create sticker','Send sticker'][wizardStep-1]:names[wizardStep-1];
+  if(heading.textContent!==label)heading.textContent=names[wizardStep-1];
+  for(const button of document.querySelectorAll('[data-wizard]')){
+    const step=Number(button.dataset.wizard);
+    button.disabled=locked||step>wizardStep+1||!wizardAvailable(step);
+    if(step===wizardStep)button.setAttribute('aria-current','step');else button.removeAttribute('aria-current');
+  }
+  byId('wizard-prev').disabled=locked||wizardStep===1;
+  byId('wizard-next').disabled=locked||wizardStep===4||!wizardAvailable(wizardStep+1);
+  byId('wizard-next').hidden=wizardStep===4;
+  byId('wizard-counter').textContent=wizardStep+' / 4';
+}
+function goWizard(step){
+  if(step===wizardStep || busy||importing||loadingVisual||loadingAudio||stickerJob||!wizardAvailable(step)||step>wizardStep+1)return;
+  stopSourcePreview();output.pause();byId('sticker-audio').pause();
+  wizardStep=step;sync();
+  if(step===2&&visual)previewFrame(byId('scrub').valueAsNumber);
+  const target=step===4?byId('send-title'):byId('editor');
+  target.setAttribute('tabindex','-1');target.focus({preventScroll:true});
+  document.querySelector('.workflow-strip').scrollIntoView({block:'nearest',behavior:'instant'});
+}
+byId('wizard-prev').onclick=()=>goWizard(wizardStep-1);
+byId('wizard-next').onclick=()=>goWizard(wizardStep+1);
+for(const button of document.querySelectorAll('[data-wizard]'))button.onclick=()=>goWizard(Number(button.dataset.wizard));
+
 
 // All crop positions are in output-canvas pixels; guides never enter the canvas.
 const cropSide = 512;
@@ -555,7 +595,7 @@ async function render(context, videoTrim, soundTrim, signal) {
 
 byId('project').addEventListener('submit', async event => {
   event.preventDefault();
-  if (busy || importing || !visual || !audio) return;
+  if (wizardStep!==3 || busy || importing || !visual || !audio) return;
   let context;
   try {
     if (!window.MediaRecorder || !canvas.captureStream || !window.AudioContext) throw new Error('Este navegador no permite exportar el clip. Prueba con Chrome o Edge actualizado.');

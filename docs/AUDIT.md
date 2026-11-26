@@ -72,3 +72,7 @@ Preserved the useful changes from the obsolete branch without restoring its 1 MB
 ### 2026.11.26.36 — Frame cadence regression
 
 User reported progressive motion loss on a 38s 448px/9FPS sticker. Final Video-mode conversion now reads the original rather than the real-time canvas recording, uses crop/zoom/rotation at capture time, disables playback fallback for exact source sampling, and writes each animation interval without merging repeated frames. Budget estimates count actual frame chunks; physical frame cadence and size are checked. Added a 38s moving-fixture regression inspecting ANMF durations, frame count and changing content in all thirds. User clip itself not available for reproduction. / Se conserva la cadencia y se adapta la calidad sin inventar movimiento.
+
+### 2026.11.26.37 — Four-screen wizard / Asistente por etapas
+
+Separates import, editing, generation and sending, with explicit Back/Next navigation, guarded progression, retained project state and ES/EN labels. Existing crop, timeline, quality, signature, conversion and sending controls are reused. Regression tests exercise navigation, result preservation and responsive screenshots. .36 CI, Pages and Render diagnostic all passed before this change.

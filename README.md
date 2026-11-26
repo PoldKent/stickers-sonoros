@@ -133,3 +133,5 @@ La barra bajo la vista previa muestra la posición actual y duración total. Per
 **Novedad móvil (26/11/2026):** algunas cuentas ya disponen del editor sonoro nativo de WhatsApp. Consulta [la guía móvil y su matriz de pruebas](docs/MOBILE.md); la importación directa de `.sonoro.json` sigue sin estar verificada.
 
 **Cadencia de animación:** el modo Video genera el WebP desde el archivo original con el mismo encuadre del editor; la grabación intermedia solo sirve de vista previa. Los cuadros de animación ya no se fusionan en intervalos largos. Se adapta resolución/calidad para respetar el presupuesto, sin bajar de 9 FPS. Una fuente con cuadros repetidos no gana movimiento artificial.
+
+**Asistente de cuatro pantallas:** Importar → Editar → Crear → Enviar. Usa Anterior y Siguiente para avanzar sin perder el proyecto. El envío se habilita cuando termina la conversión. Cambiar la edición o calidad invalida el resultado anterior; navegar no lo borra.

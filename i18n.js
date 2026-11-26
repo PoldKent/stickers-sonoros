@@ -1,6 +1,14 @@
 /* Spanish/English presentation layer; does not change media or sending logic. */
 (() => {
   const pairs = [
+    ["Importar contenido","Import content"],
+    ["Editar sticker","Edit sticker"],
+    ["Crear sticker","Create sticker"],
+    ["Enviar sticker","Send sticker"],
+    ["Selecciona el contenido y su sonido para continuar.","Select your content and its audio to continue."],
+    ["Navegación entre etapas","Step navigation"],
+    ["← Anterior","← Back"],
+    ["Siguiente →","Next →"],
     ["La animación conserva una cadencia uniforme. Si el original tiene fotogramas repetidos, no se inventa movimiento.","The animation preserves a uniform frame cadence. If the original contains repeated frames, no motion is invented."],
     ["Usar completo","Use full source"],
     ["Si ya tienes el favorito de esta versión, salta este paso. Actualiza los favoritos antiguos.","Skip this step if you have the bookmark for this version. Update older bookmarks."],

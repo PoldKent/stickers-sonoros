@@ -19,6 +19,12 @@ try {
   await page.locator('#demo').click();
   await page.waitForFunction(()=>!document.querySelector('#export').disabled);
   assert.match(await page.locator('#selection-info').textContent(),/2\.00 s/);
+  assert.equal(await page.locator('#export').isVisible(),false);
+  await page.locator('#wizard-next').click();
+  assert.equal(await page.locator('#position').isVisible(),true);
+  assert.equal(await page.locator('#visual').isVisible(),false);
+  await page.locator('#wizard-next').click();
+  assert.equal(await page.locator('#position').isVisible(),false);
   await page.locator('#signature').fill('Mi firma 🎵');
   await page.locator('#export').click();
   await page.locator('#output').waitFor({state:'visible',timeout:40000});
@@ -39,7 +45,12 @@ try {
   await page.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
   assert.match(await page.locator('#sticker-state').textContent(),/listo para enviar/);
   assert.match(await page.locator('#quality-result').textContent(),/Calidad final: /);
+  assert.equal(await page.locator('#package-download').isVisible(),false);
+  await page.locator('#wizard-next').click();
   assert.equal(await page.locator('#package-download').isVisible(),true);
+  await page.locator('#wizard-prev').click();
+  assert.equal(await page.locator('#signature').inputValue(),'Mi firma 🎵');
+  await page.locator('#wizard-next').click();
   assert.equal(await page.locator('.send-steps > li').count(),4);
   assert.equal(await page.locator('#download').count(),0);
   assert.equal(await page.locator('#share').count(),0);
@@ -52,6 +63,7 @@ try {
   await visualAudit.goto('http://127.0.0.1:8000');
   await visualAudit.locator('#demo').click();
   await visualAudit.waitForFunction(()=>!document.querySelector('#export').disabled);
+  await visualAudit.locator('#wizard-next').click();
   await visualAudit.screenshot({path:'artifacts/screenshots/mobile-editor-es.png',fullPage:true});
   await visualAudit.locator('#language').selectOption('en');
   await visualAudit.screenshot({path:'artifacts/screenshots/mobile-editor-en.png',fullPage:true});
@@ -205,6 +217,7 @@ try {
   await page.waitForFunction(()=>document.querySelector('#service-status').textContent.includes('Actualiza Render'));
   await page.unroute('**/health');
   assert.deepEqual(errors,[]);
+  await page.locator('[data-wizard="1"]').click();
   await page.locator('[data-mode="video"]').click();
   assert.equal(await page.locator('#components').isVisible(),false);
   assert.equal(await page.locator('#export').isDisabled(),true);
@@ -228,6 +241,7 @@ try {
     assert.equal(requested,'https://www.youtube.com/watch?v=YBB4FHPFVmM');
     assert.equal(await page.locator('input[type=url]').count(),1);
     assert.equal(await page.locator('#export').isDisabled(),false);
+    await page.locator('#wizard-next').click();
     assert.equal(await page.locator('#play-source').isVisible(),true);
     await page.locator('#play-source').click();
     await page.waitForFunction(()=>document.querySelector('#play-source').textContent.includes('Detener'));
@@ -360,6 +374,8 @@ try {
     await qualityPage.goto('http://127.0.0.1:8000');
     await qualityPage.locator('#visual').setInputFiles(file);
     await qualityPage.waitForFunction(()=>!document.querySelector('#export').disabled);
+    await qualityPage.locator('#wizard-next').click();
+    await qualityPage.locator('#wizard-next').click();
     await qualityPage.locator('#size-budget').selectOption('compatible');
     await qualityPage.locator('#export').click();
     await qualityPage.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
@@ -388,7 +404,8 @@ try {
   const crop=await browser.newPage({viewport:{width:1200,height:900}});
   try {
     await crop.goto('http://127.0.0.1:8000');
-    await crop.locator('[data-mode="image"]').click();
+    await crop.locator('#demo').click();
+    await crop.waitForFunction(()=>!document.querySelector('#export').disabled);
     async function loadCropFixture(width,height,asymmetric=false){
       const bytes=await crop.evaluate(async({width,height,asymmetric})=>{
         const c=document.createElement('canvas');c.width=width;c.height=height;
@@ -400,6 +417,7 @@ try {
       await crop.waitForFunction(()=>!document.querySelector('#position').hidden&&!document.querySelector('#pan-x').disabled);
     }
     await loadCropFixture(800,400);
+    await crop.locator('#wizard-next').click();
     const pan=async(id,n,magnetic=true)=>crop.evaluate(({id,n,magnetic})=>{
       const el=document.getElementById(id);
       if(magnetic)el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:1}));
@@ -469,11 +487,14 @@ try {
     await crop.locator('#rotation').selectOption('0');
     assert.deepEqual(await colorAt(64,256),[255,0,0]);
     // The edited media must keep its rotation in the actual converted output.
+    await crop.locator('[data-wizard="1"]').click();
     await crop.locator('#demo').click();
     await crop.waitForFunction(()=>!document.querySelector('#export').disabled);
     await loadCropFixture(800,400,true);
+    await crop.locator('#wizard-next').click();
     await crop.waitForFunction(()=>!document.querySelector('#export').disabled);
     await crop.locator('#rotate-right').click();
+    await crop.locator('#wizard-next').click();
     await crop.locator('#export').click();
     await crop.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
     const colors=await crop.evaluate(async()=>{
@@ -501,6 +522,7 @@ try {
     await durations.waitForFunction(()=>!document.querySelector('#export').disabled);
     const full=Number(await durations.locator('#ve').inputValue());
     assert(full>=240 && full===Number(await durations.locator('#ve').getAttribute('max')),`Full source selection: ${full}`);
+    await durations.locator('#wizard-next').click();
     assert.equal(await durations.locator('#scrub-row').evaluate(e=>e.parentElement.id),'preview-media');
     await durations.locator('#ve').fill('60');
     await durations.locator('#ve').dispatchEvent('change');
@@ -560,12 +582,15 @@ try {
     const englishBookmark=await phone.locator('#wa-bookmark').getAttribute('href');
     assert.match(decodeURIComponent(englishBookmark),/\)\("en"\)$/);
     if(width===390){
+      await phone.locator('#wizard-next').click();
+      await phone.locator('#wizard-next').click();
       await phone.locator('#export').click();
       await phone.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
       assert.match(await phone.locator('#sticker-state').textContent(),/Your sticker is ready to send/);
       assert.equal(await phone.locator('#send-title').textContent(),'How to send your sticker to WhatsApp');
       assert.equal(await phone.locator('.send-steps > li').count(),4);
       assert.equal(await phone.locator('#download').count(),0);
+      await phone.locator('#wizard-next').click();
       assert.equal(await phone.locator('#wa-bookmark').isVisible(),true);
       assert.match(await phone.locator('#package-download').textContent(),/Save sound sticker/);
       assert.equal(await phone.locator('#signature').inputValue(),'');

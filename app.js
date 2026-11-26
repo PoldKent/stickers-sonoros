@@ -21,6 +21,7 @@ let loadingVisual = false;
 let loadingAudio = false;
 let busy = false;
 let exportJob;
+let previewSession;
 let importController;
 let importing = false;
 
@@ -39,6 +40,7 @@ function closeVisual(item) {
 let stickerJob;
 let clipDuration;
 function clearResult() {
+  stopSourcePreview();
   stickerJob?.abort();
   stickerJob = undefined;
   byId('sticker-image').removeAttribute('src');
@@ -77,6 +79,8 @@ function sync() {
   byId('empty').hidden = !!visual;
   byId('position').hidden = !visual;
   byId('scrub-row').hidden = !visual || visual.kind === 'image';
+  byId('source-preview').hidden = !visual || !audio || loadingVisual || loadingAudio || busy || importing || !!result;
+  byId('play-source').disabled = busy || importing;
   byId('trim-actions').hidden = byId('scrub-row').hidden;
   // Hidden trim fields must not block form submission.
   for (const [ids,hidden] of [[['vs','ve'],byId('visual-trim').hidden],[['as','ae'],byId('audio-trim').hidden]]) for (const id of ids) { byId(id).required = !hidden; byId(id).disabled = hidden || busy; }
@@ -296,6 +300,7 @@ async function gifAt(item, time) {
 
 async function previewFrame(at) {
   if (!visual || busy) return;
+  stopSourcePreview();
   const item = visual;
   const time = Math.max(0, Math.min(item.duration || 0, typeof at === 'number' ? at : (byId('vs').valueAsNumber || 0)));
   try {
@@ -505,19 +510,18 @@ canvas.addEventListener('pointermove', event => {
 });
 canvas.addEventListener('lostpointercapture', () => { drag = undefined; });
 const linkStatus = byId('link-status');
-const endpointField = byId('import-endpoint');
 const maxImportBytes = 80 * 1024 * 1024;
 const socialHosts = /^(?:(?:www|m|vm|vt)\.tiktok\.com|tiktok\.com|(?:www\.)?instagram\.com|(?:www\.|m\.)?youtube\.com|youtu\.be)$/i;
-const configuredEndpoint = document.querySelector('meta[name="sticker-import-endpoint"]')?.content || '';
-endpointField.value = configuredEndpoint;
-try { endpointField.value = localStorage.getItem('sticker-import-endpoint') || configuredEndpoint; } catch {}
-endpointField.addEventListener('change', () => {
-  try { localStorage.setItem('sticker-import-endpoint', endpointField.value.trim()); } catch {}
-});
+const configuredEndpoint = document.querySelector('meta[name="sticker-import-endpoint"]')?.content.trim() || '';
+// Deployment configuration belongs to the administrator, never to the user.
+const importEndpoint = configuredEndpoint || (!location.hostname.endsWith('.github.io') ? location.origin : '');
+try { localStorage.removeItem('sticker-import-endpoint'); } catch {}
+let linkTimer;
+let lastLink = '';
 function switchToVideo() {
   if (mode !== 'video') modes.find(button => button.dataset.mode === 'video').click();
 }
-function cancelImport() { importController?.abort(); }
+function cancelImport() { clearTimeout(linkTimer); importController?.abort(); }
 byId('cancel-link').onclick = cancelImport;
 byId('visual').addEventListener('change', cancelImport, { capture: true });
 drop.addEventListener('drop', cancelImport, { capture: true });
@@ -556,53 +560,88 @@ async function downloadVideo(response, signal) {
   if (!bytes) throw new Error('El video está vacío.');
   return new File(chunks, type === 'video/webm' ? 'video-importado.webm' : 'video-importado.mp4', {type: type.startsWith('video/') ? type : 'video/mp4'});
 }
-byId('link-input').addEventListener('keydown', event => {
-  if (event.key === 'Enter') { event.preventDefault(); byId('load-link').click(); }
+const linkInput = byId('link-input');
+function queueImport() {
+  clearTimeout(linkTimer);
+  if (busy) return;
+  const text = linkInput.value.trim();
+  if (text === lastLink && importing) return;
+  if (importing) importController?.abort();
+  if (!text) { linkStatus.textContent = ''; return; }
+  linkTimer = setTimeout(() => importLink(false), 500);
+}
+linkInput.addEventListener('input', queueImport);
+linkInput.addEventListener('paste', event => {
+  const pasted = event.clipboardData?.getData('text/plain')?.trim();
+  if (!pasted || !/^https?:\/\//i.test(pasted)) return;
+  event.preventDefault();
+  linkInput.value = pasted;
+  clearTimeout(linkTimer);
+  importLink(true);
 });
-byId('load-link').onclick = async () => {
-  if (busy || importing) return;
-  const button = byId('load-link');
+linkInput.addEventListener('keydown', event => {
+  if (event.key === 'Enter') { event.preventDefault(); clearTimeout(linkTimer); importLink(true); }
+});
+byId('load-link').onclick = () => { clearTimeout(linkTimer); importLink(true); };
+async function importLink(force) {
+  if (busy) return;
+  const text = linkInput.value.trim();
+  if (!force && text === lastLink) return;
+  if (importing && text === lastLink) return;
   let controller, timer;
   try {
-    const url = httpsUrl(byId('link-input').value.trim());
+    const url = httpsUrl(text);
     const social = socialHosts.test(url.hostname);
+    // Keep a single YouTube video; do not pass playlist or tracking parameters.
+    if (social && /(?:^|\.)youtube\.com$/.test(url.hostname) && url.pathname === '/watch') {
+      const id = url.searchParams.get('v');
+      if (!id || !/^[A-Za-z0-9_-]{11}$/.test(id)) throw new Error('Pega el enlace de un solo video de YouTube.');
+      url.search = '?v=' + id;
+      url.hash = '';
+    }
     let request = url.href, options = {};
     if (social) {
-      if (!endpointField.value.trim()) {
-        byId('import-settings').open = true;
-        throw new Error('Falta configurar el servicio de descarga para TikTok, Reels y Shorts.');
-      }
-      const endpoint = httpsUrl(endpointField.value.trim());
-      if (endpoint.search || endpoint.hash) throw new Error('Configura la URL base del servicio, sin parámetros.');
+      if (!importEndpoint) throw new Error('La descarga de redes sociales aún no está disponible en esta versión del sitio. Puedes elegir un video de tu dispositivo.');
+      const endpoint = new URL(importEndpoint);
+      if (endpoint.protocol !== 'https:' && !(endpoint.origin === location.origin && ['localhost','127.0.0.1'].includes(location.hostname))) throw new Error('Servicio de descarga no disponible.');
       request = endpoint.href.replace(/\/$/, '') + '/api/import';
       options = {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:url.href})};
     }
+    importController?.abort();
     switchToVideo();
     controller = new AbortController();
     importController = controller;
     importing = true;
-    button.disabled = true;
+    lastLink = text;
+    byId('load-link').hidden = true;
     byId('cancel-link').hidden = false;
+    linkInput.setAttribute('aria-busy','true');
     sync();
-    timer = setTimeout(() => controller.abort(), 120000);
-    linkStatus.textContent = social ? 'Preparando el video en el servicio de descarga…' : 'Conectando con el video…';
+    timer = setTimeout(() => controller.abort(), 150000);
+    linkStatus.textContent = social ? 'Obteniendo video y audio…' : 'Conectando con el video…';
     const response = await fetch(request, {...options, signal:controller.signal, credentials:'omit', referrerPolicy:'no-referrer', cache:'no-store'});
     const file = await downloadVideo(response, controller.signal);
-    if (controller.signal.aborted || busy) return;
-    linkStatus.textContent = 'Abriendo el video en el editor…';
+    if (controller.signal.aborted || busy || importController !== controller) return;
+    linkStatus.textContent = 'Cargando en el editor…';
     const loaded = await chooseVisual(file);
-    if (!controller.signal.aborted) linkStatus.textContent = loaded ? 'Video importado. Ajusta el tramo, zoom y posición antes de crear el clip.' : 'No se pudo abrir el video: ' + status.textContent;
+    if (!controller.signal.aborted && importController === controller) {
+      linkStatus.textContent = loaded ? 'Video listo. Ajusta el tramo y el encuadre en la vista previa.' : 'No se pudo abrir el video: ' + status.textContent;
+      if (loaded && matchMedia('(max-width:740px)').matches) byId('preview-title').scrollIntoView({behavior:'smooth',block:'start'});
+    }
   } catch (error) {
-    linkStatus.textContent = error.name === 'AbortError' ? 'Descarga cancelada o tiempo agotado.' : error instanceof TypeError ? 'No se pudo conectar. Comprueba el servicio o que el video directo permita CORS.' : error.message;
+    if (!controller || importController === controller) linkStatus.textContent = error.name === 'AbortError' ? 'Importación cancelada o tiempo agotado.' : error instanceof TypeError ? 'No se pudo descargar. Comprueba el enlace o vuelve a intentarlo.' : error.message;
   } finally {
     clearTimeout(timer);
-    importController = undefined;
-    importing = false;
-    button.disabled = false;
-    byId('cancel-link').hidden = true;
-    sync();
+    if (controller && importController === controller) {
+      importController = undefined;
+      importing = false;
+      byId('load-link').hidden = false;
+      byId('cancel-link').hidden = true;
+      linkInput.removeAttribute('aria-busy');
+      sync();
+    }
   }
-};
+}
 
 function selectionInfo() {
   const info = byId('selection-info');
@@ -723,4 +762,62 @@ byId('demo').onclick = async () => {
   const track = chooseAudio(demoAudio());
   await Promise.all([selected,track]);
   if (mode==='image' && visual && audio) status.textContent='Ejemplo preparado. Pulsa Crear sticker sonoro.';
+};
+
+function stopSourcePreview() {
+  const session = previewSession;
+  if (!session) return;
+  previewSession = undefined;
+  cancelAnimationFrame(session.raf);
+  try { session.sound?.stop(); } catch {}
+  session.item?.media?.pause?.();
+  session.context.close().catch(() => {});
+  byId('play-source').textContent = '▶ Reproducir tramo';
+}
+byId('play-source').onclick = async () => {
+  if (previewSession) { stopSourcePreview(); return; }
+  if (!visual || !audio || busy || importing) return;
+  const item = visual;
+  let session;
+  try {
+    const v = item.kind === 'image' ? null : trimmed('v');
+    const a = mode === 'video' ? v : trimmed('a');
+    if (a.duration > limit + .0001) throw new Error('Reduce el tramo a 10 segundos.');
+    const context = new AudioContext();
+    session = {context,item};
+    previewSession = session;
+    byId('play-source').textContent = '■ Detener';
+    await context.resume();
+    if (previewSession !== session) return;
+    if (item.kind === 'video') await seek(item.media,v.start);
+    if (previewSession !== session) return;
+    const sound = context.createBufferSource();
+    session.sound = sound;
+    sound.buffer = audio;
+    sound.connect(context.destination);
+    if (item.kind === 'video') await item.media.play();
+    if (previewSession !== session) return;
+    const start = context.currentTime;
+    sound.start(start,a.start,a.duration);
+    sound.onended = () => { if (previewSession === session) stopSourcePreview(); };
+    const loop = mode === 'mix' && byId('motion').value === 'loop';
+    const tick = async () => {
+      if (previewSession !== session) return;
+      try {
+        const elapsed = context.currentTime-start;
+        if (item.kind === 'video') {
+          if (item.media.currentTime >= v.start+v.duration || item.media.ended) {
+            item.media.pause();
+            if (loop) { await seek(item.media,v.start); if (previewSession === session) await item.media.play(); }
+          }
+          if (previewSession === session) paint(item.media);
+        } else if (item.kind === 'gif') {
+          const frame = await gifAt(item,v.start+(loop?elapsed%v.duration:Math.min(elapsed,v.duration-.001)));
+          if (previewSession === session) paint(frame);
+        } else paint(item.media);
+        if (previewSession === session) session.raf=requestAnimationFrame(tick);
+      } catch (error) { if (previewSession === session) { stopSourcePreview(); status.textContent=error.message; } }
+    };
+    tick();
+  } catch (error) { if (previewSession === session) stopSourcePreview(); status.textContent=error.message; }
 };

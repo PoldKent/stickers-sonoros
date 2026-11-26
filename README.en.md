@@ -22,6 +22,10 @@ Video, image or GIF + audio · up to 60 seconds · Español / English.
 3. Select **Create sound sticker**. The editor locally creates a package containing linked WebP and Ogg/Opus files when the browser supports the required codecs.
 4. Follow the four sending steps under the preview. The editor's only download is `sticker.sonoro.json`.
 
+## Precision framing
+
+Position controls use pixels of the 512 × 512 canvas, with 0.1 px steps; zoom uses 0.01% steps. Drag the media or slider to softly snap to its center or actual canvas edges, depending on framing mode and zoom. Continue dragging to release the snap, or enter exact numbers or use arrow keys to bypass it. **Center** resets position only. Temporary guides are not part of the sticker.
+
 ## Sticker quality
 
 The default **Maximum sharpness** mode prioritizes resolution (192 px minimum for animation; 512 px target), reducing frame rate for long clips. **Balanced** and **Maximum smoothness** offer other tradeoffs. Output depends on content and the 1 MB limit; HD is not guaranteed for every 60-second clip. Shorten the selection or use frame + audio if needed. Actual resolution and FPS appear in the result.

@@ -67,6 +67,7 @@ function clearResult() {
   byId('sticker-files').hidden = true;
   output.pause();
   output.removeAttribute('src');
+  output.removeAttribute('poster');
   output.load();
   output.hidden = true;
   byId('sticker-advanced').open = false;
@@ -478,7 +479,6 @@ byId('project').addEventListener('submit', async event => {
     resultUrl = URL.createObjectURL(result);
     output.src = resultUrl;
     output.hidden = false;
-    status.textContent = 'Preparando tu sticker con sonido…';
   } catch (error) {
     status.textContent = error.name === 'AbortError' ? 'Generación cancelada.' : error.message || 'No pude crear el clip.';
   } finally {
@@ -942,6 +942,7 @@ async function prepareSticker() {
     const info = await verifySticker(files);
     if (controller.signal.aborted || result !== source) return;
     const webpUrl = URL.createObjectURL(files.webp), oggUrl = URL.createObjectURL(files.ogg);
+    output.poster = webpUrl;
     byId('sticker-image').src = webpUrl;
     byId('sticker-audio').src = oggUrl;
     byId('sticker-info').textContent = (info.lado || '?') + ' px · ' + (info.fps || 1) + ' FPS · ' + Math.round(files.webp.size/1024) + ' KB + ' + Math.round(files.ogg.size/1024) + ' KB de audio';

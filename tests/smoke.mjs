@@ -279,7 +279,11 @@ try {
     assert.equal(await phone.locator('html').getAttribute('lang'),'en');
     assert.match(await phone.locator('#export').textContent(),/Create sound sticker/);
     assert.equal(await phone.locator('#link-input').getAttribute('placeholder'),'Web page, video, image or audio');
-    assert.equal(await phone.locator('a[href$="/SUPPORT.md"]').textContent(),'Support the project');
+    assert.equal(await phone.locator('#support-link').textContent(),'Support the project');
+    assert.match(await phone.locator('#support-link').getAttribute('href'),/#english$/);
+    assert.match(await phone.locator('#guide-link').getAttribute('href'),/README\.en\.md$/);
+    await phone.waitForFunction(()=>{const img=document.querySelector('.brand img');return img.complete&&img.naturalWidth>0;});
+    assert.match(await phone.locator('.footer-brand small').textContent(),/Version 2026/);
     assert.equal(await phone.evaluate(()=>window.StickerUI.translate('El video no respondió al recorte.')),'The video did not respond to seeking.');
     assert.equal(await phone.evaluate(()=>window.StickerUI.translate('Este navegador no puede generar WebP (devolvió image/png). Usa Chrome o Edge.')),'This browser cannot generate WebP (returned image/png). Use Chrome or Edge.');
     assert.equal(await phone.evaluate(()=>window.StickerUI.translate('Dominio no permitido para esta descarga.')),'Domain not allowed for this download.');
@@ -291,6 +295,7 @@ try {
     await phone.waitForFunction(()=>document.querySelector('#selection-info').textContent.includes('Duration: 2.00 s of 60 s allowed.'));
     assert(await phone.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
     await phone.locator('#language').selectOption('es');
+    assert.match(await phone.locator('#guide-link').getAttribute('href'),/README\.md$/);
     assert.match(await phone.locator('#selection-info').textContent(),/Duración: 2\.00 s/);
     assert.equal(await phone.locator('#export').isDisabled(),false);
     await phone.locator('#language').selectOption('en');

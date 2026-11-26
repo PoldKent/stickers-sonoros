@@ -1,0 +1,42 @@
+name: Diagnóstico público de Render
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/render-diagnostic.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Comprobar servidor y acceso público
+        shell: bash
+        run: |
+          set +e
+          base=https://stickers-sonoros.onrender.com
+          origin=https://poldkent.github.io
+          tmp=$(mktemp -d)
+          trap 'rm -rf "$tmp"' EXIT
+          echo '### Estado público de Render' >> "$GITHUB_STEP_SUMMARY"
+          curl -sS --max-time 100 -D "$tmp/health-headers" -o "$tmp/health" -H "Origin: $origin" "$base/health"
+          echo 'Estado /health:'
+          cat "$tmp/health-headers" "$tmp/health" 2>/dev/null
+          printf '\n'
+          if ! python -c 'import json,sys; sys.exit(0 if json.load(open(sys.argv[1])).get("publicMedia") is True else 1)' "$tmp/health"; then
+            echo 'El servidor no anuncia publicMedia; revisar el despliegue o la conexión.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          curl -sS --max-time 20 -D "$tmp/options-headers" -o /dev/null -X OPTIONS -H "Origin: $origin" -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type' "$base/api/media"
+          cat "$tmp/options-headers"
+          status=$(curl -sS --max-time 90 --max-filesize 10000000 -D "$tmp/media-headers" -o "$tmp/media" -w '%{http_code}' -H "Origin: $origin" -H 'Content-Type: application/json' --data '{"url":"https://www.w3schools.com/html/mov_bbb.mp4"}' "$base/api/media")
+          echo "Importación HTTP $status"
+          cat "$tmp/media-headers" 2>/dev/null
+          if [[ "$status" == 200 ]] && grep -iq '^content-type: video/mp4' "$tmp/media-headers"; then
+            echo "MP4 público recibido: $(wc -c < "$tmp/media") bytes" | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Importación no verificada: HTTP $status" | tee -a "$GITHUB_STEP_SUMMARY"
+            if grep -iq '^content-type: application/json' "$tmp/media-headers"; then head -c 1000 "$tmp/media"; fi
+          fi
+          exit 0

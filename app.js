@@ -707,18 +707,40 @@ async function openMedia(file, signal) {
   }
   return loaded ? 'Video listo. Ajusta el tramo y el encuadre en la vista previa.' : '';
 }
+async function fetchBackend(path, options = {}) {
+  if (!importEndpoint) throw new Error('No hay un servidor de importación configurado.');
+  const endpoint = new URL(importEndpoint);
+  if (endpoint.protocol !== 'https:' && !(endpoint.origin === location.origin && ['localhost','127.0.0.1'].includes(location.hostname))) throw new Error('Dirección de servidor no válida.');
+  try {
+    return await fetch(new URL(path, endpoint), {...options, credentials:'omit', referrerPolicy:'no-referrer', cache:'no-store'});
+  } catch (error) {
+    if (options.signal?.aborted) throw error;
+    if (error instanceof TypeError) throw new Error('No se puede conectar con Render ('+path+'). Comprueba el servidor al pie de la página; puede estar suspendido o no permitir el origen de esta web.');
+    throw error;
+  }
+}
+async function backendHealth(signal, capability) {
+  const response = await fetchBackend('/health',{signal});
+  if (!response.ok) throw new Error('Render respondió HTTP '+response.status+' al comprobar el servidor.');
+  let info;
+  try { info = await response.json(); } catch { throw new Error('Render no devolvió el estado JSON del descargador. Revisa su despliegue.'); }
+  if (!info.ok) throw new Error('El servidor de importación no está disponible.');
+  if (capability && info[capability] !== true) throw new Error('Render está ejecutando una versión antigua ('+(info.version||'sin versión')+'). No tiene habilitada la importación alternativa de medios. Despliega el último commit de main en Render.');
+  return info;
+}
 async function fetchAccessible(url, signal) {
   const options = {signal,credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store'};
   try {
     return await fetch(url,options);
   } catch (error) {
-    if (signal.aborted || !(error instanceof TypeError) || !importEndpoint) throw error;
+    if (signal.aborted || !(error instanceof TypeError)) throw error;
     const target = new URL(url);
     if (socialHosts.test(target.hostname)) throw error;
-    const endpoint = new URL(importEndpoint);
-    if (endpoint.protocol !== 'https:' && !(['localhost','127.0.0.1'].includes(location.hostname) && endpoint.origin===location.origin)) throw error;
-    showLinkState('Consultando el recurso público mediante el servidor…','loading');
-    return await fetch(endpoint.href.replace(/\/$/,'')+'/api/media',{
+    if (!importEndpoint) throw new Error('La fuente no permite acceso directo y el servidor alternativo no está configurado.');
+    showLinkState('La fuente no permite acceso directo. Comprobando Render…','loading');
+    await backendHealth(signal,'publicMedia');
+    showLinkState('Descargando el recurso público mediante Render…','loading');
+    return await fetchBackend('/api/media',{
       ...options,method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:target.href})
     });
   }
@@ -815,11 +837,10 @@ async function importLink(force) {
     timer = setTimeout(() => controller.abort(), 240000);
     showLinkState(social ? 'Conectando con el servidor de descarga…' : 'Conectando con el video…','loading');
     if (social) {
-      const health = await fetch(request.replace(/\/api\/import$/, '/health'), {signal:controller.signal,credentials:'omit',cache:'no-store',referrerPolicy:'no-referrer'});
-      if (!health.ok || !(health.headers.get('content-type') || '').includes('application/json') || !(await health.json()).ok) throw new Error('El servidor de descarga no responde correctamente. Vuelve a intentarlo cuando esté disponible.');
+      await backendHealth(controller.signal);
       showLinkState('Obteniendo video y audio…','loading');
     }
-    const response = social ? await fetch(request, {...options, signal:controller.signal, credentials:'omit', referrerPolicy:'no-referrer', cache:'no-store'}) : await fetchAccessible(request,controller.signal);
+    const response = social ? await fetchBackend('/api/import', {...options, signal:controller.signal}) : await fetchAccessible(request,controller.signal);
     await checkResponse(response);
     const type = detectedType(response,inferredType(url.href));
     if (!social && (type === 'text/html' || type === 'application/xhtml+xml' || (type==='application/json' && response.url.endsWith('/api/media')))) {
@@ -1153,12 +1174,9 @@ byId('check-service').onclick = async () => {
   const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),90000);
   try {
     if(!importEndpoint)throw Error('Servidor no configurado.');
-    const response=await fetch(new URL('/health',importEndpoint),{cache:'no-store',credentials:'omit',signal:controller.signal});
-    if(!response.ok)throw Error('HTTP '+response.status);
-    const info=await response.json();
-    if(!info.ok)throw Error('Servicio no disponible.');
+    const info=await backendHealth(controller.signal);
     const ui=document.documentElement.dataset.version;
-    note.textContent=info.version===ui?'Servidor '+info.version+' · disponible':'Servidor '+(info.version||'sin versión')+' · editor '+ui+'. Actualiza Render si no coinciden.';
+    note.textContent=info.version===ui&&info.publicMedia?'Servidor '+info.version+' · importador público disponible':'Servidor '+(info.version||'sin versión')+' · editor '+ui+'. Actualiza Render si no coinciden.';
   } catch(error) {note.textContent=error.name==='AbortError'?'El servidor no respondió a tiempo.':error.message;}
   finally{clearTimeout(timer);button.disabled=false;}
 };

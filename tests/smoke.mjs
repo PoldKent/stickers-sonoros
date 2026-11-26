@@ -22,11 +22,19 @@ try {
   await page.locator('#export').click();
   await page.locator('#output').waitFor({state:'visible',timeout:40000});
   await page.waitForFunction(()=>document.querySelector('#output').readyState>=2,{},{timeout:20000});
+  const rank=await page.evaluate(()=>{
+    const {rankedCells,captureFpsFor}=window.WAAS._internals;
+    const cells=[{side:64,fps:20,estado:'ok'},{side:384,fps:5,estado:'baja'},{side:256,fps:10,estado:'ok'}];
+    return {sharp:rankedCells(cells,'sharp')[0].side,smooth:rankedCells(cells,'smooth')[0].side,limit:captureFpsFor(60,'sharp'),reject:rankedCells([cells[0]],'sharp').length};
+  });
+  assert.deepEqual(rank,{sharp:384,smooth:64,limit:5,reject:0});
+  assert.equal(await page.locator('#quality').inputValue(),'sharp');
   const caps=await page.evaluate(()=>window.WAAS.capabilities());
   assert.equal(caps.opus,true,'Chromium must support Opus');
   assert.equal(caps.webpEncode,'image/webp');
   await page.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
   assert.match(await page.locator('#sticker-state').textContent(),/listo para enviar/);
+  assert.match(await page.locator('#quality-result').textContent(),/Calidad final: /);
   assert.equal(await page.locator('#package-download').isVisible(),true);
   assert.equal(await page.locator('.send-steps > li').count(),4);
   assert.equal(await page.locator('#download').count(),0);
@@ -252,6 +260,20 @@ try {
   await finder.locator('#load-link').click();
   await finder.waitForFunction(()=>document.querySelector('#link-status').textContent.includes('No se puede conectar con Render'));
   await finder.close();
+  // Failed TikTok import shows the manual external fallback; no automatic request to SnapTik.
+  const fallback=await browser.newPage();
+  await fallback.route('**/health',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({version:'2026.11.26.24',publicMedia:true,tiktokPublicDownload:true})}));
+  await fallback.route('**/api/import',route=>route.fulfill({status:422,contentType:'application/json',body:JSON.stringify({error:'No se pudo descargar el video.'})}));
+  await fallback.goto('http://127.0.0.1:8000');
+  await fallback.locator('#link-input').fill('https://www.tiktok.com/@example/video/12345');
+  await fallback.locator('#load-link').click();
+  await fallback.locator('#tiktok-alternative').waitFor({state:'visible'});
+  assert.equal(await fallback.locator('#tiktok-alternative a').getAttribute('href'),'https://snaptik.fi/');
+  await fallback.locator('#language').selectOption('en');
+  assert.equal(await fallback.locator('#tiktok-alternative a').textContent(),'Open SnapTik ↗');
+  await fallback.locator('#demo').click();
+  assert.equal(await fallback.locator('#tiktok-alternative').isVisible(),false);
+  await fallback.close();
   // The editor permits a 30-second default, manual 60 seconds and rejects longer clips.
   const durations=await browser.newPage();
   const temp=mkdtempSync(join(tmpdir(),'sticker-duration-'));

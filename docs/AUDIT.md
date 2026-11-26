@@ -50,3 +50,7 @@ Se amplían editor, conversor y marcador a 180 segundos, con selección inicial 
 ## Recorte sin tope temporal fijo — 2026.11.26.31
 
 Se elimina el tope fijo del editor, conversor y marcador. Se selecciona el origen completo y se ofrecen barras separadas de inicio y final, indicador de tramo y botón para restaurarlo. El nombre de descarga conserva el nombre base de origen y añade `.sonoro.json`; el marcador valida contenido, no nombre. El límite de peso, memoria de captura de 320 MB y bitrate Opus disponible siguen condicionando la duración posible. El modo nitidez conserva 192 px y 9 FPS mínimos y rechaza selecciones que exceden su presupuesto de captura antes de procesarlas. No se afirma duración ilimitada real. Se mantiene el tope de seguridad de 10 minutos en importación web y 80 MiB de archivo local. Se añade una prueba de imagen con audio de 240 segundos y una selección de vídeo de 241 segundos. La aceptación por WhatsApp se debe probar en un chat real.
+
+## Línea de tiempo — 2026.11.26.32
+
+Se mueve el control de exploración y marcado bajo el lienzo compartido de escritorio y móvil. La posición y duración total se muestran en minutos, segundos y centésimas; el indicador de recorte y el cursor se actualizan durante la reproducción. Se serializan las búsquedas de fotogramas para evitar carreras al arrastrar. La prueba del navegador comprueba avance, pausa, búsqueda y marcado. No cambia el puente de WhatsApp respecto a .31.

@@ -118,6 +118,18 @@ try {
   await finder.waitForFunction(()=>!document.querySelector('#export').disabled);
   assert.equal(await finder.locator('[data-mode="image"]').getAttribute('aria-pressed'),'true');
   assert.match(await finder.locator('#selection-info').textContent(),/1\.00 s/);
+  // Simulate a website without CORS; the fallback is the first-party public fetcher.
+  const blocked='https://blocked.example';
+  let proxied;
+  await finder.route(blocked+'/**',route=>route.abort());
+  await finder.route('**/api/media',route=>{
+    proxied=route.request().postDataJSON().url;
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({html:'<img src="/picture.png">',url:blocked+'/page'})});
+  });
+  await finder.locator('#link-input').fill(blocked+'/page');
+  await finder.locator('#load-link').click();
+  await finder.waitForFunction(()=>document.querySelector('#media-list').children.length===1 && document.querySelector('#link-status').dataset.state==='success');
+  assert.equal(proxied,blocked+'/page');
   await finder.close();
   console.log('OK: ejemplo, exportación, WebP/Ogg, vínculo de audio y limpieza al cambiar fuente.');
 } finally { await browser.close(); }

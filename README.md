@@ -11,7 +11,7 @@ Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
 
 ![Esquema ilustrativo del editor en computadora y teléfono](docs/images/interface.svg)
 
-[Capturas reales de la última versión verificada](https://github.com/PoldKent/stickers-sonoros/actions/runs/45852351963#artifacts) (artefactos temporales de CI).
+[Capturas reales de las pruebas de interfaz](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) (artefactos temporales de cada ejecución).
 
 ## Cómo funciona
 
@@ -19,8 +19,8 @@ Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
 
 1. Pega un enlace multimedia HTTPS o selecciona un archivo de tu dispositivo.
 2. Reproduce el tramo, elige el inicio y el final (hasta 60 s) y ajusta el encuadre, posición o zoom.
-3. Pulsa **Crear sticker sonoro**. El editor prepara un video y, si el navegador dispone de los códecs necesarios, un paquete con WebP y Ogg/Opus vinculados.
-4. Sigue los cuatro pasos de envío que aparecen debajo de la vista previa. El archivo del sticker es `.sonoro.json`, no un vídeo MP4.
+3. Pulsa **Crear sticker sonoro**. El editor prepara localmente un paquete con WebP y Ogg/Opus vinculados, si el navegador dispone de los códecs necesarios.
+4. Sigue los cuatro pasos de envío que aparecen debajo de la vista previa. La única descarga del editor es `sticker.sonoro.json`.
 
 ## Funciones
 
@@ -61,7 +61,7 @@ Usa Chrome o Edge actualizados para la mejor compatibilidad con WebCodecs, WebP 
 
 ## Desarrollo y despliegue
 
-**Editor estático:** desde la raíz, ejecuta `python -m http.server 8000` y abre `http://localhost:8000`. Para importar redes sociales , usa el servicio completo.
+**Editor estático:** desde la raíz, ejecuta `python -m http.server 8000` y abre `http://localhost:8000`. Para importar redes sociales, usa el servicio completo.
 
 ```sh
 docker build -t stickers-sonoros .
@@ -90,7 +90,7 @@ python tests/test_http.py
 python tests/test_format_selection.py
 ```
 
-Para las pruebas de navegador instala Playwright y Chromium en el entorno de desarrollo, inicia el servidor estático en el puerto 8000 y ejecuta `node tests/smoke.mjs`. Las pruebas de integración necesitan FFmpeg y las de selección necesitan yt-dlp. [Consulta las ejecuciones de CI](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) y [el diagnóstico del servicio real](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml). Las imágenes del README son esquemas ilustrativos; las capturas reales de Chromium se adjuntan a las ejecuciones de CI como artefactos cuando se generan.
+Para las pruebas de navegador instala Playwright y Chromium en el entorno de desarrollo, inicia el servidor estático en el puerto 8000 y ejecuta `node tests/smoke.mjs`. Las pruebas de navegador utilizan FFmpeg para crear medios de prueba; las de selección necesitan yt-dlp. [Consulta las ejecuciones de CI](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) y [el diagnóstico del servicio real](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml). Las imágenes del README son esquemas ilustrativos; las capturas reales de Chromium se adjuntan a las ejecuciones de CI como artefactos cuando se generan.
 
 ## Privacidad y límites
 

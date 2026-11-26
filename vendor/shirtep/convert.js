@@ -8,6 +8,7 @@
 
   const SIDE = 512;                    // lado máximo (WhatsApp usa 512; más grande no se ve mejor y pesa 4 veces más)
   const MAX_STICKER_BYTES = 1_000_000; // el servidor de WhatsApp rechaza stickers más pesados (HTTP 413)
+  const MAX_DURATION_SECONDS = 180;
   const MAX_TOTAL_BYTES = 4_000_000; // opt-in, WhatsApp acceptance not verified
   const SAFE_BYTES = 900_000;
   const MAX_AUDIO_BYTES = 1_000_000;   // límite de WhatsApp Web para el audio del sticker
@@ -16,6 +17,14 @@
   }
   function estimatedAudioBytes(dur) {
     return Math.min(MAX_AUDIO_BYTES, Math.ceil(dur * 32000 / 8 * 1.2 + 4096));
+  }
+  function validateDuration(seconds) {
+    if (!Number.isFinite(seconds) || seconds <= 0 || seconds > MAX_DURATION_SECONDS + 0.0001)
+      throw new Error("Selecciona un tramo válido de hasta 180 segundos.");
+  }
+  function captureSideFor(duration, fps) {
+    const slots = Math.max(1, Math.ceil(duration * fps));
+    return Math.max(64, Math.min(SIDE, Math.floor(Math.sqrt(CAPTURE_MEM_BYTES / (4 * slots)))));
   }
   const SAMPLE_RATE = 48000;
   const CAPTURE_MEM_BYTES = 320e6;     // memoria máxima para los cuadros capturados (10 s a 30 fps caben a 512 px)
@@ -826,6 +835,7 @@
     const t0 = performance.now();
     const vDur = visual.kind === "image" ? audio.dur : visual.dur;
     const dur = visual.kind === "image" || fit !== "independiente" ? audio.dur : vDur; // duración del sticker
+    validateDuration(vDur); validateDuration(audio.dur); validateDuration(dur);
     const capDur = Math.min(vDur, dur);                                                // lo que se captura
     const base = { file: visual.file, start: visual.start || 0, visual, audio, fit, dur, vDur, mode, extended: extended === true };
 
@@ -841,8 +851,7 @@
     }
 
     const captureFps = captureFpsFor(dur, profile, base.extended);
-    const slots = Math.ceil(capDur * captureFps);
-    const captureSide = Math.max(64, Math.min(SIDE, Math.floor(Math.sqrt(CAPTURE_MEM_BYTES / (4 * slots)))));
+    const captureSide = captureSideFor(capDur, captureFps);
     log("info", "analizar:parametros", {
       tipo: visual.kind, archivo: visual.file.name, bytes: visual.file.size, inicio: visual.start || 0, duracionImagen: vDur,
       audioAparte: audio.file !== visual.file, duracionAudio: audio.dur, ajuste: fit, duracionSticker: dur, modo: mode, captureFps, captureSide,
@@ -923,6 +932,7 @@
     const { dur } = an;
     // El audio puede cambiar después del análisis sin recalcular: con "independiente" no afecta a los cuadros.
     const A = audio || an.audio;
+    validateDuration(dur); validateDuration(A.dur);
     if (an.visual.kind === "image" || an.fit !== "independiente") {
       if (Math.abs(A.dur - an.audio.dur) > 0.002) throw new Error("La duración del audio cambió: vuelve a calcular las opciones");
     }
@@ -930,15 +940,24 @@
     log("info", "crear:parametros", { side, fps, compensacionMs: syncMs, estatico: still, estimado: cell && cell.est, estado: cell && cell.estado });
 
     // Audio: la tasa de bits baja en clips largos para no pasar de 1 MB (límite de WhatsApp).
-    const bitrate = Math.max(12000, Math.min(32000, Math.floor((0.9 * MAX_AUDIO_BYTES * 8) / A.dur)));
+    let bitrate = Math.max(12000, Math.min(32000, Math.floor((0.9 * MAX_AUDIO_BYTES * 8) / A.dur)));
     if ((bitrate / 8) * A.dur > 0.97 * MAX_AUDIO_BYTES) throw new Error(`Con ${Math.round(A.dur)} s el audio no cabe en 1 MB (límite de WhatsApp). Máximo unos ${Math.floor((0.9 * MAX_AUDIO_BYTES * 8) / 12000 / 60)} minutos.`);
     prog("Extrayendo audio…", 0);
     // Un audio aparte se corta donde el usuario quiera: se suaviza el corte para evitar clics.
     const pcm = await extractAudio(A.file, A.start, A.dur, A.file !== an.visual.file ? 8 : 0);
     checkAbort(signal);
     prog("Codificando audio…", 0.05);
-    const { packets, preSkip, config } = await encodeOpus(pcm, bitrate);
-    const ogg = buildOggOpus(packets, preSkip, pcm.length);
+    let packets, preSkip, config, ogg;
+    // Variable bitrate can overshoot the target on long or complex audio.
+    // Retry with bounded lower bitrates, preserving the entire selected duration.
+    for (const rate of [...new Set([bitrate,24000,16000,12000].filter(r=>r<=bitrate))]) {
+      checkAbort(signal);
+      bitrate=rate;
+      ({packets,preSkip,config}=await encodeOpus(pcm,bitrate));
+      checkAbort(signal);
+      ogg=buildOggOpus(packets,preSkip,pcm.length);
+      if(ogg.length<=MAX_AUDIO_BYTES)break;
+    }
     if (ogg.length > MAX_AUDIO_BYTES) throw new Error(`El audio pesa ${Math.round(ogg.length / 1000)} KB (máximo 1000 KB)`);
     const soundSha = await sha256b64(ogg);
     const oggCheck = await verifyOgg(ogg);
@@ -1010,6 +1029,6 @@
   WAAS.retagWebp = retagWebp;
   WAAS.create = create;
   WAAS.release = release;
-  WAAS.limits = { SIDE, MAX_STICKER_BYTES, MAX_TOTAL_BYTES, MAX_AUDIO_BYTES, SIDES, FPS_LIST };
-  WAAS._internals = { buildOggOpus, buildAnimatedWebp, buildStillWebp, fitTimeline, exifWhatsApp, readChunks, plan, sha256b64, score, rankedCells, captureFpsFor, webpBudget, estimatedAudioBytes };
+  WAAS.limits = { SIDE, MAX_DURATION_SECONDS, MAX_STICKER_BYTES, MAX_TOTAL_BYTES, MAX_AUDIO_BYTES, SIDES, FPS_LIST };
+  WAAS._internals = { buildOggOpus, buildAnimatedWebp, buildStillWebp, fitTimeline, exifWhatsApp, readChunks, plan, sha256b64, score, rankedCells, captureFpsFor, webpBudget, estimatedAudioBytes, captureSideFor, validateDuration };
 })();

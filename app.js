@@ -676,6 +676,22 @@ async function openMedia(file) {
   }
   return loaded ? 'Video listo. Ajusta el tramo y el encuadre en la vista previa.' : '';
 }
+async function fetchAccessible(url, signal) {
+  const options = {signal,credentials:'omit',referrerPolicy:'no-referrer',cache:'no-store'};
+  try {
+    return await fetch(url,options);
+  } catch (error) {
+    if (signal.aborted || !(error instanceof TypeError) || !importEndpoint) throw error;
+    const target = new URL(url);
+    if (socialHosts.test(target.hostname)) throw error;
+    const endpoint = new URL(importEndpoint);
+    if (endpoint.protocol !== 'https:' && !(['localhost','127.0.0.1'].includes(location.hostname) && endpoint.origin===location.origin)) throw error;
+    showLinkState('Consultando el recurso público mediante el servidor…','loading');
+    return await fetch(endpoint.href.replace(/\/$/,'')+'/api/media',{
+      ...options,method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:target.href})
+    });
+  }
+}
 async function loadDetected(item) {
   if (busy || importing) return;
   const controller = new AbortController();
@@ -685,7 +701,7 @@ async function loadDetected(item) {
   sync();
   try {
     showLinkState('Cargando recurso seleccionado…','loading');
-    const response = await fetch(item.url,{signal:controller.signal,credentials:'omit',referrerPolicy:'no-referrer'});
+    const response = await fetchAccessible(item.url,controller.signal);
     const file = await readMedia(response,controller.signal,item.type);
     if (controller.signal.aborted) return;
     const message = await openMedia(file);
@@ -770,16 +786,19 @@ async function importLink(force) {
       if (!health.ok || !(health.headers.get('content-type') || '').includes('application/json') || !(await health.json()).ok) throw new Error('El servidor de descarga no responde correctamente. Vuelve a intentarlo cuando esté disponible.');
       showLinkState('Obteniendo video y audio…','loading');
     }
-    const response = await fetch(request, {...options, signal:controller.signal, credentials:'omit', referrerPolicy:'no-referrer', cache:'no-store'});
+    const response = social ? await fetch(request, {...options, signal:controller.signal, credentials:'omit', referrerPolicy:'no-referrer', cache:'no-store'}) : await fetchAccessible(request,controller.signal);
     await checkResponse(response);
     const type = detectedType(response,inferredType(url.href));
-    if (!social && (type === 'text/html' || type === 'application/xhtml+xml')) {
-      const chunks = await readBounded(response,controller.signal,2*1024*1024);
-      const markup = await new Blob(chunks).text();
-      const items = findMedia(markup,response.url || url.href);
+    if (!social && (type === 'text/html' || type === 'application/xhtml+xml' || (type==='application/json' && response.url.endsWith('/api/media')))) {
+      const viaServer = type === 'application/json';
+      const chunks = await readBounded(response,controller.signal,viaServer?12*1024*1024:2*1024*1024);
+      const raw = await new Blob(chunks).text();
+      const page = viaServer?JSON.parse(raw):{html:raw,url:response.url||url.href};
+      if (typeof page.html!=='string' || typeof page.url!=='string') throw new Error('Respuesta de detección no válida.');
+      const items = findMedia(page.html,page.url);
       if (controller.signal.aborted || importController!==controller) return;
       showMediaResults(items);
-      showLinkState(items.length ? 'Selecciona el video, imagen o audio que quieras utilizar.' : 'No se encontraron archivos multimedia directos en el HTML accesible.',items.length?'success':'error');
+      showLinkState(items.length ? 'Selecciona el video, imagen o audio que quieras utilizar.' : 'No se encontraron archivos multimedia directos. El sitio puede utilizar reproducción dinámica.',items.length?'success':'error');
       return;
     }
     const file = await readMedia(response, controller.signal,social?'video/mp4':inferredType(url.href));

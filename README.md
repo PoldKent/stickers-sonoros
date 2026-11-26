@@ -1,86 +1,104 @@
 # Stickers Sonoros
 
-Editor web en español para convertir un video, una imagen con audio o un video/GIF con otro audio en un clip cuadrado de 512 × 512. Permite recortar, ajustar el encuadre y exportar hasta 60 segundos con sonido. El navegador procesa los archivos localmente.
+**Crea stickers con sonido para WhatsApp desde tu navegador.**  
+Video, imagen o GIF + audio · hasta 60 segundos · Español / English.
 
-La exportación es MP4 o WebM según el navegador. Para GIF animado se necesita ImageDecoder. Para exportar se necesita MediaRecorder, Web Audio y captura de canvas. Usar Chrome o Edge actualizado es la opción recomendada.
+[**Abrir aplicación**](https://poldkent.github.io/stickers-sonoros/) · [Servidor Render](https://stickers-sonoros.onrender.com/) · [English README](README.en.md) · [❤️ Apoyar el proyecto](SUPPORT.md)
 
-El editor funciona sin extensiones. Un solo botón genera el vídeo cuadrado y, si el navegador admite WebP y Opus, los archivos vinculados de sticker y sonido. La app comprueba las firmas de archivo, tamaños y hash SHA-256 del audio en los metadatos WebP. El vídeo se puede compartir como vídeo (no como sticker). En las cuentas móviles que tengan habilitada la creación de stickers con sonido, guarda el clip en la galería y usa Stickers → Crear → Añadir sonido en WhatsApp para conservar su audio. La función está en despliegue gradual. Si no está habilitada, la web no puede forzar el envío nativo desde una cuenta personal. MP4 es preferible para la galería; WebM es la alternativa en navegadores sin codificación MP4.
+[![Pruebas automatizadas](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml)
 
-Para servirlo localmente, ejecuta `python -m http.server 8000` desde esta carpeta y abre http://localhost:8000. En GitHub Pages, publica la rama principal desde la raíz. El sitio no requiere compilación.
+![Esquema ilustrativo del editor en computadora y teléfono](docs/images/interface.svg)
 
-El conversor local de WebP y Ogg/Opus procede de [Shirtep, revisión 25f7909](https://github.com/Shirtep/WA-audio-stickers/tree/25f790945134f395c4bed4f0deea380ac3a2b778). Se distribuye con el aviso de autoría y la [licencia PolyForm Noncommercial](vendor/shirtep/LICENSE.md). Exportar los archivos no crea por sí solo un mensaje de WhatsApp.
+## Cómo funciona
 
-## Importación directa de enlaces
+![Flujo: importar, editar, crear y enviar](docs/images/workflow.svg)
 
-La captura de pestañas se ha eliminado. El editor descarga URLs de video HTTPS que permiten CORS directamente. Para TikTok, Instagram Reels y YouTube Shorts, la interfaz usa un servicio propio con yt-dlp y FFmpeg: GitHub Pages no ejecuta Python ni puede resolver esos enlaces por sí solo.
+1. Pega un enlace multimedia HTTPS o selecciona un archivo de tu dispositivo.
+2. Reproduce el tramo, elige el inicio y el final (hasta 60 s) y ajusta el encuadre, posición o zoom.
+3. Pulsa **Crear sticker sonoro**. El editor prepara un video y, si el navegador dispone de los códecs necesarios, un paquete con WebP y Ogg/Opus vinculados.
+4. Guarda el paquete sonoro y envíalo mediante el marcador de WhatsApp Web siguiendo los pasos de abajo.
 
-**Estado:** la URL pública asignada por Render es https://stickers-sonoros.onrender.com. GitHub Pages está configurado para utilizar ese servidor. La disponibilidad real y la descarga desde redes sociales requieren verificación. No es necesario instalar una extensión ni programa en el equipo de quien utiliza el editor.
+## Funciones
 
-### Despliegue unificado (administrador)
+- Importación directa de video, imagen y audio; detección de recursos públicos en páginas compatibles.
+- Importador propio con yt-dlp y alternativa para direcciones públicas de descarga de TikTok.
+- Editor cuadrado de 512 × 512, reproducción previa, selección de fotograma, imagen o GIF con audio.
+- Recorte inicial de hasta 30 segundos, máximo de 60 segundos. Calidad ajustada para los límites del conversor: 1 MB para WebP y 1 MB para Ogg.
+- Interfaz adaptable a celulares, tablets y computadoras. Selector Español/English persistente.
+- Edición y generación locales; no se requiere instalar programas ni extensiones.
+- MP4 o WebM según capacidades del navegador; conversión opcional de WebM a MP4 en Render.
 
-El editor tiene una sola entrada de URL y comienza a importar automáticamente al pegar. No guarda ni solicita una dirección de servidor al visitante. En el despliegue unificado, la página y `/api/import` comparten origen.
+## Enviar a WhatsApp
 
-- Render: importa el repositorio como Blueprint (archivo `render.yaml` en la raíz). El plan gratuito se propone para pruebas, no garantiza rendimiento suficiente. El servicio utiliza el Dockerfile de la raíz y proporciona HTTPS. Abre la URL asignada al servicio para utilizar el editor completo.
-- Docker local: `docker build -t stickers-sonoros . && docker run --rm -p 8080:8080 stickers-sonoros`. Abre `http://localhost:8080`.
-- GitHub Pages: utiliza la URL de Render configurada en el atributo `content` de `meta[name=sticker-import-endpoint]` en `index.html`. El sitio servido por Render utiliza su propio origen. Comprueba `/health` y una importación autorizada antes de considerar el servicio operativo.
-- Las pruebas de integración del importador utilizan una respuesta de vídeo simulada; comprobar cada red social contra el servicio real es una prueba distinta.
+### Computadora (WhatsApp Web)
 
+1. Guarda `sticker.sonoro.json` desde el editor.
+2. Una sola vez, muestra la barra de marcadores (Ctrl + Shift + B) y guarda **Enviar sticker sonoro** desde la app.
+3. Abre WhatsApp Web e inicia sesión. Abre primero tu propio chat para verificar la compatibilidad.
+4. Pulsa el marcador, elige el archivo guardado y confirma el destinatario.
+5. Si aparece la opción de compatibilidad con sonido, puedes activarla temporalmente. Comprueba que el sticker se reproduce con sonido.
 
-El servicio admite enlaces individuales, limita una descarga simultánea, cuatro intentos por minuto por instancia, diez minutos de duración, tamaño máximo de 80 MiB (descarga individual de hasta 50 MB, prioridad a formatos de hasta 480p para edición) y aplica plazos máximos al proceso. No usa cookies, cuentas ni credenciales del usuario. Los archivos temporales se eliminan tras la respuesta. CORS no equivale a autenticación: antes de exponerlo ampliamente, aplica límites de tráfico y restricciones de salida de red a nivel del proveedor (bloquear redes privadas, loopback, servicios de metadatos e IP reservadas, también tras redirecciones). Usa una instancia aislada sin secretos. Actualiza y revisa las dependencias periódicamente; fija versiones verificadas para producción. Las redes sociales pueden rechazar las descargas desde centros de datos, requerir autenticación o modificar su funcionamiento; no se garantiza que todas las publicaciones funcionen. El servicio devuelve códigos de diagnóstico distintos para restricciones de acceso, duración, tamaño y formato, sin divulgar registros privados. /health expone la versión del servicio. Descarga solo contenido que tengas derecho a utilizar.
+El marcador usa una integración no oficial basada en Shirtep, dentro de la sesión del navegador. No envía la sesión al servidor ni cambia permanentemente la configuración de la cuenta. Los paquetes anteriores son compatibles. Los marcadores antiguos deben sustituirse para obtener mejoras de idioma o duración. **El archivo JSON no se adjunta directamente a un chat.**
 
-Tras la importación, el video se carga en el editor existente para elegir el inicio y final, explorar cuadros, ajustar el encuadre, zoom y desplazamiento, y exportar. Se conservan las limitaciones de WhatsApp descritas arriba.
+### Android y iPhone
 
-## Verificación manual
+Puedes importar, editar y generar desde el navegador si admite las funciones multimedia necesarias. Guarda el video en la galería y utiliza el editor de stickers de WhatsApp si tu cuenta permite conservar el sonido. Compartir un MP4 no lo convierte por sí solo en un sticker sonoro. El envío mediante marcador está diseñado para computadora; no se garantiza el envío nativo desde el móvil ni todos los códecs en Safari.
 
-1. Abre un vídeo con audio de menos de 60 s; ajusta encuadre e inicio/final.
-2. Pulsa Crear sticker sonoro. Comprueba que el vídeo se reproduce, que el sonido es audible y que aparecen la animación WebP y el audio Ogg con vinculación verificada.
-3. Guarda el MP4 en un teléfono compatible; abre WhatsApp, Crea un sticker y conserva su audio. Envía a tu propio chat y comprueba el icono de audio.
-4. Repite con imagen + audio, GIF + audio y un navegador sin WebCodecs. Comprueba cancelación y cambio de fuente sin resultados obsoletos.
+## Estado y compatibilidad
 
-## Detector multimedia
+| Función | Verificación |
+|---|---|
+| Envío de sticker sonoro al propio chat | Prueba real confirmada por el usuario en .12 |
+| Importación de TikTok | Prueba real confirmada por el usuario con un clip de 27,14 s en .18 |
+| Paquete de 60 s y envío | Generación real y envío simulado en CI; falta validar envío real de 60 s |
+| Diseño móvil e idioma | Pruebas Chromium con 320, 390, 740 y 1024 px; no equivalen a pruebas físicas de todos los teléfonos |
+| Importación universal de redes sociales | No garantizada; depende del origen |
+| Envío a todas las cuentas de WhatsApp | No garantizado; depende del cliente y servidor |
 
-Inspirado en la selección de recursos de Media Finder y FlowPick, sin copiar código de extensiones. Una URL directa de vídeo, imagen o audio se abre en el modo de edición correspondiente. Las páginas HTML públicas que permiten lectura entre orígenes (CORS) se analizan en una plantilla inerte, sin ejecutar JavaScript remoto; muestran hasta 60 recursos HTTPS detectados en etiquetas multimedia y metadatos Open Graph. El usuario puede elegir recursos y combinar imagen/video con audio. Se utiliza un lector limitado de HTTPS público, con controles de red, como alternativa al navegador. La detección no equivale a interceptar el tráfico de una pestaña ni garantiza acceso a contenido dinámico, privado, protegido o que bloquee CORS. Los enlaces de las redes sociales admitidas conservan el importador existente; Cobalt es una posible alternativa futura como servicio propio, no una dependencia activa.
+Usa Chrome o Edge actualizados para la mejor compatibilidad con WebCodecs, WebP y Opus. Para GIF animado se requiere ImageDecoder. Descarga solamente contenido que tengas derecho a utilizar. Si un sitio exige autenticación o restringe la descarga, usa el archivo original autorizado.
 
-El editor también permite tomar el fotograma actual de un vídeo y combinarlo con el sonido del tramo seleccionado, sin descargar un segundo archivo.
+## Desarrollo y despliegue
 
-## Acceso a medios públicos sin CORS
+**Editor estático:** desde la raíz, ejecuta `python -m http.server 8000` y abre `http://localhost:8000`. Para importar redes sociales o convertir en servidor, usa el servicio completo.
 
-Si falla la petición directa del navegador, el editor puede consultar la URL HTTPS pública mediante `/api/media`. El lector no utiliza cookies, credenciales ni proxies, rechaza redes privadas y direcciones no globales en cada resolución y redirección, fija la IP del socket, valida TLS, limita tiempo y tamaño y solo devuelve tipos multimedia permitidos o HTML en JSON. No se ejecuta contenido remoto. No se utiliza este camino para saltar autenticación ni para extraer vídeo restringido de YouTube, TikTok o Instagram. Sigue siendo necesario aislar el servicio y limitar tráfico a nivel de infraestructura antes de ofrecerlo a gran escala.
+```sh
+docker build -t stickers-sonoros .
+docker run --rm -p 8080:8080 stickers-sonoros
+```
 
-El contenedor actualiza yt-dlp a la versión disponible del canal de pruebas en la compilación; Node 22 y yt-dlp-ejs se mantienen como dependencias. `/health` informa de la versión instalada. Esto reduce incompatibilidades por cambios del sitio, pero no elimina restricciones de acceso de la plataforma. Para un despliegue estable, fija una versión verificada después de las pruebas reales.
+Abre `http://localhost:8080`. El Dockerfile de la raíz es el canónico; el Dockerfile secundario se debe construir con contexto de la raíz.
 
-## Compatibilidad con WhatsApp
+- GitHub Pages sirve el frontend desde `main`; la URL de Render se define en `index.html`.
+- Render utiliza `render.yaml`, Docker y el plan gratuito con despliegue tras superar las comprobaciones. Si no se actualiza automáticamente, usa **Manual sync** en el Blueprint y **Manual Deploy** en el servicio.
+- `/health` informa de versión, capacidades y versión de yt-dlp. El plan gratuito puede entrar en reposo.
 
-Cuando el navegador solo graba WebM, el usuario puede solicitar **Preparar MP4 compatible**. El botón envía exclusivamente el clip editado (hasta 16 MiB) a `/api/clip-mp4`, que valida la cabecera WebM y genera H.264/AAC de hasta sesenta segundos. Los archivos temporales se eliminan al finalizar. La conversión local sigue siendo la opción por defecto. Compartir el MP4 sigue siendo compartir un vídeo, no un mensaje de sticker sonoro. Si el acceso a YouTube está restringido, se ofrece acceso a YouTube Studio para descargar vídeos propios y seleccionar el archivo original. No se introducen sesiones de WhatsApp, cookies de YouTube ni mecanismos para eludir sus restricciones.
+| Ruta | Propósito |
+|---|---|
+| GET `/health` | Estado y capacidades |
+| POST `/api/import` | Video social público compatible |
+| POST `/api/media` | Recurso HTTPS público o HTML inerte |
+| POST `/api/clip-mp4` | Conversión opcional del clip WebM editado |
 
-## Prueba de envío nativo en WhatsApp Web (experimental)
+## Pruebas
 
-El editor puede exportar un paquete local `sticker.sonoro.json` que reúne WebP, Ogg y sus metadatos. No es un formato que WhatsApp importe por sí solo. El marcador **Enviar sticker sonoro** ejecuta una adaptación autocontenida del flujo de publicación de Shirtep dentro de WhatsApp Web, sin extensión ni carga remota de código. Guarda el marcador en Chrome/Edge, abre tu propio chat en WhatsApp Web, ejecútalo allí, selecciona el paquete y confirma el destinatario. El puente valida formato, dimensiones, peso y vínculo SHA-256 antes del envío. Usa los módulos internos del cliente para subir el audio cifrado y enviar el WebP con stickerAudio; no recoge sesión, credenciales ni historial, no transmite el paquete a nuestro servidor y permite probar temporalmente las opciones experimentales locales de WhatsApp si el usuario lo acepta; las restaura al finalizar. Si el navegador bloquea los marcadores JavaScript, los módulos internos cambian o el servidor rechaza la función, no podrá enviar. El usuario confirmó un envío real con sonido a su propio chat en la versión 2026.11.26.12. No se ha confirmado la compatibilidad general con otras cuentas y dispositivos. Respeta la licencia no comercial de Shirtep; no se garantiza estabilidad de funciones internas.
+```sh
+node --check app.js
+node --check i18n.js
+python -m unittest discover -s importer -p 'test_*.py'
+python tests/test_clip_http.py
+python tests/test_format_selection.py
+```
 
-## Estabilización y despliegue (2026.11.26.13)
+Para las pruebas de navegador instala Playwright y Chromium en el entorno de desarrollo, inicia el servidor estático en el puerto 8000 y ejecuta `node tests/smoke.mjs`. Las pruebas de integración necesitan FFmpeg y las de selección necesitan yt-dlp. [Consulta las ejecuciones de CI](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) y [el diagnóstico del servicio real](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml). Las imágenes del README son esquemas ilustrativos; las capturas reales de Chromium se adjuntan a las ejecuciones de CI como artefactos cuando se generan.
 
-La prueba de navegador de la versión anterior fallaba porque seleccionaba cualquier input del puente (archivo y casilla experimental). El selector ahora identifica específicamente el archivo. Se mantiene sin cambios el código del puente v2 validado por el usuario. Se añaden cancelación de importaciones durante la lectura del archivo, plazo de carga de vídeo y comprobación de la versión de Render desde el pie de página. El Blueprint define `autoDeployTrigger: checksPass` en `main`, sin cambio de plan. Si Render no aplica la sincronización automáticamente, revisa Blueprint > Manual sync y el servicio > Manual Deploy > Deploy latest commit. No se requiere compartir claves ni volver a guardar el marcador v2.
+## Privacidad y límites
 
-## Diagnóstico de importación real (2026.11.26.14)
+El procesamiento de archivos ocurre localmente por defecto. La importación mediante servidor consulta la URL pública y elimina los archivos temporales después de responder; la conversión MP4 opcional transmite exclusivamente el clip editado. El importador limita tamaño, tiempo y concurrencia, y el lector HTTPS comprueba dominios, DNS público y TLS. CORS no es autenticación ni sustituye controles de salida de red y aislamiento de infraestructura. No se deben configurar secretos en la instancia pública de importación. Véase [auditoría y seguridad](docs/AUDIT.md).
 
-El editor comprueba /health antes de recurrir a /api/media. Distingue servidor inaccesible, servidor antiguo sin la capacidad publicMedia y errores HTTP devueltos por la fuente. El workflow Diagnóstico público de Render consulta el servicio real, comprueba CORS y realiza una importación de prueba con un MP4 público; no utiliza secretos ni cambia el servicio. Es diagnóstico, no una prueba que exija que Render ya tenga el nuevo commit antes del despliegue. El puente de WhatsApp v2 no se modifica.
+## ❤️ Apoya el proyecto
 
-## Textos de envío (2026.11.26.15)
+Si deseas apoyar voluntariamente el mantenimiento no comercial, consulta [las instrucciones de donación BBTC por Ethereum (ERC-20)](SUPPORT.md). No uses BTC nativo u otros tokens. La aplicación no vende funciones, no requiere pagos y no automatiza transferencias.
 
-Se simplifican las instrucciones y los avisos del marcador para usuarios finales, sin modificar la validación del archivo, la confirmación del destinatario, la compatibilidad temporal ni el envío. La interfaz conserva una nota sobre la integración no oficial. Para ver los textos nuevos, reemplaza el marcador guardado anteriormente; los paquetes sonoros existentes siguen siendo compatibles.
+## Créditos y licencia
 
-## Formatos verticales (2026.11.26.16)
-
-Se elimina el filtro estricto de altura de 480 px. yt-dlp prioriza la dimensión menor con `res:480`, admite formatos combinados o separados y FFmpeg conserva o convierte los códecs según sea necesario. Se mantienen los límites de descarga, tiempo y duración. La selección no garantiza acceso a publicaciones restringidas. Se prueba con formatos verticales simulados y con el selector real de yt-dlp sobre metadatos locales. El diagnóstico público consulta también la publicación de TikTok indicada por el usuario, cuando el servidor tiene soporte de importación.
-
-## Clips de hasta un minuto (2026.11.26.17)
-
-El recorte inicial es de hasta 30 s y el máximo editable y exportable es 60 s. El importador de origen conserva 600 s. El conversor de Shirtep mantiene sus límites de 1 MB por WebP y por Ogg y adapta FPS, resolución y calidad. El marcador acepta duraciones de 1 a 60 s; debe reemplazarse una vez. Se añade una prueba de paquete real de 60 s (imagen + sonido) y envío simulado, una de selección de vídeo de 61 s y una de conversión HTTP MP4 real de 60 s. La aceptación por WhatsApp de stickers largos requiere prueba con una cuenta real; el envío de dos segundos ya estaba validado. Si una animación no cabe, acorta el tramo. No se garantiza la calidad ni el envío de cualquier vídeo de un minuto.
-
-## Alternativa de descarga pública de TikTok (2026.11.26.18)
-
-SnapTik.fi se revisó como referencia de experiencia de usuario, no como fuente de código ni API. Sus términos publicados restringen la automatización y copia. El servicio propio intenta leer el campo explícito de descarga de una publicación pública de TikTok cuando yt-dlp devuelve un error de formato o genérico. No usa direcciones de reproducción para sustituir descargas, cookies, credenciales ni APIs de terceros. Rechaza publicaciones privadas, clasificadas, con descarga explícitamente deshabilitada, identificadores discordantes y dominios ajenos a los CDN admitidos. Se aplican los límites de tamaño y tiempo, DNS fijado y TLS del lector HTTPS. Solo se acepta MP4 con cabecera correspondiente y se verifica audio, vídeo y duración con FFprobe. Esta alternativa no garantiza disponibilidad: si no se ofrece un archivo público, devuelve un error y el usuario puede importar su archivo original. Los cambios no afectan al marcador ni a los límites de 60 s.
-
-## Mobile y English (2026.11.26.19)
-
-Interfaz adaptable: en pantallas estrechas la vista previa se mueve al editor antes de los controles de recorte, usando el mismo canvas y los mismos eventos. Selector Español/English persistente en el navegador; traduce interfaz, estados, mensajes habituales del conversor y del servidor. El marcador nuevo se genera en el idioma elegido y conserva la lógica de envío. Los marcadores ya guardados siguen funcionando en su idioma original. El editor funciona según las capacidades multimedia del navegador; la compatibilidad WebP/Opus y el envío nativo desde WhatsApp móvil dependen del dispositivo y de WhatsApp. El envío por marcador está diseñado para WhatsApp Web en computadora. No se alteran los importadores ni los límites de 60 s.
+El conversor y el mecanismo de publicación adaptado proceden de [Shirtep/WA-audio-stickers, commit 25f7909](https://github.com/Shirtep/WA-audio-stickers/tree/25f790945134f395c4bed4f0deea380ac3a2b778). Se conserva el [aviso de autoría y licencia PolyForm Noncommercial 1.0.0](vendor/shirtep/LICENSE.md); no se otorgan derechos de uso comercial ni se implica asociación oficial con WhatsApp, TikTok o Binance. Confirma con el titular de los derechos cualquier uso o financiación que pueda constituir explotación comercial.

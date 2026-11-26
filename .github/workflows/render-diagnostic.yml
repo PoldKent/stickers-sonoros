@@ -1,10 +1,11 @@
 name: Diagnóstico público de Render
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/render-diagnostic.yml'
-      - 'importer/tiktok_public.py'
   workflow_dispatch:
+    inputs:
+      social_url:
+        description: 'Optional authorized public social video URL'
+        required: false
+        type: string
 permissions:
   contents: read
 jobs:
@@ -14,8 +15,10 @@ jobs:
     steps:
       - name: Comprobar servidor y acceso público
         shell: bash
+        env:
+          SOCIAL_URL: ${{ inputs.social_url }}
         run: |
-          set +e
+          set -euo pipefail
           base=https://stickers-sonoros.onrender.com
           origin=https://poldkent.github.io
           tmp=$(mktemp -d)
@@ -27,7 +30,7 @@ jobs:
           printf '\n'
           if ! python -c 'import json,sys; sys.exit(0 if json.load(open(sys.argv[1])).get("publicMedia") is True else 1)' "$tmp/health"; then
             echo 'El servidor no anuncia publicMedia; revisar el despliegue o la conexión.' >> "$GITHUB_STEP_SUMMARY"
-            exit 0
+            exit 1
           fi
           curl -sS --max-time 20 -D "$tmp/options-headers" -o /dev/null -X OPTIONS -H "Origin: $origin" -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type' "$base/api/media"
           cat "$tmp/options-headers"
@@ -39,13 +42,16 @@ jobs:
           else
             echo "Importación no verificada: HTTP $status" | tee -a "$GITHUB_STEP_SUMMARY"
             if grep -iq '^content-type: application/json' "$tmp/media-headers"; then head -c 1000 "$tmp/media"; fi
+            exit 1
           fi
-          echo 'Comprobación TikTok de la publicación indicada por el usuario (versión actualmente desplegada)'
-          status=$(curl -sS --max-time 180 --max-filesize 83886080 -o "$tmp/tiktok" -D "$tmp/tiktok-headers" -w '%{http_code}' -H "Origin: $origin" -H 'Content-Type: application/json' --data '{"url":"https://www.tiktok.com/@ssillazul/video/7653976843833330952"}' "$base/api/import")
-          echo "TikTok HTTP $status"
+          if [[ -z "$SOCIAL_URL" ]]; then exit 0; fi
+          echo 'Comprobación del video social autorizado'
+          status=$(curl -sS --max-time 180 --max-filesize 83886080 -o "$tmp/tiktok" -D "$tmp/tiktok-headers" -w '%{http_code}' -H "Origin: $origin" -H 'Content-Type: application/json' --data "$(python -c 'import json,os; print(json.dumps({"url":os.environ["SOCIAL_URL"]}))')" "$base/api/import")
+          echo "Social import HTTP $status"
           if [[ "$status" == 200 ]] && grep -iq '^content-type: video/mp4' "$tmp/tiktok-headers"; then
-            echo "TikTok MP4 recibido: $(wc -c < "$tmp/tiktok") bytes" | tee -a "$GITHUB_STEP_SUMMARY"
-          elif grep -iq '^content-type: application/json' "$tmp/tiktok-headers"; then
-            head -c 1000 "$tmp/tiktok"
+            echo "MP4 social recibido: $(wc -c < "$tmp/tiktok") bytes" | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            if grep -iq '^content-type: application/json' "$tmp/tiktok-headers"; then head -c 1000 "$tmp/tiktok"; fi
+            exit 1
           fi
           exit 0

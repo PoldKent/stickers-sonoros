@@ -10,6 +10,7 @@ const labels = {
   mix: ['Selecciona o arrastra un video o GIF', 'MP4, WebM o GIF animado', 'video/*,image/gif']
 };
 const limit = 60;
+const maxLocalBytes = 80 * 1024 * 1024;
 const defaultTrim = 30;
 let mode = 'video';
 let visual;
@@ -202,6 +203,7 @@ async function readVisual(file, selectedMode) {
 
 async function chooseVisual(file, signal) {
   if (!file || busy || signal?.aborted) return;
+  if (file.size > maxLocalBytes) { status.textContent = 'El archivo local supera 80 MiB. Selecciona un archivo más pequeño.'; return false; }
   const request = ++visualRequest;
   const selectedMode = mode;
   loadingVisual = true;
@@ -209,6 +211,7 @@ async function chooseVisual(file, signal) {
   closeVisual(visual);
   visual = undefined;
   if (mode === 'video') audio = undefined;
+  byId('visual-label').dataset.noTranslate = '';
   byId('visual-label').textContent = file.name;
   status.textContent = 'Leyendo archivo…';
   sync();
@@ -243,6 +246,7 @@ async function chooseVisual(file, signal) {
 
 async function chooseAudio(file, signal) {
   if (!file || busy || signal?.aborted) return;
+  if (file.size > maxLocalBytes) { status.textContent = 'El archivo local supera 80 MiB. Selecciona un archivo más pequeño.'; return false; }
   const request = ++audioRequest;
   clearResult();
   audio = undefined;
@@ -278,6 +282,7 @@ for (const button of modes) {
     visual = audio = undefined;
     for (const tab of modes) tab.setAttribute('aria-pressed', String(tab === button));
     const [label, hint, accept] = labels[mode];
+    delete byId('visual-label').dataset.noTranslate;
     byId('visual-label').textContent = label;
     byId('visual-hint').textContent = hint;
     byId('visual').accept = accept;
@@ -663,6 +668,7 @@ function showMediaResults(items) {
     label.textContent = ({video:'▶ Video',image:'▧ Imagen',audio:'♫ Audio'})[item.kind];
     const detail = document.createElement('small');
     const url = new URL(item.url);
+    detail.dataset.noTranslate = '';
     detail.textContent = url.hostname + ' · ' + (url.pathname.split('/').pop() || item.kind).slice(0,70);
     row.append(label,detail);
     row.addEventListener('click',()=>loadDetected(item));
@@ -681,6 +687,7 @@ function selectMediaMode(next, keepVisual = false, keepAudio = false) {
   if (keepVisual) {
     visual = oldVisual;
     if (visual?.duration) range('v',visual.duration);
+    if (visual?.name) byId('visual-label').dataset.noTranslate = ''; else delete byId('visual-label').dataset.noTranslate;
     byId('visual-label').textContent = visual?.name || 'Contenido seleccionado';
   }
   if (keepAudio && oldAudio) { audio = oldAudio; range('a',audio.duration); }

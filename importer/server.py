@@ -39,7 +39,7 @@ MAX_DURATION = 600
 # Sort by the short edge; vertical videos must not be filtered by height.
 FORMAT_SELECTOR = "bv*+ba/b"
 FORMAT_SORT = "res:480,vcodec:h264,acodec:aac"
-SERVICE_VERSION = '2026.11.26.19'
+SERVICE_VERSION = '2026.11.26.20'
 MAX_CLIP_DURATION = 60
 MAX_CLIP_BYTES = 16 * 1024 * 1024
 try:

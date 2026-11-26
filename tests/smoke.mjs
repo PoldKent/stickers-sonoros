@@ -1,10 +1,11 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
-import {mkdtempSync,readFileSync,rmSync} from 'node:fs';
+import {mkdtempSync,readFileSync,rmSync,mkdirSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 
+mkdirSync('artifacts/screenshots',{recursive:true});
 const browser = await chromium.launch({headless:true,args:['--autoplay-policy=no-user-gesture-required']});
 try {
   const page = await browser.newPage({acceptDownloads:true});
@@ -27,6 +28,7 @@ try {
   assert.equal(caps.webpEncode,'image/webp');
   await page.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
   assert.match(await page.locator('#sticker-state').textContent(),/verificada/);
+  await page.screenshot({path:'artifacts/screenshots/desktop-es.png',fullPage:true});
   const sizes = await page.evaluate(async()=>Promise.all(['webp-file','ogg-file'].map(async id=>(await (await fetch(document.getElementById(id).href)).blob()).size)));
   assert(sizes.every(size=>size>0&&size<=1000000));
   // Export the actual converted package and execute the bookmarklet against mock WA modules.
@@ -277,6 +279,11 @@ try {
     assert.equal(await phone.locator('html').getAttribute('lang'),'en');
     assert.match(await phone.locator('#export').textContent(),/Create sound sticker/);
     assert.equal(await phone.locator('#link-input').getAttribute('placeholder'),'Web page, video, image or audio');
+    assert.equal(await phone.locator('a[href$="/SUPPORT.md"]').textContent(),'Support the project');
+    assert.equal(await phone.evaluate(()=>window.StickerUI.translate('El video no respondió al recorte.')),'The video did not respond to seeking.');
+    assert.equal(await phone.evaluate(()=>window.StickerUI.translate('Este navegador no puede generar WebP (devolvió image/png). Usa Chrome o Edge.')),'This browser cannot generate WebP (returned image/png). Use Chrome or Edge.');
+    assert.equal(await phone.evaluate(()=>window.StickerUI.translate('Dominio no permitido para esta descarga.')),'Domain not allowed for this download.');
+    assert.equal(await phone.evaluate(()=>window.StickerUI.translate('No se encontró un formato de video con sonido accesible. Puede que la publicación no ofrezca ambos recursos. Alternativa de descarga pública: TikTok no ofreció un archivo público accesible.')),'No accessible video format with sound was found. The post may not provide both tracks. Public download fallback: TikTok did not provide an accessible public file.');
     await phone.locator('#load-link').click();
     await phone.waitForFunction(()=>document.querySelector('#link-status').textContent.includes('Paste a video link first.'));
     await phone.locator('#demo').click();
@@ -295,6 +302,10 @@ try {
       await phone.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
       assert.match(await phone.locator('#sticker-state').textContent(),/SHA-256 link verified/);
       assert.match(await phone.locator('#package-download').textContent(),/Save sound sticker package/);
+      await phone.screenshot({path:'artifacts/screenshots/mobile-en.png',fullPage:true});
+      await phone.locator('#language').selectOption('es');
+      await phone.screenshot({path:'artifacts/screenshots/mobile-es.png',fullPage:true});
+      await phone.locator('#language').selectOption('en');
       assert(await phone.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
     }
     await phone.reload();
@@ -303,5 +314,19 @@ try {
     assert.deepEqual(pageErrors,[]);
     await phone.close();
   }
+  const coverage=await browser.newPage();
+  await coverage.goto('http://127.0.0.1:8000');
+  await coverage.locator('#language').selectOption('en');
+  await coverage.locator('[data-mode="image"]').click();
+  const fixture=await coverage.evaluate(async()=>{
+    const canvas=document.createElement('canvas');canvas.width=canvas.height=16;
+    return Array.from(new Uint8Array(await (await new Promise(r=>canvas.toBlob(r,'image/png'))).arrayBuffer()));
+  });
+  await coverage.locator('#visual').setInputFiles({name:'Listo',mimeType:'image/png',buffer:Buffer.from(fixture)});
+  await coverage.waitForFunction(()=>document.querySelector('#position').hidden===false);
+  assert.equal(await coverage.locator('#visual-label').textContent(),'Listo');
+  await coverage.locator('#language').selectOption('es');
+  assert.equal(await coverage.locator('#visual-label').textContent(),'Listo');
+  await coverage.close();
   console.log('OK: ejemplo, exportación, WebP/Ogg, vínculo de audio y limpieza al cambiar fuente.');
 } finally { await browser.close(); }

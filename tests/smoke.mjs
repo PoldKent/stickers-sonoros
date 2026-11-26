@@ -85,11 +85,12 @@ try {
   await send.click();
   assert.match(await panel.locator('[role=status]').textContent(),/no está habilitada/);
   assert.equal(await wa.evaluate(()=>window.mockCalls.uploads),0);
-  await wa.evaluate(()=>{window.mockCalls.enabled=true;});
+  await panel.locator('#ss-experimental').check();
   await send.click();
   await panel.getByText('WhatsApp confirmó el envío.',{exact:false}).waitFor();
   assert.deepEqual(await wa.evaluate(()=>[window.mockCalls.uploads,window.mockCalls.sends]),[1,1]);
   assert.equal(await send.isDisabled(),true);
+  assert.equal(await wa.evaluate(()=>window.require('WAWebSoundStickerGating').isSoundStickerCreationEnabled()),false);
   await wa.close();
   assert.deepEqual(errors,[]);
   await page.locator('[data-mode="video"]').click();

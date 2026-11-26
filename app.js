@@ -43,6 +43,8 @@ let stickerJob;
 let nativePackage;
 let clipDuration;
 function clearResult() {
+  byId('quality-result').hidden = true;
+  byId('quality-result').textContent = '';
   nativePackage = undefined;
   byId('native-bridge').hidden = true;
   byId('bridge-status').textContent = '';
@@ -77,6 +79,7 @@ function clearResult() {
 
 function sync() {
   byId('export').disabled = busy || importing || loadingVisual || loadingAudio || !visual || !audio;
+  byId('quality').disabled = busy || importing || !!stickerJob;
   byId('sound-row').hidden = mode === 'video';
   byId('visual-trim').hidden = !visual || visual.kind === 'image';
   byId('audio-trim').hidden = mode === 'video' || !audio;
@@ -355,7 +358,7 @@ function trimmed(prefix) {
 function record(stream) {
   const types = ['video/mp4;codecs=avc1.42001E,mp4a.40.2', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'];
   const mimeType = types.find(type => MediaRecorder.isTypeSupported(type));
-  const options = { videoBitsPerSecond: 1200000, audioBitsPerSecond: 96000 };
+  const options = { videoBitsPerSecond: 4000000, audioBitsPerSecond: 96000 };
   const recorder = new MediaRecorder(stream, mimeType ? { ...options, mimeType } : options);
   const buffered = [];
   const blob = new Promise((resolve, reject) => {
@@ -519,6 +522,15 @@ canvas.addEventListener('pointermove', event => {
 canvas.addEventListener('lostpointercapture', () => { drag = undefined; });
 const linkStatus = byId('link-status');
 function showLinkState(message, state = 'info') {
+  const fallback = byId('tiktok-alternative');
+  fallback.hidden = true;
+  if (state === 'error') {
+    try {
+      const url = new URL(linkInput.value.trim());
+      if (url.protocol === 'https:' && /^(?:(?:www|m|vm|vt)\.)?tiktok\.com$/i.test(url.hostname)
+          && !/cancelada|Espera a que termine/i.test(message)) fallback.hidden = false;
+    } catch {}
+  }
   linkStatus.dataset.state = state;
   linkStatus.textContent = message;
 }
@@ -531,6 +543,7 @@ const importEndpoint = isPages ? configuredEndpoint : location.origin;
 try { localStorage.removeItem('sticker-import-endpoint'); } catch {}
 let linkTimer;
 let lastLink = '';
+byId('choose-tiktok-file').onclick = () => { switchToVideo(); byId('visual').click(); };
 function switchToVideo() {
   if (mode !== 'video') modes.find(button => button.dataset.mode === 'video').click();
 }
@@ -925,6 +938,7 @@ async function prepareSticker() {
   const button = byId('prepare-sticker'), state = byId('sticker-state'), progress = byId('sticker-progress');
   const controller = new AbortController();
   stickerJob = controller;
+  byId('quality').disabled = true;
   button.hidden = true;
   button.disabled = true;
   byId('cancel-sticker').hidden = false;
@@ -936,7 +950,7 @@ async function prepareSticker() {
     if (caps.opus !== true || caps.webpEncode !== 'image/webp') throw new Error('Este navegador no puede crear el sticker con sonido. Prueba Chrome o Edge actualizado.');
     if (controller.signal.aborted) return;
     const files = await window.WAAS.convert({
-      file: source, duration, signal: controller.signal,
+      file: source, duration, profile: byId('quality').value, signal: controller.signal,
       onProgress(message, fraction) { if (!controller.signal.aborted) { state.textContent = message; if (Number.isFinite(fraction)) progress.value = Math.max(0, Math.min(1, fraction)); } }
     });
     const info = await verifySticker(files);
@@ -947,6 +961,8 @@ async function prepareSticker() {
     byId('sticker-audio').src = oggUrl;
     byId('sticker-info').textContent = (info.lado || '?') + ' px · ' + (info.fps || 1) + ' FPS · ' + Math.round(files.webp.size/1024) + ' KB + ' + Math.round(files.ogg.size/1024) + ' KB de audio';
     nativePackage = {webp:files.webp,ogg:files.ogg,info};
+    byId('quality-result').textContent = 'Calidad final: ' + info.lado + ' × ' + info.lado + ' px · ' + (info.fps || 1) + ' FPS' + (info.lado < 256 ? ' · Resolución reducida. Para mejorar la nitidez, elige un tramo más corto.' : '');
+    byId('quality-result').hidden = false;
     byId('native-bridge').hidden = false;
     byId('sticker-files').hidden = false;
     state.textContent = 'Tu sticker está listo para enviar.';
@@ -960,6 +976,7 @@ async function prepareSticker() {
   } finally {
     if (stickerJob === controller) {
       stickerJob = undefined;
+      sync();
       progress.hidden = true;
       byId('cancel-sticker').hidden = true;
       button.disabled = false;
@@ -967,6 +984,7 @@ async function prepareSticker() {
     }
   }
 }
+byId('quality').addEventListener('change', () => { clearResult(); sync(); if (visual) paint(visual.frame || visual.media); });
 byId('prepare-sticker').onclick = prepareSticker;
 byId('cancel-sticker').onclick = () => stickerJob?.abort();
 

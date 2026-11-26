@@ -22,6 +22,12 @@ Video, image or GIF + audio · up to 60 seconds · Español / English.
 3. Select **Create sound sticker**. The editor locally creates a package containing linked WebP and Ogg/Opus files when the browser supports the required codecs.
 4. Follow the four sending steps under the preview. The editor's only download is `sticker.sonoro.json`.
 
+## Sticker quality
+
+The default **Maximum sharpness** mode prioritizes resolution (192 px minimum for animation; 512 px target), reducing frame rate for long clips. **Balanced** and **Maximum smoothness** offer other tradeoffs. Output depends on content and the 1 MB limit; HD is not guaranteed for every 60-second clip. Shorten the selection or use frame + audio if needed. Actual resolution and FPS appear in the result.
+
+If TikTok import fails, [SnapTik](https://snaptik.fi/) is offered as an external manual alternative: download authorized content only, then select the local file. Links are not automatically sent to that service and its API is not integrated.
+
 ## Features
 
 - Direct video, image and audio imports; public media detection on supported pages.
@@ -103,3 +109,7 @@ To voluntarily support noncommercial maintenance, see [USDC or BBTC donation ins
 ## Credits and license
 
 The converter and adapted publishing mechanism come from [Shirtep/WA-audio-stickers, commit 25f7909](https://github.com/Shirtep/WA-audio-stickers/tree/25f790945134f395c4bed4f0deea380ac3a2b778). The original [copyright notice and PolyForm Noncommercial 1.0.0 license](vendor/shirtep/LICENSE.md) are retained. No commercial-use rights or official affiliation with WhatsApp, TikTok or Binance are implied. Confirm with the rights holder any use or funding that could constitute commercial exploitation.
+
+## Mobile research
+
+See [mobile sending without WhatsApp Web](docs/MOBILE.md). Direct sound sticker sending from Android/iOS is not implemented; the verified desktop flow remains available.

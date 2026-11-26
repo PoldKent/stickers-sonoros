@@ -13,22 +13,33 @@
   const SAMPLE_RATE = 48000;
   const CAPTURE_MEM_BYTES = 320e6;     // memoria máxima para los cuadros capturados (10 s a 30 fps caben a 512 px)
   const SIDES = [512, 448, 384, 320, 256, 224, 192, 160, 128, 96, 64];
-  const FPS_LIST = [30, 25, 20, 15, 12, 10, 8, 6, 5];
+  const FPS_LIST = [30, 25, 20, 15, 12, 10, 8, 6, 5, 4, 3, 2];
   const Q_MIN = 0.15;
   // Calidad WebP por lado: con menos píxeles conviene comprimir menos.
   const Q_BY_SIDE = { 512: 0.75, 448: 0.7, 384: 0.65, 320: 0.6, 256: 0.55, 224: 0.55, 192: 0.5, 160: 0.5, 128: 0.45, 96: 0.45, 64: 0.4 };
 
-  // Preferencia para la opción automática: la fluidez pesa más que la resolución (en pantalla un
-  // sticker es pequeño), pero sin bajar de ~160 px salvo que no quede otra.
-  // Más de 20 fps casi no suma (solo desempata); bajar de 192 px penaliza.
-  const FPS_SCORE = { 30: 101, 25: 100.5, 20: 100, 15: 80, 12: 55, 10: 40, 8: 25, 6: 12, 5: 5 };
-  function score(side, fps) {
-    return (FPS_SCORE[fps] || 0) + (40 * side) / 512 - (side < 192 ? (192 - side) / 3 : 0);
+  const PROFILES = {
+    sharp: { minSide: 192, minFps: 3 },
+    balanced: { minSide: 128, minFps: 5 },
+    smooth: { minSide: 64, minFps: 8 }
+  };
+  function profileOf(value) { return Object.hasOwn(PROFILES,value) ? value : "sharp"; }
+  function score(side, fps, profile = "sharp") {
+    if (profile === "smooth") return Math.min(30,fps)*25 + side/512*70;
+    if (profile === "balanced") return side/512*180 + Math.min(20,fps)*7;
+    return side/512*480 + Math.min(15,fps)*4;
   }
-
-  // fps de captura según la duración: lo que puede llegar a caber en 1 MB.
-  function captureFpsFor(dur) {
-    return dur <= 10 ? 30 : dur <= 20 ? 25 : dur <= 40 ? 20 : dur <= 80 ? 15 : 12;
+  function captureFpsFor(dur, profile = "sharp") {
+    if (profile === "sharp") return dur <= 10 ? 20 : dur <= 20 ? 12 : dur <= 30 ? 8 : 5;
+    if (profile === "balanced") return dur <= 10 ? 25 : dur <= 20 ? 20 : dur <= 40 ? 12 : 8;
+    return dur <= 10 ? 30 : dur <= 20 ? 25 : dur <= 40 ? 20 : 15;
+  }
+  function rankedCells(cells, profile, isImage = false) {
+    const p = PROFILES[profileOf(profile)];
+    return cells.filter(c => (c.estado === "ok" || c.estado === "baja") &&
+      (c.side >= p.minSide && (isImage || c.fps >= p.minFps)))
+      .sort((a,b) => (score(b.side,b.fps,profile) - (b.estado==="baja"?20:0)) -
+                     (score(a.side,a.fps,profile) - (a.estado==="baja"?20:0)));
   }
 
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -540,7 +551,8 @@
     }
     log("info", "webp:intentos", { side, fps, intentos: attempts });
     if (!best || best.bytes.length > MAX_STICKER_BYTES) {
-      throw new Error(`No cabe en 1 MB ni con la calidad mínima (${Math.round(best.bytes.length / 1000)} KB). Elige menos fps o menos resolución.`);
+      const error = new Error(`No cabe en 1 MB ni con la calidad mínima (${Math.round(best.bytes.length / 1000)} KB). Elige menos fps o menos resolución.`);
+      error.code = "STICKER_SIZE"; throw error;
     }
     return best;
   }
@@ -798,7 +810,8 @@
   //   "independiente" cada uno conserva su duración (WhatsApp no exige que coincidan).
   // Si la animación es más larga que el audio, con "repetir"/"congelar" se corta al largo del audio.
   // Una imagen fija siempre dura lo que el audio.
-  async function analyze({ file, start = 0, duration, mode = "ajustar", visual, audio, fit = "repetir", onProgress, signal }) {
+  async function analyze({ file, start = 0, duration, mode = "ajustar", visual, audio, fit = "repetir", profile = "sharp", onProgress, signal }) {
+    profile = profileOf(profile);
     if (!visual) visual = { kind: "video", file, start, dur: duration };
     if (!audio) audio = { file: visual.file, start: visual.start, dur: visual.dur };
     const prog = onProgress || (() => {});
@@ -819,7 +832,7 @@
       return an;
     }
 
-    const captureFps = captureFpsFor(dur);
+    const captureFps = captureFpsFor(dur, profile);
     const slots = Math.ceil(capDur * captureFps);
     const captureSide = Math.max(64, Math.min(SIDE, Math.floor(Math.sqrt(CAPTURE_MEM_BYTES / (4 * slots)))));
     log("info", "analizar:parametros", {
@@ -874,8 +887,7 @@
       const estado = est <= SAFE_BYTES ? "ok" : estMin <= SAFE_BYTES ? "baja" : "no";
       cells.push({ side, fps, est: Math.round(est), estMin: Math.round(estMin), estado, score: score(side, fps) });
     }
-    const pick = (st) => cells.filter((c) => c.estado === st).sort((x, y) => y.score - x.score)[0];
-    const auto = pick("ok") || pick("baja") || null;
+    const auto = rankedCells(cells, profile)[0] || null;
     const an = { ...base, frames, captureFps, captureSide, sampleBytes, distinct, cells, auto, ms: Math.round(performance.now() - t0) };
     log("info", "analizar:resultado", {
       ms: an.ms, captureFps, captureSide, distintos: distinct, muestra: M,
@@ -940,21 +952,24 @@
   }
 
   // Atajo (pruebas): analizar + elegir (automático o fijo) + crear.
-  async function convert({ file, start = 0, duration, mode = "ajustar", visual, audio, fit, still = false, syncMs = 0, side = "auto", fps = "auto", onProgress, signal }) {
-    const an = await analyze({ file, start, duration, mode, visual, audio, fit, onProgress, signal });
+  async function convert({ file, start = 0, duration, mode = "ajustar", visual, audio, fit, still = false, syncMs = 0, side = "auto", fps = "auto", profile = "sharp", onProgress, signal }) {
+    profile = profileOf(profile);
+    const an = await analyze({ file, start, duration, mode, visual, audio, fit, profile, onProgress, signal });
     try {
-      let c = an.auto;
-      if (side !== "auto" || fps !== "auto") {
-        const ok = an.cells.filter((x) => (side === "auto" || x.side === +side) && (fps === "auto" || x.fps === +fps) && x.estado !== "no" && x.estado !== "fuera");
-        c = ok.sort((x, y) => y.score - x.score)[0];
+      const cells = rankedCells(an.cells, profile, an.visual.kind === "image")
+        .filter(c => (side === "auto" || c.side === +side) && (fps === "auto" || c.fps === +fps));
+      if (!cells.length) throw new Error("El tramo no cabe con la calidad elegida. Acórtalo, cambia el modo de calidad o usa fotograma + audio.");
+      let lastError;
+      for (const c of cells.slice(0,4)) {
+        checkAbort(signal);
+        try {
+          const r = await create(an, { side: c.side, fps: c.fps, syncMs, still, onProgress, signal });
+          r.analysis = { auto: an.auto, cells: an.cells, ms: an.ms, captureFps: an.captureFps, captureSide: an.captureSide, profile };
+          return r;
+        } catch(e) { if (e.code !== "STICKER_SIZE") throw e; lastError=e; }
       }
-      if (!c) throw new Error("Ninguna combinación cabe en 1 MB para este tramo");
-      const r = await create(an, { side: c.side, fps: c.fps, syncMs, still, onProgress, signal });
-      r.analysis = { auto: an.auto, cells: an.cells, ms: an.ms, captureFps: an.captureFps, captureSide: an.captureSide };
-      return r;
-    } finally {
-      release(an);
-    }
+      throw lastError;
+    } finally { release(an); }
   }
 
   // Comprobaciones del navegador para el diagnóstico.
@@ -984,5 +999,5 @@
   WAAS.create = create;
   WAAS.release = release;
   WAAS.limits = { SIDE, MAX_STICKER_BYTES, MAX_AUDIO_BYTES, SIDES, FPS_LIST };
-  WAAS._internals = { buildOggOpus, buildAnimatedWebp, buildStillWebp, fitTimeline, exifWhatsApp, readChunks, plan, sha256b64, score };
+  WAAS._internals = { buildOggOpus, buildAnimatedWebp, buildStillWebp, fitTimeline, exifWhatsApp, readChunks, plan, sha256b64, score, rankedCells, captureFpsFor };
 })();

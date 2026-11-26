@@ -127,3 +127,7 @@ El conversor y el mecanismo de publicación adaptado proceden de [Shirtep/WA-aud
 ## Investigación móvil
 
 Consulta [envío móvil sin WhatsApp Web](docs/MOBILE.md). El envío directo con sonido desde Android/iOS aún no está implementado; se mantiene el flujo verificado de escritorio.
+
+## Línea de tiempo de edición
+
+Debajo de la vista previa, la barra muestra la posición actual y la duración total del vídeo o GIF, con centésimas de segundo. Arrástrala para explorar fotogramas; al reproducir el tramo, el indicador avanza con el contenido. Si la posición está dentro del tramo elegido, la reproducción comienza desde allí. Los botones Marcar inicio/final aplican el recorte en esa posición. El reproductor del clip generado conserva sus propios controles.

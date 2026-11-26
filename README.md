@@ -1,6 +1,6 @@
 # Stickers Sonoros
 
-Editor web en español para convertir un video, una imagen con audio o un video/GIF con otro audio en un clip cuadrado de 512 × 512. Permite recortar, ajustar el encuadre y exportar hasta 10 segundos con sonido. El navegador procesa los archivos localmente.
+Editor web en español para convertir un video, una imagen con audio o un video/GIF con otro audio en un clip cuadrado de 512 × 512. Permite recortar, ajustar el encuadre y exportar hasta 60 segundos con sonido. El navegador procesa los archivos localmente.
 
 La exportación es MP4 o WebM según el navegador. Para GIF animado se necesita ImageDecoder. Para exportar se necesita MediaRecorder, Web Audio y captura de canvas. Usar Chrome o Edge actualizado es la opción recomendada.
 
@@ -32,7 +32,7 @@ Tras la importación, el video se carga en el editor existente para elegir el in
 
 ## Verificación manual
 
-1. Abre un vídeo con audio de menos de 10 s; ajusta encuadre e inicio/final.
+1. Abre un vídeo con audio de menos de 60 s; ajusta encuadre e inicio/final.
 2. Pulsa Crear sticker sonoro. Comprueba que el vídeo se reproduce, que el sonido es audible y que aparecen la animación WebP y el audio Ogg con vinculación verificada.
 3. Guarda el MP4 en un teléfono compatible; abre WhatsApp, Crea un sticker y conserva su audio. Envía a tu propio chat y comprueba el icono de audio.
 4. Repite con imagen + audio, GIF + audio y un navegador sin WebCodecs. Comprueba cancelación y cambio de fuente sin resultados obsoletos.
@@ -51,7 +51,7 @@ El contenedor actualiza yt-dlp a la versión disponible del canal de pruebas en 
 
 ## Compatibilidad con WhatsApp
 
-Cuando el navegador solo graba WebM, el usuario puede solicitar **Preparar MP4 compatible**. El botón envía exclusivamente el clip editado (hasta 16 MiB) a `/api/clip-mp4`, que valida la cabecera WebM y genera H.264/AAC de hasta diez segundos. Los archivos temporales se eliminan al finalizar. La conversión local sigue siendo la opción por defecto. Compartir el MP4 sigue siendo compartir un vídeo, no un mensaje de sticker sonoro. Si el acceso a YouTube está restringido, se ofrece acceso a YouTube Studio para descargar vídeos propios y seleccionar el archivo original. No se introducen sesiones de WhatsApp, cookies de YouTube ni mecanismos para eludir sus restricciones.
+Cuando el navegador solo graba WebM, el usuario puede solicitar **Preparar MP4 compatible**. El botón envía exclusivamente el clip editado (hasta 16 MiB) a `/api/clip-mp4`, que valida la cabecera WebM y genera H.264/AAC de hasta sesenta segundos. Los archivos temporales se eliminan al finalizar. La conversión local sigue siendo la opción por defecto. Compartir el MP4 sigue siendo compartir un vídeo, no un mensaje de sticker sonoro. Si el acceso a YouTube está restringido, se ofrece acceso a YouTube Studio para descargar vídeos propios y seleccionar el archivo original. No se introducen sesiones de WhatsApp, cookies de YouTube ni mecanismos para eludir sus restricciones.
 
 ## Prueba de envío nativo en WhatsApp Web (experimental)
 
@@ -72,3 +72,7 @@ Se simplifican las instrucciones y los avisos del marcador para usuarios finales
 ## Formatos verticales (2026.11.26.16)
 
 Se elimina el filtro estricto de altura de 480 px. yt-dlp prioriza la dimensión menor con `res:480`, admite formatos combinados o separados y FFmpeg conserva o convierte los códecs según sea necesario. Se mantienen los límites de descarga, tiempo y duración. La selección no garantiza acceso a publicaciones restringidas. Se prueba con formatos verticales simulados y con el selector real de yt-dlp sobre metadatos locales. El diagnóstico público consulta también la publicación de TikTok indicada por el usuario, cuando el servidor tiene soporte de importación.
+
+## Clips de hasta un minuto (2026.11.26.17)
+
+El recorte inicial es de hasta 30 s y el máximo editable y exportable es 60 s. El importador de origen conserva 600 s. El conversor de Shirtep mantiene sus límites de 1 MB por WebP y por Ogg y adapta FPS, resolución y calidad. El marcador acepta duraciones de 1 a 60 s; debe reemplazarse una vez. Se añade una prueba de paquete real de 60 s (imagen + sonido) y envío simulado, una de selección de vídeo de 61 s y una de conversión HTTP MP4 real de 60 s. La aceptación por WhatsApp de stickers largos requiere prueba con una cuenta real; el envío de dos segundos ya estaba validado. Si una animación no cabe, acorta el tramo. No se garantiza la calidad ni el envío de cualquier vídeo de un minuto.

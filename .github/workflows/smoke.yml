@@ -27,7 +27,7 @@ jobs:
           python -m compileall -q importer
       - run: python -m unittest discover -s importer -p 'test_*.py'
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - run: python tests/test_clip_http.py
+      - run: python tests/test_http.py
       - run: python -m pip install 'yt-dlp[default]'
       - run: python tests/test_format_selection.py
       - run: npm install --no-save --package-lock=false playwright

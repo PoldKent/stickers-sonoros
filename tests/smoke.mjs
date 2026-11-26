@@ -32,11 +32,11 @@ try {
   assert.deepEqual(rank,{sharp:256,smooth:64,limit:9,reject:0,floor:9,belowFloor:0,has9:true,capture:[20,20,12,10,9,9],image:1});
   const longLimits=await page.evaluate(()=>{
     const x=window.WAAS._internals;
-    let rejected=false;try{x.validateDuration(181);}catch{rejected=true;}
-    x.validateDuration(180);
-    return {duration:window.WAAS.limits.MAX_DURATION_SECONDS,fps:x.captureFpsFor(180,'sharp',true),side:x.captureSideFor(180,9),rejected};
+    let rejected=false;try{x.validateDuration(0);}catch{rejected=true;}
+    x.validateDuration(181);x.validateDuration(600);x.validateDuration(3600);
+    return {fixedLimit:Object.hasOwn(window.WAAS.limits,'MAX_DURATION_SECONDS'),fps:x.captureFpsFor(240,'sharp',true),side:x.captureSideFor(180,9),rejected};
   });
-  assert.equal(longLimits.duration,180);assert.equal(longLimits.fps,9);assert(longLimits.side>=192);assert.equal(longLimits.rejected,true);
+  assert.equal(longLimits.fixedLimit,false);assert.equal(longLimits.fps,9);assert(longLimits.side>=192);assert.equal(longLimits.rejected,true);
   assert.equal(await page.locator('#quality').inputValue(),'sharp');
   assert.equal(await page.locator('#size-budget').inputValue(),'compatible');
   assert.deepEqual(await page.evaluate(()=>{const x=window.WAAS._internals;return [x.webpBudget(false,123456),x.webpBudget(true,123456),x.captureFpsFor(10,'sharp',true),x.captureFpsFor(60,'sharp',true)];}),[1000000,3876544,30,9]);
@@ -56,7 +56,7 @@ try {
   assert(sizes.every(size=>size>0&&size<=1000000));
   // Export the actual converted package and execute the bookmarklet against mock WA modules.
   const [download] = await Promise.all([page.waitForEvent('download'),page.locator('#package-download').click()]);
-  assert.equal(download.suggestedFilename(),'sticker.sonoro.json');
+  assert.equal(download.suggestedFilename(),'ejemplo.sonoro.json');
   const packageBytes=readFileSync(await download.path());
   const pack=JSON.parse(packageBytes.toString('utf8'));
   assert.equal(pack.format,'stickers-sonoros/1');
@@ -138,35 +138,35 @@ try {
   assert.deepEqual(await wa.evaluate(()=>[window.mockCalls.uploads,window.mockCalls.sends]),[1,1]);
   assert.equal(await send.isDisabled(),true);
   assert.equal(await wa.evaluate(()=>window.require('WAWebSoundStickerGating').isSoundStickerCreationEnabled()),false);
-  // A real 180-second image+audio package, produced by the shipped converter.
+  // A real 240-second image+audio package, produced by the shipped converter.
   const longPack=await page.evaluate(async()=>{
     const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
     const ctx=canvas.getContext('2d');ctx.fillStyle='#5845a3';ctx.fillRect(0,0,128,128);
     const image=new File([await new Promise(r=>canvas.toBlob(r,'image/png'))],'long.png',{type:'image/png'});
-    const samples=180*48000, bytes=new ArrayBuffer(44+samples*2), d=new DataView(bytes);
+    const samples=240*48000, bytes=new ArrayBuffer(44+samples*2), d=new DataView(bytes);
     const ascii=(at,s)=>{for(let i=0;i<s.length;i++)d.setUint8(at+i,s.charCodeAt(i));};
     ascii(0,'RIFF');d.setUint32(4,bytes.byteLength-8,true);ascii(8,'WAVE');ascii(12,'fmt ');
     d.setUint32(16,16,true);d.setUint16(20,1,true);d.setUint16(22,1,true);d.setUint32(24,48000,true);d.setUint32(28,96000,true);d.setUint16(32,2,true);d.setUint16(34,16,true);ascii(36,'data');d.setUint32(40,samples*2,true);
     for(let i=0;i<samples;i++)d.setInt16(44+i*2,Math.round(Math.sin(2*Math.PI*440*i/48000)*3000),true);
     const audio=new File([bytes],'long.wav',{type:'audio/wav'});
-    const out=await window.WAAS.convert({visual:{kind:'image',file:image,start:0,dur:180},audio:{file:audio,start:0,dur:180},fit:'repetir'});
+    const out=await window.WAAS.convert({visual:{kind:'image',file:image,start:0,dur:240},audio:{file:audio,start:0,dur:240},fit:'repetir'});
     const decoded=await new OfflineAudioContext(1,48000,48000).decodeAudioData(await out.ogg.arrayBuffer());
-    if(Math.abs(decoded.duration-180)>0.1)throw Error('Unexpected decoded duration: '+decoded.duration);
+    if(Math.abs(decoded.duration-240)>0.1)throw Error('Unexpected decoded duration: '+decoded.duration);
     const encode=async blob=>{const u=new Uint8Array(await blob.arrayBuffer());let s='';for(let i=0;i<u.length;i+=16384)s+=String.fromCharCode(...u.subarray(i,i+16384));return btoa(s);};
     return {format:'stickers-sonoros/1',webp:await encode(out.webp),ogg:await encode(out.ogg),info:out.info};
   });
-  assert.equal(longPack.info.segundosAudio,180);
-  assert.equal(longPack.info.duracionAudio,180);
+  assert.equal(longPack.info.segundosAudio,240);
+  assert.equal(longPack.info.duracionAudio,240);
   assert.equal(longPack.info.lado,512);
   assert(Buffer.from(longPack.webp,'base64').length<=1000000);
   assert(Buffer.from(longPack.ogg,'base64').length<=1000000);
   await panel.locator('input[type=file]').setInputFiles({name:'long.sonoro.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(longPack))});
-  await wa.waitForFunction(()=>document.querySelector('#ss-local-bridge [role=status]').textContent.includes('180 s'));
+  await wa.waitForFunction(()=>document.querySelector('#ss-local-bridge [role=status]').textContent.includes('240 s'));
   await wa.evaluate(()=>{window.mockCalls.enabled=true;});
   await send.click();
   await panel.getByText('WhatsApp confirmó el envío.',{exact:false}).waitFor();
   assert.deepEqual(await wa.evaluate(()=>[window.mockCalls.uploads,window.mockCalls.sends]),[2,2]);
-  await panel.locator('input[type=file]').setInputFiles({name:'too-long.sonoro.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...longPack,info:{...longPack.info,segundosAudio:181}}))});
+  await panel.locator('input[type=file]').setInputFiles({name:'invalid-duration.sonoro.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...longPack,info:{...longPack.info,segundosAudio:0}}))});
   await panel.getByText('Duración de audio no válida.',{exact:true}).waitFor();
   assert.equal(await send.isDisabled(),true);
   await panel.getByRole('button',{name:'Cerrar'}).click();
@@ -471,23 +471,33 @@ try {
     await crop.setViewportSize({width:320,height:800});
     assert(await crop.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
   }finally{await crop.close();}
-  // The editor permits a 30-second default, manual 180 seconds and rejects longer clips.
+  // Full source selected by default, accessible trim sliders, no 180-second ceiling.
   const durations=await browser.newPage();
   const temp=mkdtempSync(join(tmpdir(),'sticker-duration-'));
   try{
     const path=join(temp,'source.webm');
-    execFileSync('ffmpeg',['-v','error','-f','lavfi','-i','color=c=blue:s=128x128:r=5:d=181','-f','lavfi','-i','sine=frequency=440:sample_rate=48000:duration=181','-c:v','libvpx','-c:a','libopus','-shortest',path]);
+    execFileSync('ffmpeg',['-v','error','-f','lavfi','-i','color=c=blue:s=128x128:r=5:d=241','-f','lavfi','-i','sine=frequency=440:sample_rate=48000:duration=241','-c:v','libvpx','-c:a','libopus','-shortest',path]);
     await durations.goto('http://127.0.0.1:8000');
     await durations.locator('#visual').setInputFiles(path);
     await durations.waitForFunction(()=>!document.querySelector('#export').disabled);
-    assert.equal(Number(await durations.locator('#ve').inputValue()),30);
-    await durations.locator('#ve').fill('180');
-    await durations.locator('#ve').dispatchEvent('change');
-    await durations.waitForFunction(()=>!document.querySelector('#export').disabled);
-    assert.match(await durations.locator('#selection-info').textContent(),/180\.00 s de 180/);
-    await durations.locator('#ve').fill('181');
-    await durations.locator('#ve').dispatchEvent('change');
-    await durations.waitForFunction(()=>document.querySelector('#export').disabled);
+    const full=Number(await durations.locator('#ve').getAttribute('max'));
+    assert(full>=240);
+    assert.equal(Number(await durations.locator('#ve').inputValue()),full);
+    assert.equal(await durations.locator('#ve').getAttribute('type'),'range');
+    assert.equal(await durations.locator('#vs').getAttribute('type'),'range');
+    async function slide(id,value){
+      await durations.locator('#'+id).evaluate((el,value)=>{el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));},value);
+    }
+    await slide('vs',15);
+    await slide('ve',215);
+    assert.match(await durations.locator('#selection-info').textContent(),/200\.00 s/);
+    assert.equal(await durations.locator('#v-trim-duration').textContent(),'3:20.00');
+    assert.equal(await durations.locator('#export').isDisabled(),false);
+    await slide('vs',230);
+    assert(Number(await durations.locator('#vs').inputValue())<Number(await durations.locator('#ve').inputValue()));
+    await durations.locator('#v-full').click();
+    assert.equal(Number(await durations.locator('#vs').inputValue()),0);
+    assert.equal(Number(await durations.locator('#ve').inputValue()),full);
   }finally{await durations.close();rmSync(temp,{recursive:true,force:true});}
   // Mobile layout and language switch preserve the active media and project.
   for(const width of [320,390,740,1024]){
@@ -518,14 +528,14 @@ try {
     await phone.waitForFunction(()=>!document.querySelector('#export').disabled);
     assert.equal(await phone.locator('#link-status').textContent(),'');
     assert.equal(await phone.locator('.send-steps > li').count(),4);
-    await phone.waitForFunction(()=>document.querySelector('#selection-info').textContent.includes('Duration: 2.00 s of 180 s allowed.'));
+    await phone.waitForFunction(()=>document.querySelector('#selection-info').textContent.includes('Selected duration: 2.00 s.'));
     assert(await phone.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
     await phone.locator('#language').selectOption('es');
     assert.match(await phone.locator('#guide-link').getAttribute('href'),/README\.md$/);
     assert.match(await phone.locator('#selection-info').textContent(),/Duración: 2\.00 s/);
     assert.equal(await phone.locator('#export').isDisabled(),false);
     await phone.locator('#language').selectOption('en');
-    assert.match(await phone.locator('#selection-info').textContent(),/Duration: 2\.00 s/);
+    assert.match(await phone.locator('#selection-info').textContent(),/Selected duration: 2\.00 s/);
     const englishBookmark=await phone.locator('#wa-bookmark').getAttribute('href');
     assert.match(decodeURIComponent(englishBookmark),/\)\("en"\)$/);
     if(width===390){

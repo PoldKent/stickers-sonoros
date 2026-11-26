@@ -291,13 +291,17 @@ for (const button of modes) {
     sync();
   });
 }
-byId('visual').addEventListener('change', event => chooseVisual(event.target.files[0]));
+byId('visual').addEventListener('change', event => {
+  if (event.target.files[0]) showLinkState('');
+  chooseVisual(event.target.files[0]);
+});
 const drop = byId('drop');
 drop.addEventListener('dragover', event => { event.preventDefault(); drop.classList.add('over'); });
 drop.addEventListener('dragleave', () => drop.classList.remove('over'));
 drop.addEventListener('drop', event => {
   event.preventDefault();
   drop.classList.remove('over');
+  if (event.dataTransfer.files[0]) showLinkState('');
   chooseVisual(event.dataTransfer.files[0]);
 });
 
@@ -1008,7 +1012,8 @@ function demoAudio() {
 byId('demo').onclick = async () => {
   if (busy || importing) return;
   modes.find(button=>button.dataset.mode==='image').click();
-  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="#211832"/><circle cx="256" cy="220" r="140" fill="#ddb5ff"/><path d="M178 190h40l50-44v148l-50-44h-40zM290 188q45 32 0 64m25-91q78 59 0 118" fill="none" stroke="#241331" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/><text x="256" y="420" text-anchor="middle" font-family="sans-serif" font-size="48" font-weight="bold" fill="#f7f0ff">¡Suena!</text></svg>';
+  showLinkState('');
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="80" fill="#211832"/><circle cx="256" cy="220" r="140" fill="#ddb5ff"/><path d="M178 190h40l50-44v148l-50-44h-40zM290 188q45 32 0 64m25-91q78 59 0 118" fill="none" stroke="#241331" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/><text x="256" y="420" text-anchor="middle" font-family="sans-serif" font-size="48" font-weight="bold" fill="#f7f0ff">'+(window.StickerUI?.language()==='en'?'Sound!':'¡Suena!')+'</text></svg>';
   const selected = chooseVisual(new File([svg],'ejemplo.svg',{type:'image/svg+xml'}));
   const track = chooseAudio(demoAudio());
   await Promise.all([selected,track]);

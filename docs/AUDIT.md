@@ -80,3 +80,5 @@ Separates import, editing, generation and sending, with explicit Back/Next navig
 ### 2026.11.26.38 — Documentation and translation / Documentación y traducción
 
 Reorganized Spanish and English README around four screens, refreshed diagrams and metadata, aligned mobile/support guides, added title/description/navigation localization checks. Previous .37 browser CI and Pages succeeded; production diagnostic reached healthy Render .36 but failed strict version comparison with Pages .37. Added bounded retry for rollout before the existing strict comparison. No real-device or real long WhatsApp-send claim. Donation addresses and third-party license unchanged.
+
+Follow-up: corrected rollout comparison command quoting, and removed obsolete quality-floor translation entries while keeping older server errors readable during deployment transitions.

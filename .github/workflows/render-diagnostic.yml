@@ -52,7 +52,7 @@ jobs:
           # Render deploys only after CI, so allow its rollout before comparing versions.
           for attempt in $(seq 1 10); do
             curl -fsS --max-time 100 -D "$tmp/health-headers" -o "$tmp/health" -H "Origin: $origin" "$base/health"
-            if python -c 'import json,re,sys; m=re.search(r\x27data-version="([^"]+)"\x27,open(sys.argv[2]).read()); sys.exit(0 if m and m.group(1)==json.load(open(sys.argv[1])).get("version") else 1)' "$tmp/health" "$tmp/pages.html"; then break; fi
+            if python -c 'import json,sys; page=open(sys.argv[2]).read(); version=json.load(open(sys.argv[1])).get("version"); sys.exit(0 if version and ("data-version="+chr(34)+version+chr(34)) in page else 1)' "$tmp/health" "$tmp/pages.html"; then break; fi
             echo "Render rollout not yet synchronized (attempt $attempt/10)"
             if [[ "$attempt" != 10 ]]; then sleep 12; fi
           done

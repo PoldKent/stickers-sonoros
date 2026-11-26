@@ -81,6 +81,7 @@ function clearResult() {
 function sync() {
   byId('export').disabled = busy || importing || loadingVisual || loadingAudio || !visual || !audio;
   byId('quality').disabled = busy || importing || !!stickerJob;
+  byId('signature').disabled = busy || importing || !!stickerJob;
   byId('sound-row').hidden = mode === 'video';
   byId('visual-trim').hidden = !visual || visual.kind === 'image';
   byId('audio-trim').hidden = mode === 'video' || !audio;
@@ -1052,6 +1053,12 @@ byId('mark-end').onclick = () => {
   if (mode === 'video' && end - start > limit) byId('vs').value = (end - limit).toFixed(2);
   clearResult(); sync();
 };
+const stickerAppUrl = 'https://poldkent.github.io/stickers-sonoros/';
+const stickerPackName = 'Creado en Stickers Sonoros';
+function stickerAttribution() {
+  const signature=byId('signature').value.replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,40);
+  return {packName:stickerPackName,publisher:signature ? signature+' · '+stickerAppUrl : stickerAppUrl,signature};
+}
 async function verifySticker(files) {
   if (!files.webp?.size || !files.ogg?.size || files.webp.size > 1000000 || files.ogg.size > 1000000) throw new Error('Los archivos superan el límite del conversor o están vacíos.');
   const webp = new Uint8Array(await files.webp.arrayBuffer());
@@ -1061,18 +1068,25 @@ async function verifySticker(files) {
   const hash = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.digest('SHA-256',ogg))));
   // Check the actual EXIF chunk rather than assuming a successful converter implies correct linkage.
   const dv = new DataView(webp.buffer);
-  let valid = false;
+  let valid = false, attribution;
   for (let offset = 12; offset + 8 <= webp.length;) {
     const size = dv.getUint32(offset+4,true), end = offset+8+size;
     if (end > webp.length) throw new Error('WebP incompleto.');
     if (read(webp,offset,4) === 'EXIF') {
-      const metadata = new TextDecoder().decode(webp.subarray(offset+8,end));
-      valid = metadata.includes('"sound-sha256"') && metadata.includes(hash);
+      const exif=webp.subarray(offset+8,end);
+      if(exif.length<26)throw new Error('Metadatos del sticker no válidos.');
+      const view=new DataView(exif.buffer,exif.byteOffset,exif.byteLength);
+      const length=view.getUint32(14), start=view.getUint32(18);
+      if(view.getUint32(0)!==0x4d4d002a||view.getUint32(4)!==8||view.getUint16(8)!==1||view.getUint16(10)!==0x5741||start!==26||start+length!==exif.length)throw new Error('Metadatos del sticker no válidos.');
+      attribution=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(exif.subarray(start,start+length)));
+      valid=attribution['sound-sha256']===hash;
     }
     offset = end + (size % 2);
   }
   if (!valid || files.info?.soundSha256 !== hash) throw new Error('No se pudo verificar la vinculación del sonido.');
-  return files.info;
+  const expected=stickerAttribution();
+  if(attribution?.['sticker-pack-name']!==expected.packName||attribution?.['sticker-pack-publisher']!==expected.publisher)throw new Error('No se pudo verificar la firma del sticker.');
+  return {...files.info,...expected,appUrl:stickerAppUrl};
 }
 async function prepareSticker() {
   if (!result || stickerJob) return;
@@ -1092,7 +1106,7 @@ async function prepareSticker() {
     if (caps.opus !== true || caps.webpEncode !== 'image/webp') throw new Error('Este navegador no puede crear el sticker con sonido. Prueba Chrome o Edge actualizado.');
     if (controller.signal.aborted) return;
     const files = await window.WAAS.convert({
-      file: source, duration, profile: byId('quality').value, signal: controller.signal,
+      file: source, duration, profile: byId('quality').value, ...stickerAttribution(), signal: controller.signal,
       onProgress(message, fraction) { if (!controller.signal.aborted) { state.textContent = message; if (Number.isFinite(fraction)) progress.value = Math.max(0, Math.min(1, fraction)); } }
     });
     const info = await verifySticker(files);
@@ -1103,6 +1117,7 @@ async function prepareSticker() {
     byId('sticker-audio').src = oggUrl;
     byId('sticker-info').textContent = (info.lado || '?') + ' px · ' + (info.fps || 1) + ' FPS · ' + Math.round(files.webp.size/1024) + ' KB + ' + Math.round(files.ogg.size/1024) + ' KB de audio';
     nativePackage = {webp:files.webp,ogg:files.ogg,info};
+    byId('attribution-result').textContent=info.packName+' · '+info.publisher;
     byId('quality-result').textContent = 'Calidad final: ' + info.lado + ' × ' + info.lado + ' px · ' + (info.fps || 1) + ' FPS' + (info.lado < 256 ? ' · Resolución reducida. Para mejorar la nitidez, elige un tramo más corto.' : '');
     byId('quality-result').hidden = false;
     byId('native-bridge').hidden = false;
@@ -1126,6 +1141,7 @@ async function prepareSticker() {
     }
   }
 }
+byId('signature').addEventListener('input',()=>{ if(result || nativePackage) {clearResult();sync();if(visual)paint(visual.frame || visual.media);} });
 byId('quality').addEventListener('change', () => { clearResult(); sync(); if (visual) paint(visual.frame || visual.media); });
 byId('prepare-sticker').onclick = prepareSticker;
 byId('cancel-sticker').onclick = () => stickerJob?.abort();
@@ -1258,8 +1274,8 @@ byId('package-download').onclick=async()=>{
     const webp=bytesToBase64(new Uint8Array(await files.webp.arrayBuffer()));
     const ogg=bytesToBase64(new Uint8Array(await files.ogg.arrayBuffer()));
     if(nativePackage!==files)return;
-    const {lado,isAnimated,segundosAudio,soundSha256}=files.info;
-    const blob=new Blob([JSON.stringify({format:'stickers-sonoros/1',webp,ogg,info:{lado,isAnimated,segundosAudio,soundSha256}})],{type:'application/json'});
+    const {lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl}=files.info;
+    const blob=new Blob([JSON.stringify({format:'stickers-sonoros/1',webp,ogg,info:{lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl}})],{type:'application/json'});
     const url=URL.createObjectURL(blob), link=document.createElement('a');
     link.href=url;link.download='sticker.sonoro.json';document.body.append(link);link.click();link.remove();
     setTimeout(()=>URL.revokeObjectURL(url),30000);

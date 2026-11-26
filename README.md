@@ -40,3 +40,5 @@ Tras la importación, el video se carga en el editor existente para elegir el in
 ## Detector multimedia
 
 Inspirado en la selección de recursos de Media Finder y FlowPick, sin copiar código de extensiones. Una URL directa de vídeo, imagen o audio se abre en el modo de edición correspondiente. Las páginas HTML públicas que permiten lectura entre orígenes (CORS) se analizan en una plantilla inerte, sin ejecutar JavaScript remoto; muestran hasta 60 recursos HTTPS detectados en etiquetas multimedia y metadatos Open Graph. El usuario puede elegir recursos y combinar imagen/video con audio. No se utiliza un proxy genérico que acceda a URLs arbitrarias desde el servidor. La detección no equivale a interceptar el tráfico de una pestaña ni garantiza acceso a contenido dinámico, privado, protegido o que bloquee CORS. Los enlaces de las redes sociales admitidas conservan el importador existente; Cobalt es una posible alternativa futura como servicio propio, no una dependencia activa.
+
+El editor también permite tomar el fotograma actual de un vídeo y combinarlo con el sonido del tramo seleccionado, sin descargar un segundo archivo.

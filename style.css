@@ -5,7 +5,7 @@ body{margin:0;background:radial-gradient(ellipse at 80% 0,#302043 0,transparent 
 header,main,footer{width:min(1120px,calc(100% - 40px));margin:auto}
 header{height:76px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);gap:12px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:770}
-.logo{display:grid;place-items:center;width:36px;height:36px;background:var(--accent);border-radius:11px;color:#241331;font-size:22px}
+.logo{width:36px;height:36px;border-radius:11px}
 .privacy{font-size:.8rem;color:var(--muted);white-space:nowrap}.privacy i{display:inline-block;width:7px;height:7px;background:#b1e9c4;border-radius:50%;margin-right:5px}
 .intro{padding:50px 0 34px}.intro h1{font-size:clamp(2.25rem,6vw,4.8rem);line-height:1.05;letter-spacing:-.065em;margin:0}.intro em{color:var(--accent);font-style:normal}.intro p{color:var(--muted);margin:16px 0 0}
 .workspace{display:grid;grid-template-columns:1.16fr 1fr;gap:20px;align-items:start}

@@ -1,6 +1,16 @@
 /* Spanish/English presentation layer; does not change media or sending logic. */
 (() => {
   const pairs = [
+    ["Crea stickers con sonido para WhatsApp en cuatro pasos: importa, edita, crea y envía. Animaciones desde 9 FPS, hasta 4 MB.","Create sound stickers for WhatsApp in four steps: import, edit, create and send. Animations at 9 FPS or more, up to 4 MB."],
+    ["Stickers Sonoros · Creador de stickers con sonido","Stickers Sonoros · Sound sticker maker"],
+    ["Importa, edita, crea y envía tu sticker con sonido, una etapa a la vez.","Import, edit, create and send your sound sticker, one step at a time."],
+    ["Puedes reintentar o elegir un tramo más corto.","You can retry or choose a shorter selection."],
+    ["Usa un enlace individual de TikTok, Instagram Reel o YouTube Short.","Use an individual TikTok, Instagram Reel or YouTube Short link."],
+    ["Solicitud no válida.","Invalid request."],
+    ["El navegador no puede leer imágenes","The browser cannot read images"],
+    ["El navegador no pudo leer la imagen","The browser could not read the image"],
+    ["El audio generado no se puede reproducir","The generated audio cannot be played"],
+    ["Alternativa de descarga pública:","Public download fallback:"],
     ["Importar contenido","Import content"],
     ["Editar sticker","Edit sticker"],
     ["Crear sticker","Create sticker"],
@@ -331,6 +341,9 @@
     [/^No se pudo abrir el recurso: /,"Could not open resource: "],
     [/^Leyendo cuadros del GIF /,"Reading GIF frames "],[/^Leyendo cuadros /,"Reading frames "],
     [/^Codificando \((\d+) px, (\d+) fps, calidad (\d+)\)/,"Encoding ($1 px, $2 fps, quality $3)"],
+    [/^El navegador no puede leer imágenes /,"The browser cannot read images "],
+    [/^El navegador no pudo leer la imagen /,"The browser could not read the image "],
+    [/^El audio generado no se puede reproducir: /,"The generated audio cannot be played: "],
     [/^Tiempo agotado buscando el segundo /,"Timed out seeking to second "],
     [/^No cabe en el límite de tamaño ni con la calidad mínima \(([^)]+)\)\. Acorta el tramo o reduce la resolución\./,"Does not fit the size limit even at minimum quality ($1). Shorten the selection or reduce resolution."],
     [/^El audio pesa (\d+) KB \(máximo 1000 KB\)/,"Audio is $1 KB (maximum 1000 KB)"],
@@ -366,7 +379,7 @@
     if(!node.parentElement || node.parentElement.closest("script,style,textarea,[data-no-translate]") || !node.data.trim())return;
     const parent=node.parentElement, previous=stored.get(node);
     const raw=previous && node.data===previous.rendered ? previous.raw : node.data;
-    const rendered=language==="en"?english(raw,dynamic.has(parent.id)||!!parent.closest("footer")):raw;
+    const rendered=language==="en"?english(raw,dynamic.has(parent.id)||!!parent.closest("footer")||parent.tagName==='TITLE'):raw;
     stored.set(node,{raw,rendered});
     if(node.data!==rendered)node.data=rendered;
   }

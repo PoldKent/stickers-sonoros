@@ -1,6 +1,6 @@
 # ❤️ Apoyar Stickers Sonoros / Support Stickers Sonoros
 
-[Español](#español) · [English](#english) · [Volver al proyecto / Back to the project](README.md)
+[Español](#español) · [English](#english) · [Web oficial / Official app](https://poldkent.github.io/stickers-sonoros/) · [README en español](README.md) · [English README](README.en.md)
 
 ## Español
 

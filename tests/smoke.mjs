@@ -553,6 +553,10 @@ try {
     assert(await phone.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
     await phone.locator('#language').selectOption('en');
     assert.equal(await phone.locator('html').getAttribute('lang'),'en');
+    assert.equal(await phone.title(),'Stickers Sonoros · Sound sticker maker');
+    assert.match(await phone.locator('meta[name=description]').getAttribute('content'),/four steps/);
+    assert.equal(await phone.locator('#wizard-next').textContent(),'Next →');
+    assert.equal(await phone.locator('#wizard-prev').textContent(),'← Back');
     assert.match(await phone.locator('#export').textContent(),/Create sound sticker/);
     assert.equal(await phone.locator('#signature').getAttribute('placeholder'),'Your name or nickname');
     assert.equal(await phone.locator('#link-input').getAttribute('placeholder'),'Web page, video, image or audio');
@@ -575,6 +579,7 @@ try {
     assert(await phone.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
     await phone.locator('#language').selectOption('es');
     assert.match(await phone.locator('#guide-link').getAttribute('href'),/README\.md$/);
+    assert.equal(await phone.title(),'Stickers Sonoros · Creador de stickers con sonido');
     assert.match(await phone.locator('#selection-info').textContent(),/Duración: 2\.00 s/);
     assert.equal(await phone.locator('#export').isDisabled(),false);
     await phone.locator('#language').selectOption('en');

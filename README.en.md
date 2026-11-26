@@ -2,78 +2,78 @@
 
 ![Stickers Sonoros — brand identity](docs/images/brand.svg)
 
-**Create sound stickers for WhatsApp from your browser.**  
-Video, image or GIF + audio · no fixed duration limit · Español / English.
+**Create sound stickers for WhatsApp in four simple steps.**  
+Video, image or GIF + audio · 9+ FPS for animation · up to 4 MB combined · no fixed duration cap.
 
-[**Official website**](https://poldkent.github.io/stickers-sonoros/) · [README en español](README.md) · [❤️ Support the project](SUPPORT.md#english)
+[**Open the official app**](https://poldkent.github.io/stickers-sonoros/) · [Español](README.md) · [Mobile guide](docs/MOBILE.md#english) · [Support](SUPPORT.md#english)
 
-[![Automated checks](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml)
+[![Automated checks](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![Production API](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-![Illustrative desktop and phone editor layout](docs/images/interface.svg)
+## Quick start
 
-[Real screenshots from interface checks](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) (temporary artifacts per run).
+![Four-screen editor workflow / illustrative diagram](docs/images/interface.svg)
 
-## How it works
+| Screen | What to do |
+|---|---|
+| **1. Import** | Choose Video, Image + audio or Video/GIF + audio. Paste a public HTTPS link or select a local file; add a separate audio track if required. Select **Next** once content and audio are ready. |
+| **2. Edit** | Preview the media, trim its start/end, explore the timeline, adjust framing, zoom, position and rotation. Use **Use full source** to reset trimming. Select **Next**. |
+| **3. Create** | Choose quality and size budget, optionally add a creator signature, then select **Create sound sticker**. Review the generated WebP and audio, actual resolution, FPS and total size. Select **Next** after conversion succeeds. |
+| **4. Send** | Save the original-name `.sonoro.json` package and follow the WhatsApp Web instructions below. |
 
-![Workflow: import, edit, create and send](docs/images/workflow.svg)
+**Back** and **Next** retain the project and settings. The numbered step buttons can also navigate to accessible steps. Sending is locked until a valid package exists. Changing source, edit settings, signature or quality invalidates the previous result; generate it again. Try **Try an example** on the Import screen if you do not have a file.
 
-1. Paste a public HTTPS media link or choose a local file.
-2. Preview the selection, set start and end (no fixed duration limit), and adjust framing, position or zoom.
-3. Select **Create sound sticker**. The editor locally creates a package containing linked WebP and Ogg/Opus files when the browser supports the required codecs.
-4. Follow the four sending steps under the preview. The editor's only download is `original-name.sonoro.json`.
+![Import, edit, create and send](docs/images/workflow.svg)
 
-## Sticker signature
+## Editing and quality
 
-Optionally enter your name or nickname (up to 40 characters). Every sticker contains **Creado en Stickers Sonoros** as its EXIF pack name and the app URL in its publisher field, alongside your signature if provided. No text is painted on the image and the audio SHA-256 linkage is preserved. Recipients may see this public attribution. WhatsApp determines how fields are displayed and whether the URL is clickable. No app-store links are impersonated.
+- The full source is selected initially; there is no fixed time limit. The preview timeline shows the current position and total duration, with start/end markers and playback from the cursor within the selection.
+- The 512 × 512 editing canvas supports exact position (0.1 px), zoom (0.01%), rotation in 90° steps, fit/fill and magnetic alignment. **Center** resets position only; guides are not exported. **Use frame + audio** creates a still sticker.
+- Video mode samples the original source using the crop/zoom/rotation settings. Animated WebP intervals are not merged into long holds. All animation profiles keep at least 9 encoded FPS; static sources and repeated original frames do not gain artificial motion.
+- **Maximum sharpness** favors resolution; **Balanced** and **Maximum smoothness** trade resolution for motion. Output resolution and compression adapt to the budget. If it cannot fit at 9 FPS or above, shorten the selection or use a still frame.
 
-## Precision framing
+| Limit | Default: Extended quality | Optional: Compatible |
+|---|---|---|
+| Combined WebP + Ogg | 4,000,000 bytes | Up to 1 MB per component |
+| Animation | ≥9 FPS | ≥9 FPS |
+| Duration | No fixed cap | No fixed cap |
 
-Position controls use pixels of the 512 × 512 canvas, with 0.1 px steps; zoom uses 0.01% steps. Drag the media or slider to softly snap to its center or actual canvas edges, depending on framing mode and zoom. Continue dragging to release the snap, or enter exact numbers or use arrow keys to bypass it. **Center** resets position only. Temporary guides are not part of the sticker. Rotate media 90° left or right, 180°, or select 0°, 90°, 180° or 270°. Magnetic alignment adapts to orientation and rotation is applied to the actual exported sticker. Zoom and screen-space position are preserved when rotating; use **Center** as needed.
+The JSON transport envelope is larger because of Base64. The local input guard (80 MiB), memory, available codecs and server request/byte limits still apply. WhatsApp may reject long or large stickers; 4 MB is the editor's budget, not a guaranteed WhatsApp limit.
 
-## Sticker quality
+### Creator signature
 
-**Extended quality (default):** allows up to 4,000,000 combined WebP and Ogg bytes (no separate audio cap in extended mode), with higher initial quality and capture FPS for short clips. Compatible is optional and limits each component to 1 MB. WhatsApp acceptance of images over 1 MB is unverified; the upstream converter warns of HTTP 413. Replace the bookmark to try larger packages, first in your own chat. If rejected, use Compatible. Base64 JSON is larger than the original media.
+Optionally add a name or nickname (40 characters). EXIF retains the pack name **Creado en Stickers Sonoros**, the official URL and the optional signature. The signature is public to recipients, not painted on the image. Audio linkage uses SHA-256; WhatsApp determines how attribution is displayed.
 
-The default **Maximum sharpness** mode prioritizes resolution (512 px target; adaptive resolution), with a minimum **9 FPS** sampling and encoding rate for animations, including long clips. Static or low-motion sources do not gain artificial distinct frames. All profiles maintain at least 9 FPS; if the budget cannot be met, export fails. **Balanced** and **Maximum smoothness** offer other tradeoffs. Output depends on content and the selected size limit; HD is not guaranteed for every clip. Shorten the selection or use frame + audio if needed. Actual resolution and FPS appear in the result.
+### Import sources
 
-If TikTok import fails, [SnapTik](https://snaptik.fi/) is offered as an external manual alternative: download authorized content only, then select the local file. Links are not automatically sent to that service and its API is not integrated.
-
-## Features
-
-- Direct video, image and audio imports; public media detection on supported pages.
-- Self-hosted yt-dlp importer and a fallback for public TikTok download addresses.
-- Square 512 × 512 editor, playback preview, frame extraction and image/GIF with sound.
-- Full source selected initially; adjustable trimming with no fixed duration limit. Quality adapts to the converter's compatible 1 MB per component or extended 4 MB combined limit.
-- Responsive phone, tablet and desktop layouts with a persistent Spanish/English setting.
-- Local editing and generation without installing applications or browser extensions.
+Local video, images, GIF and audio, direct public HTTPS media, and supported public pages/social links can be imported. The Render API handles supported remote imports; editing is local. If TikTok import fails, the external [SnapTik](https://snaptik.fi/) fallback is manual and only for authorized content; the app does not automatically send your link there.
 
 ## Send to WhatsApp
 
-### Desktop (WhatsApp Web)
+On screen 4, **Send**:
 
-1. **Save your sticker.** Click **Save sound sticker** to download `original-name.sonoro.json`. Do not open it or attach it to a chat.
-2. **Set up the send button (first time only).** Show the bookmarks bar with Ctrl + Shift + B (Mac: ⌘ + Shift + B) and drag the app's **Send sound sticker** link onto it. If dragging is unavailable, click **Copy bookmark address**, create a bookmark named Send sound sticker, and paste the address into its URL field. Skip this step if you already have the bookmark.
-3. **Open the WhatsApp chat.** Click **Open WhatsApp Web**, sign in and open the recipient's chat. For the first test, use your own chat.
-4. **Choose the file and send.** In WhatsApp Web, click the bookmark, choose the file from step 1 and click **Send sticker with sound**. If Enable sound compatibility is offered, check it before sending. Confirm the recipient and check playback.
+1. Select **Save sound sticker** to download `original-name.sonoro.json`. Do not attach the JSON directly to a chat.
+2. Show your browser's bookmarks bar (Ctrl + Shift + B; Mac: ⌘ + Shift + B). Drag **Send sound sticker** to it, or select **Copy bookmark address** and paste it into a new bookmark's URL. Replace outdated bookmarks.
+3. Select **Open WhatsApp Web**, sign in and open your own chat for the first test.
+4. Click the bookmark within WhatsApp Web, select the downloaded package, click **Send sticker with sound**, confirm the recipient and check sound playback. If offered, temporary sound compatibility may be required.
 
-The bookmark uses an unofficial integration adapted from Shirtep inside your browser session. It does not upload your session to our server or permanently change account settings. Existing packages remain compatible. Replace old bookmarks to receive language and duration updates. **Do not attach the JSON file directly to a chat.**
+This is an unofficial integration adapted from Shirtep; sessions remain in the browser. Acceptance depends on WhatsApp and the account. If rejected, try Compatible mode or a shorter selection. No extension is required.
 
 ### Android and iPhone
 
-Import, edit and save the `.sonoro.json` file in a supported mobile browser. Transfer it to your computer and follow the four WhatsApp Web steps. Native sending from Android or iPhone is not implemented.
+The editor works in compatible mobile browsers. Save the package on screen 4 and transfer it to a computer for WhatsApp Web sending. Some WhatsApp accounts have a native sound sticker editor; direct import of this project's JSON is not verified. See the [mobile guide](docs/MOBILE.md#english).
 
-## Status and compatibility
+## Verification and compatibility
 
-| Feature | Verification |
+| Area | Evidence |
 |---|---|
-| Native sound sticker to own chat | User-confirmed real send in .12 |
-| TikTok import | User-confirmed 27.14-second clip in .18 |
-| 60-second package and send | Actual package generation and simulated send in CI; real 60-second send unverified |
-| Mobile layout and language | Chromium tests at 320, 390, 740 and 1024 px; not physical device tests |
-| Universal social media import | Not guaranteed; depends on source |
-| Sending to every WhatsApp account | Not guaranteed; depends on client and server |
+| Four-screen wizard | Browser CI passed in .37 |
+| 38-second animation cadence | .36 CI checks 342 ANMF frames, timing and motion across the clip |
+| 240-second image + audio | .35 CI generation, decoded audio and simulated send |
+| Actual WhatsApp send | User-confirmed in .12; long/large files still require real tests |
+| TikTok | User-confirmed 27.14-second clip in .18; not universal |
+| Responsive Spanish/English | Chromium at 320, 390, 740 and 1024 px; not physical device certification |
 
-Updated Chrome or Edge is recommended for WebCodecs, WebP and Opus. Animated GIFs need ImageDecoder. Only download material you are authorized to use. If access is restricted, use an authorized original file.
+Use updated Chrome or Edge for WebCodecs, WebP and Opus. Animated GIFs require ImageDecoder. Only import material you have permission to use. [Actual CI screenshots](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) are temporary artifacts; the README illustrations are diagrams, not screenshots.
 
 ## Development and deployment
 
@@ -121,17 +121,3 @@ To voluntarily support noncommercial maintenance, see [USDC or BBTC donation ins
 ## Credits and license
 
 The converter and adapted publishing mechanism come from [Shirtep/WA-audio-stickers, commit 25f7909](https://github.com/Shirtep/WA-audio-stickers/tree/25f790945134f395c4bed4f0deea380ac3a2b778). The original [copyright notice and PolyForm Noncommercial 1.0.0 license](vendor/shirtep/LICENSE.md) are retained. No commercial-use rights or official affiliation with WhatsApp, TikTok or Binance are implied. Confirm with the rights holder any use or funding that could constitute commercial exploitation.
-
-## Mobile research
-
-See [mobile sending without WhatsApp Web](docs/MOBILE.md). Direct sound sticker sending from Android/iOS is not implemented; the verified desktop flow remains available.
-
-### Timeline
-
-The bar under the preview shows current position and total duration. Inspect frames, play from the cursor inside the selection and mark its start and end.
-
-**Mobile update (2026-11-26):** some accounts now have WhatsApp's native sound sticker editor. See [mobile research and acceptance matrix](docs/MOBILE.md); direct `.sonoro.json` import is still unverified.
-
-**Animation cadence:** Video mode creates WebP directly from the original file using the editor crop; the intermediate recording is preview only. Animation frames are no longer merged into long intervals. Resolution and quality adapt to the budget without dropping below 9 FPS. Repeated source frames do not gain artificial motion.
-
-**Four-screen wizard:** Import → Edit → Create → Send. Use Back and Next to navigate without losing the project. Sending unlocks when conversion finishes. Changing edits or quality invalidates the previous result; navigation does not erase it.

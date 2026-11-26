@@ -76,3 +76,7 @@ User reported progressive motion loss on a 38s 448px/9FPS sticker. Final Video-m
 ### 2026.11.26.37 — Four-screen wizard / Asistente por etapas
 
 Separates import, editing, generation and sending, with explicit Back/Next navigation, guarded progression, retained project state and ES/EN labels. Existing crop, timeline, quality, signature, conversion and sending controls are reused. Regression tests exercise navigation, result preservation and responsive screenshots. .36 CI, Pages and Render diagnostic all passed before this change.
+
+### 2026.11.26.38 — Documentation and translation / Documentación y traducción
+
+Reorganized Spanish and English README around four screens, refreshed diagrams and metadata, aligned mobile/support guides, added title/description/navigation localization checks. Previous .37 browser CI and Pages succeeded; production diagnostic reached healthy Render .36 but failed strict version comparison with Pages .37. Added bounded retry for rollout before the existing strict comparison. No real-device or real long WhatsApp-send claim. Donation addresses and third-party license unchanged.

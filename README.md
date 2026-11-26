@@ -2,78 +2,78 @@
 
 ![Stickers Sonoros — identidad visual](docs/images/brand.svg)
 
-**Crea stickers con sonido para WhatsApp desde tu navegador.**  
-Video, imagen o GIF + audio · sin duración fija · Español / English.
+**Crea stickers con sonido para WhatsApp en cuatro pasos sencillos.**  
+Video, imagen o GIF + audio · 9+ FPS en animaciones · hasta 4 MB combinados · sin límite fijo de duración.
 
-[**Web oficial**](https://poldkent.github.io/stickers-sonoros/) · [English README](README.en.md) · [❤️ Apoyar el proyecto](SUPPORT.md)
+[**Abrir la app oficial**](https://poldkent.github.io/stickers-sonoros/) · [English](README.en.md) · [Guía móvil](docs/MOBILE.md#español) · [Apoyar](SUPPORT.md)
 
-[![Pruebas automatizadas](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml)
+[![Pruebas automatizadas](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![API de producción](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-![Esquema ilustrativo del editor en computadora y teléfono](docs/images/interface.svg)
+## Guía rápida
 
-[Capturas reales de las pruebas de interfaz](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) (artefactos temporales de cada ejecución).
+![Asistente de cuatro pantallas / esquema ilustrativo](docs/images/interface.svg)
 
-## Cómo funciona
+| Pantalla | Qué hacer |
+|---|---|
+| **1. Importar** | Elige Video, Imagen + audio o Video/GIF + audio. Pega un enlace HTTPS público o selecciona un archivo local; añade una pista de audio si corresponde. Pulsa **Siguiente** cuando estén listos el contenido y el sonido. |
+| **2. Editar** | Reproduce la vista previa, recorta inicio y final, explora la línea temporal y ajusta encuadre, zoom, posición y rotación. Usa **Usar completo** para restablecer el recorte. Pulsa **Siguiente**. |
+| **3. Crear** | Elige calidad y presupuesto de tamaño, añade opcionalmente una firma y pulsa **Crear sticker sonoro**. Revisa el WebP y audio generados, resolución, FPS y peso total. Pulsa **Siguiente** cuando termine la conversión. |
+| **4. Enviar** | Guarda el paquete `nombre-original.sonoro.json` y sigue las instrucciones de WhatsApp Web descritas abajo. |
 
-![Flujo: importar, editar, crear y enviar](docs/images/workflow.svg)
+**Anterior** y **Siguiente** conservan el proyecto y sus ajustes. Los botones numerados también permiten navegar a las etapas accesibles. El envío se desbloquea cuando existe un paquete válido. Cambiar el origen, edición, firma o calidad invalida el resultado anterior; vuelve a generarlo. Usa **Probar un ejemplo** en Importar si no tienes un archivo.
 
-1. Pega un enlace multimedia HTTPS o selecciona un archivo de tu dispositivo.
-2. Reproduce el tramo, elige el inicio y el final (sin duración fija) y ajusta el encuadre, posición o zoom.
-3. Pulsa **Crear sticker sonoro**. El editor prepara localmente un paquete con WebP y Ogg/Opus vinculados, si el navegador dispone de los códecs necesarios.
-4. Sigue los cuatro pasos de envío que aparecen debajo de la vista previa. La única descarga del editor es `nombre-original.sonoro.json`.
+![Importar, editar, crear y enviar](docs/images/workflow.svg)
 
-## Firma del sticker
+## Edición y calidad
 
-Añade opcionalmente tu nombre o alias (hasta 40 caracteres). Cada sticker generado contiene en el EXIF el nombre de paquete **Creado en Stickers Sonoros** y el enlace de la aplicación en el campo de autor, junto con tu firma si la indicas. No se modifica la imagen ni el audio; se conserva la vinculación SHA-256. La firma es pública para quienes reciban el sticker. WhatsApp puede variar cómo muestra esos campos y si el enlace es pulsable. No se simulan enlaces de tiendas de aplicaciones.
+- Se selecciona el archivo completo inicialmente, sin límite temporal fijo. La línea bajo la vista previa muestra posición y duración total, con marcadores de inicio/final y reproducción desde el cursor dentro del tramo.
+- El lienzo de 512 × 512 permite posición exacta (0,1 px), zoom (0,01 %), rotación en pasos de 90°, ajustar/rellenar y alineación magnética. **Centrar** restablece solo la posición; las guías no se exportan. **Usar fotograma + audio** crea un sticker fijo.
+- El modo Video muestrea el original con el encuadre, zoom y rotación elegidos. Los intervalos del WebP animado no se fusionan en pausas largas. Todos los perfiles mantienen al menos 9 FPS codificados; las fuentes estáticas o cuadros repetidos del original no ganan movimiento artificial.
+- **Máxima nitidez** prioriza resolución; **Equilibrado** y **Máxima fluidez** ofrecen otras combinaciones. La resolución de salida y compresión se adaptan al presupuesto. Si no cabe con al menos 9 FPS, reduce el tramo o usa un fotograma fijo.
 
-## Encuadre preciso
+| Límite | Predeterminado: Calidad ampliada | Opcional: Compatible |
+|---|---|---|
+| WebP + Ogg combinados | 4.000.000 bytes | Hasta 1 MB por componente |
+| Animación | ≥9 FPS | ≥9 FPS |
+| Duración | Sin límite fijo | Sin límite fijo |
 
-Los controles de posición se expresan en píxeles del lienzo de 512 × 512 y admiten pasos de 0,1 px; el zoom admite pasos de 0,01 %. Al arrastrar el vídeo o un deslizador, un imán suave ayuda a alinear el centro o los bordes reales con el lienzo, según el modo de encuadre y el zoom. Sigue arrastrando para liberar el ajuste; también puedes introducir un valor exacto o utilizar las flechas del teclado sin el imán. **Centrar** restablece solo la posición. Las guías visibles son temporales y no aparecen en el sticker. Gira el contenido 90° a la izquierda o derecha, 180°, o selecciona 0°, 90°, 180° o 270°. El encuadre magnético se adapta a la orientación y la rotación se conserva al generar el sticker. El zoom y la posición se mantienen al girar; usa **Centrar** si lo necesitas.
+La envoltura JSON pesa más por Base64. Se mantienen las protecciones de entrada local (80 MiB), memoria, códecs y tiempo/peso de las solicitudes del servidor. WhatsApp puede rechazar stickers largos o grandes; 4 MB es el presupuesto del editor, no un límite garantizado por WhatsApp.
 
-## Calidad del sticker
+### Firma del creador
 
-**Calidad ampliada (predeterminada):** permite hasta 4.000.000 bytes combinados entre WebP y Ogg (sin límite separado de audio en modo ampliado), con mayor calidad inicial y más FPS de captura para clips cortos. El modo Compatible es opcional y limita cada componente a 1 MB. La aceptación de imágenes de más de 1 MB por WhatsApp no está verificada; el conversor original advierte de HTTP 413. Sustituye el favorito para probar paquetes grandes, primero en tu propio chat. Si falla, vuelve al modo Compatible. El JSON Base64 pesa más que los medios originales.
+Añade opcionalmente un nombre o alias (40 caracteres). El EXIF conserva el paquete **Creado en Stickers Sonoros**, la URL oficial y la firma opcional. La firma es pública para los destinatarios, no se dibuja sobre la imagen. El audio se vincula con SHA-256; WhatsApp decide cómo mostrar la atribución.
 
-El modo predeterminado **Máxima nitidez** prioriza la resolución (objetivo 512 px, resolución adaptativa), con una frecuencia de muestreo y codificación de al menos **9 FPS** en animaciones, también para clips largos. No se inventan fotogramas distintos si el origen es estático o tiene menos movimiento. Todos los perfiles mantienen al menos 9 FPS; si no cabe en el presupuesto, no se exporta. **Equilibrado** y **Máxima fluidez** permiten otras combinaciones. La calidad final depende del contenido y del límite elegido; no se garantiza HD en todos los vídeos. Si no cabe, reduce la duración o usa fotograma + audio. La vista del resultado indica la resolución y los FPS reales.
+### Fuentes de importación
 
-Si falla una importación de TikTok, se ofrece [SnapTik](https://snaptik.fi/) como alternativa manual externa: descarga únicamente contenido autorizado y selecciona el archivo local. No se envía el enlace automáticamente ni se integra su API.
-
-## Funciones
-
-- Importación directa de video, imagen y audio; detección de recursos públicos en páginas compatibles.
-- Importador propio con yt-dlp y alternativa para direcciones públicas de descarga de TikTok.
-- Editor cuadrado de 512 × 512, reproducción previa, selección de fotograma, imagen o GIF con audio.
-- Selección inicial del archivo completo y recorte ajustable, sin duración máxima fija. Calidad ajustada para los límites del conversor: 1 MB por componente en Compatible, o 4 MB combinados en Calidad ampliada.
-- Interfaz adaptable a celulares, tablets y computadoras. Selector Español/English persistente.
-- Edición y generación locales; no se requiere instalar programas ni extensiones.
+Se admiten video, imagen, GIF y audio locales, medios HTTPS públicos y páginas/enlaces sociales compatibles. La API de Render gestiona importaciones remotas compatibles; la edición es local. Si falla TikTok, la alternativa externa [SnapTik](https://snaptik.fi/) es manual y solo para contenido autorizado; la app no envía automáticamente tu enlace.
 
 ## Enviar a WhatsApp
 
-### Computadora (WhatsApp Web)
+En la pantalla 4, **Enviar**:
 
-1. **Guarda tu sticker.** Pulsa **Guardar sticker sonoro** para descargar `nombre-original.sonoro.json`. No abras el archivo ni lo adjuntes al chat.
-2. **Prepara el botón de envío (solo la primera vez).** Muestra la barra de favoritos con Ctrl + Shift + B (Mac: ⌘ + Shift + B) y arrastra el enlace **Enviar sticker sonoro** de la app a esa barra. Si no puedes arrastrarlo, pulsa **Copiar dirección del marcador**, crea un favorito nuevo llamado Enviar sticker sonoro y pega la dirección en su campo URL. Si ya tienes el favorito, salta este paso.
-3. **Abre el chat de WhatsApp.** Pulsa **Abrir WhatsApp Web**, inicia sesión y abre el chat deseado. Para tu primera prueba, usa tu propio chat.
-4. **Selecciona el archivo y envía.** Dentro de WhatsApp Web, pulsa el favorito, selecciona el archivo del paso 1 y pulsa **Enviar sticker con sonido**. Si se ofrece Activar compatibilidad con sonido, márcala antes de enviar. Confirma el destinatario y comprueba la reproducción.
+1. Pulsa **Guardar sticker sonoro** para descargar `nombre-original.sonoro.json`. No adjuntes directamente el JSON al chat.
+2. Muestra la barra de favoritos (Ctrl + Shift + B; Mac: ⌘ + Shift + B). Arrastra **Enviar sticker sonoro** a ella o pulsa **Copiar dirección del marcador** y pégala en la URL de un favorito nuevo. Sustituye los favoritos antiguos.
+3. Pulsa **Abrir WhatsApp Web**, inicia sesión y abre tu propio chat para la primera prueba.
+4. Pulsa el favorito dentro de WhatsApp Web, selecciona el paquete, pulsa **Enviar sticker con sonido**, confirma el destinatario y comprueba la reproducción. Si se ofrece compatibilidad temporal con sonido, puede ser necesario activarla.
 
-El marcador usa una integración no oficial basada en Shirtep, dentro de la sesión del navegador. No envía la sesión al servidor ni cambia permanentemente la configuración de la cuenta. Los paquetes anteriores son compatibles. Los marcadores antiguos deben sustituirse para obtener mejoras de idioma o duración. **El archivo JSON no se adjunta directamente a un chat.**
+Es una integración no oficial adaptada de Shirtep; la sesión permanece en el navegador. La aceptación depende de WhatsApp y de la cuenta. Si falla, prueba Compatible o un tramo más corto. No requiere extensiones.
 
 ### Android y iPhone
 
-Puedes importar, editar y guardar el archivo `.sonoro.json` desde un navegador compatible. Transfiérelo a tu computadora y sigue los cuatro pasos de WhatsApp Web. El envío nativo desde Android o iPhone no está implementado.
+El editor funciona en navegadores móviles compatibles. Guarda el paquete en la pantalla 4 y transfiérelo a una computadora para enviar mediante WhatsApp Web. Algunas cuentas tienen un editor sonoro nativo de WhatsApp; la importación directa del JSON de este proyecto no está verificada. Consulta la [guía móvil](docs/MOBILE.md#español).
 
-## Estado y compatibilidad
+## Verificación y compatibilidad
 
-| Función | Verificación |
+| Área | Evidencia |
 |---|---|
-| Envío de sticker sonoro al propio chat | Prueba real confirmada por el usuario en .12 |
-| Importación de TikTok | Prueba real confirmada por el usuario con un clip de 27,14 s en .18 |
-| Paquete de 60 s y envío | Generación real y envío simulado en CI; falta validar envío real de 60 s |
-| Diseño móvil e idioma | Pruebas Chromium con 320, 390, 740 y 1024 px; no equivalen a pruebas físicas de todos los teléfonos |
-| Importación universal de redes sociales | No garantizada; depende del origen |
-| Envío a todas las cuentas de WhatsApp | No garantizado; depende del cliente y servidor |
+| Asistente de cuatro pantallas | CI de navegador aprobada en .37 |
+| Cadencia de animación de 38 s | CI .36 comprueba 342 cuadros ANMF, tiempos y movimiento a lo largo del clip |
+| Imagen + audio de 240 s | CI .35: generación, audio decodificado y envío simulado |
+| Envío real a WhatsApp | Confirmado por el usuario en .12; faltan pruebas reales de archivos largos/grandes |
+| TikTok | Clip de 27,14 s confirmado por el usuario en .18; no universal |
+| Diseño adaptable español/inglés | Chromium a 320, 390, 740 y 1024 px; no certifica dispositivos físicos |
 
-Usa Chrome o Edge actualizados para la mejor compatibilidad con WebCodecs, WebP y Opus. Para GIF animado se requiere ImageDecoder. Descarga solamente contenido que tengas derecho a utilizar. Si un sitio exige autenticación o restringe la descarga, usa el archivo original autorizado.
+Usa Chrome o Edge actualizados para WebCodecs, WebP y Opus. Los GIF animados requieren ImageDecoder. Importa solo contenido que tengas permiso de utilizar. Las [capturas reales de CI](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) son artefactos temporales; los gráficos del README son esquemas, no capturas.
 
 ## Desarrollo y despliegue
 
@@ -121,17 +121,3 @@ Si deseas apoyar voluntariamente el mantenimiento no comercial, consulta [las in
 ## Créditos y licencia
 
 El conversor y el mecanismo de publicación adaptado proceden de [Shirtep/WA-audio-stickers, commit 25f7909](https://github.com/Shirtep/WA-audio-stickers/tree/25f790945134f395c4bed4f0deea380ac3a2b778). Se conserva el [aviso de autoría y licencia PolyForm Noncommercial 1.0.0](vendor/shirtep/LICENSE.md); no se otorgan derechos de uso comercial ni se implica asociación oficial con WhatsApp, TikTok o Binance. Confirma con el titular de los derechos cualquier uso o financiación que pueda constituir explotación comercial.
-
-## Investigación móvil
-
-Consulta [envío móvil sin WhatsApp Web](docs/MOBILE.md). El envío directo con sonido desde Android/iOS aún no está implementado; se mantiene el flujo verificado de escritorio.
-
-### Línea de tiempo
-
-La barra bajo la vista previa muestra la posición actual y duración total. Permite explorar fotogramas, reproducir desde el cursor dentro del tramo y marcar el inicio y final.
-
-**Novedad móvil (26/11/2026):** algunas cuentas ya disponen del editor sonoro nativo de WhatsApp. Consulta [la guía móvil y su matriz de pruebas](docs/MOBILE.md); la importación directa de `.sonoro.json` sigue sin estar verificada.
-
-**Cadencia de animación:** el modo Video genera el WebP desde el archivo original con el mismo encuadre del editor; la grabación intermedia solo sirve de vista previa. Los cuadros de animación ya no se fusionan en intervalos largos. Se adapta resolución/calidad para respetar el presupuesto, sin bajar de 9 FPS. Una fuente con cuadros repetidos no gana movimiento artificial.
-
-**Asistente de cuatro pantallas:** Importar → Editar → Crear → Enviar. Usa Anterior y Siguiente para avanzar sin perder el proyecto. El envío se habilita cuando termina la conversión. Cambiar la edición o calidad invalida el resultado anterior; navegar no lo borra.

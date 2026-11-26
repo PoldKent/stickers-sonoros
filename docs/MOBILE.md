@@ -1,39 +1,45 @@
-# Envío móvil sin WhatsApp Web / Mobile sending without WhatsApp Web
+# Guía móvil / Mobile guide
 
-## Objetivo / Goal
+[Español](#español) · [English](#english) · [Web oficial / Official app](https://poldkent.github.io/stickers-sonoros/) · [README](../README.md) · [English README](../README.en.md)
 
-Crear un sticker con sonido en el teléfono y enviarlo desde la aplicación oficial de WhatsApp, sin ordenador, sin WhatsApp Web y sin compartir un vídeo en lugar de un sticker. No se considera completado hasta verificar animación, sonido y recepción en un dispositivo real.
+## Español
 
-## Investigación / Research
+### Usar Stickers Sonoros desde el teléfono
 
-| Método / Method | Estado / Status |
-|---|---|
-| [WhatsApp Android sticker API](https://github.com/WhatsApp/stickers/tree/main/Android) | Importa paquetes mediante un ContentProvider y confirmación del usuario. No documenta una pista de audio vinculada. |
-| [WhatsApp iOS sticker API](https://github.com/WhatsApp/stickers/tree/main/iOS) | Importa paquetes desde una aplicación nativa. No documenta stickers sonoros. |
-| Web Share API / Android share sheet / iOS share sheet | Comparte archivos; no crea por sí mismo mensajes de sticker con sonido. |
-| WhatsApp editor on phone | Probar con una cuenta que ofrezca creación de stickers con audio; no asumir disponibilidad ni duración. |
-| [WhatsApp Business Platform](https://developers.facebook.com/docs/whatsapp/) | No sustituye la cuenta personal; no se ha identificado una API oficial pública para enviar el formato sonoro. |
+1. **Importar:** selecciona el contenido y audio; pulsa Siguiente.
+2. **Editar:** recorta y ajusta el encuadre en la vista previa; pulsa Siguiente.
+3. **Crear:** elige calidad, tamaño y firma; genera el sticker y revisa el resultado.
+4. **Enviar:** guarda el archivo con extensión `.sonoro.json` y transfiérelo a una computadora. Sigue la [guía de WhatsApp Web](../README.md#enviar-a-whatsapp).
 
-## Fase inicial / Initial phase
+El editor conserva los cambios al retroceder. El paquete tiene un presupuesto de hasta 4 MB de WebP + Ogg y al menos 9 FPS para animaciones, sin tope temporal fijo. El envío directo de este JSON desde la app móvil no está implementado.
 
-1. Probar en Android y iOS el editor oficial de stickers con un vídeo propio corto que contenga audio.
-2. Registrar versión, disponibilidad del selector de audio, reproducción en chat propio y recepción desde otra cuenta.
-3. Si el editor permite sonido, investigar un flujo de transferencia explícita del clip desde la web al editor nativo; no etiquetar un envío de vídeo como sticker.
-4. Si existe un contrato oficial de importación sonora, crear un prototipo nativo aislado con consentimiento y sin copiar credenciales. Una PWA o un wrapper nativo por sí solos no añaden soporte al protocolo.
-5. Validar clips de 2, 10, 30 y 60 segundos y resoluciones reales, límites de tamaño, envío, reenvío y reproducción.
+### Editor nativo e investigación
 
-No se modificarán permisos de cuenta, no se extraerán sesiones ni se añadirá un cliente no oficial en el servidor. El paquete actual sigue disponible para WhatsApp Web. El envío directo móvil aún no está implementado.
+Según los informes registrados el 25 de noviembre de 2026, WhatsApp distribuye gradualmente creación nativa de stickers con audio en [Android beta 2.26.47.1](https://wabetainfo.com/whatsapp-is-rolling-out-new-sound-sticker-messages-on-android/) y [iOS beta 26.46.10.70](https://wabetainfo.com/whatsapp-is-rolling-out-sticker-messages-with-audio-on-ios/). Si tu cuenta ofrece la función, abre el teclado de stickers, elige Crear, selecciona el video, pulsa audio, conserva el original o selecciona otro archivo y envía. No se ha probado el traspaso del paquete JSON ni los límites del editor nativo.
 
-## English summary
+Las APIs públicas de paquetes [Android](https://github.com/WhatsApp/stickers/tree/main/Android) e [iOS](https://github.com/WhatsApp/stickers/tree/main/iOS) no documentan una pista sonora vinculada. La hoja de compartir y una PWA no crean por sí solas un sticker sonoro; WhatsApp Business no sustituye la cuenta personal. No se copiarán sesiones, permisos ni credenciales.
 
-The goal is a real sound sticker sent from the official mobile app, not a video attachment. Public Android/iOS sticker-pack samples do not document the audio linkage. Test the official phone editor on actual devices first; investigate an authorized handoff or documented native sound-sticker import if available. Validate 2–60-second clips, size, playback and receiving-account compatibility before shipping. No session extraction, server-side unofficial client, or automatic sending. Existing desktop sending remains unchanged.
+### Pruebas de aceptación
 
-## Actualización / Update — 2026-11-26
+Registra dispositivo, versión, duración, bytes WebP + Ogg, FPS codificados, envío, recepción, reproducción y reenvío. Prueba primero en tu propio chat y después con un destinatario que consienta. Casos: 2, 30, 61 y 240 s y un paquete próximo a 4 MB. Anota rechazos y errores sin compartir credenciales ni QR. No se considera verificado el envío nativo hasta probarlo en equipos reales.
 
-WABetaInfo informó el 25 de noviembre del despliegue gradual de creación nativa de stickers sonoros en [Android beta 2.26.47.1](https://wabetainfo.com/whatsapp-is-rolling-out-new-sound-sticker-messages-on-android/) y [iOS beta 26.46.10.70](https://wabetainfo.com/whatsapp-is-rolling-out-sticker-messages-with-audio-on-ios/). Algunas cuentas iOS estables también pueden tener acceso. Desde el teclado de stickers: Crear, seleccionar vídeo, pulsar audio, conservar audio original o elegir un archivo, y enviar. La disponibilidad depende de la cuenta. No se ha verificado la importación de nuestro JSON ni el máximo admitido por ese editor. La [API pública de paquetes Android](https://github.com/WhatsApp/stickers/tree/main/Android) no documenta audio; sus límites de stickers convencionales no deben extrapolarse al formato sonoro. Recomendamos el editor oficial cuando aparezca el botón de audio; no desarrollar un cliente no oficial ni prometer envío móvil directo del JSON.
+## English
 
-WABetaInfo reported gradual native sound sticker creation rollout on November 25 for Android beta 2.26.47.1 and iOS beta 26.46.10.70; some stable iOS accounts may have access. In the sticker keyboard, choose Create, select a video, tap audio, keep original sound or select a file, then send. Availability is account-dependent. Importing our JSON and native editor limits are not verified. The public Android sticker pack contract does not document audio. Prefer the official editor when available; do not promise direct mobile JSON sending.
+### Using Stickers Sonoros on your phone
 
-### Acceptance matrix / Matriz de aceptación
+1. **Import:** select content and audio; choose Next.
+2. **Edit:** trim and adjust framing in the preview; choose Next.
+3. **Create:** choose quality, size and signature; generate the sticker and inspect the result.
+4. **Send:** save the `.sonoro.json` file and transfer it to a computer. Follow the [WhatsApp Web guide](../README.en.md#send-to-whatsapp).
 
-Record device, WhatsApp version, actual duration, combined WebP+Ogg bytes, encoded FPS, send/receive/play/forward result and any error. Test own chat first; then a consenting recipient. Test 2, 30, 61 and 240 seconds, and a package near 4 MB. Mark unsupported or rejected cases explicitly. No credentials, QR codes or session exports in reports.
+Going back preserves your edits. The package has a budget of up to 4 MB of WebP + Ogg and at least 9 FPS for animations, with no fixed time cap. Direct sending of this JSON from the mobile app is not implemented.
+
+### Native editor and research
+
+According to the reports recorded on November 25, 2026, WhatsApp is gradually rolling out native sound sticker creation on [Android beta 2.26.47.1](https://wabetainfo.com/whatsapp-is-rolling-out-new-sound-sticker-messages-on-android/) and [iOS beta 26.46.10.70](https://wabetainfo.com/whatsapp-is-rolling-out-sticker-messages-with-audio-on-ios/). If available for your account, open the sticker keyboard, choose Create, select a video, tap audio, keep the original sound or choose another file, then send. JSON handoff and native editor limits have not been tested.
+
+Public [Android](https://github.com/WhatsApp/stickers/tree/main/Android) and [iOS](https://github.com/WhatsApp/stickers/tree/main/iOS) sticker pack APIs do not document a linked sound track. Share sheets and PWAs do not create sound stickers by themselves; WhatsApp Business is not a replacement for personal accounts. No sessions, permissions or credentials will be copied.
+
+### Acceptance tests
+
+Record device, version, duration, WebP + Ogg bytes, encoded FPS, sending, receiving, playback and forwarding. Test your own chat first, then a consenting recipient. Cases: 2, 30, 61 and 240 s, plus a package near 4 MB. Record rejections and errors without sharing credentials or QR codes. Native sending is not verified until tested on real devices.

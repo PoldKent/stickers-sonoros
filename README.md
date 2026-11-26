@@ -1,10 +1,10 @@
 # Stickers Sonoros
 
-Editor web en español para convertir un video, una imagen con audio o un video/GIF con otro audio en un clip cuadrado de 512 × 512. Permite recortar, ajustar el encuadre y exportar hasta 30 segundos con sonido. El navegador procesa los archivos localmente.
+Editor web en español para convertir un video, una imagen con audio o un video/GIF con otro audio en un clip cuadrado de 512 × 512. Permite recortar, ajustar el encuadre y exportar hasta 10 segundos con sonido. El navegador procesa los archivos localmente.
 
 La exportación es MP4 o WebM según el navegador. Para GIF animado se necesita ImageDecoder. Para exportar se necesita MediaRecorder, Web Audio y captura de canvas. Usar Chrome o Edge actualizado es la opción recomendada.
 
-El editor funciona sin extensiones. Puedes compartir el resultado como video. En las cuentas móviles que tengan habilitada la creación de stickers con sonido, guarda el clip en la galería y usa Stickers → Crear → Añadir sonido en WhatsApp para conservar su audio.
+El editor funciona sin extensiones. Un solo botón genera el vídeo cuadrado y, si el navegador admite WebP y Opus, los archivos vinculados de sticker y sonido. La app comprueba las firmas de archivo, tamaños y hash SHA-256 del audio en los metadatos WebP. El vídeo se puede compartir como vídeo (no como sticker). En las cuentas móviles que tengan habilitada la creación de stickers con sonido, guarda el clip en la galería y usa Stickers → Crear → Añadir sonido en WhatsApp para conservar su audio. La función está en despliegue gradual. Si no está habilitada, la web no puede forzar el envío nativo desde una cuenta personal. MP4 es preferible para la galería; WebM es la alternativa en navegadores sin codificación MP4.
 
 Para servirlo localmente, ejecuta `python -m http.server 8000` desde esta carpeta y abre http://localhost:8000. En GitHub Pages, publica la rama principal desde la raíz. El sitio no requiere compilación.
 
@@ -26,3 +26,10 @@ La captura de pestañas se ha eliminado. El editor descarga URLs de video HTTPS 
 El servicio admite enlaces individuales, limita una descarga simultánea, cuatro intentos por minuto por instancia, tres minutos de duración, tamaño máximo de 80 MiB y aplica plazos máximos al proceso. No usa cookies, cuentas ni credenciales del usuario. Los archivos temporales se eliminan tras la respuesta. CORS no equivale a autenticación: antes de exponerlo ampliamente, aplica límites de tráfico y restricciones de salida de red a nivel del proveedor (bloquear redes privadas, loopback, servicios de metadatos e IP reservadas, también tras redirecciones). Usa una instancia aislada sin secretos. Actualiza y revisa las dependencias periódicamente; fija versiones verificadas para producción. Las redes sociales pueden rechazar las descargas desde centros de datos, requerir autenticación o modificar su funcionamiento; no se garantiza que todas las publicaciones funcionen. Descarga solo contenido que tengas derecho a utilizar.
 
 Tras la importación, el video se carga en el editor existente para elegir el inicio y final, explorar cuadros, ajustar el encuadre, zoom y desplazamiento, y exportar. Se conservan las limitaciones de WhatsApp descritas arriba.
+
+## Verificación manual
+
+1. Abre un vídeo con audio de menos de 10 s; ajusta encuadre e inicio/final.
+2. Pulsa Crear sticker sonoro. Comprueba que el vídeo se reproduce, que el sonido es audible y que aparecen la animación WebP y el audio Ogg con vinculación verificada.
+3. Guarda el MP4 en un teléfono compatible; abre WhatsApp, Crea un sticker y conserva su audio. Envía a tu propio chat y comprueba el icono de audio.
+4. Repite con imagen + audio, GIF + audio y un navegador sin WebCodecs. Comprueba cancelación y cambio de fuente sin resultados obsoletos.

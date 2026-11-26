@@ -18,7 +18,7 @@ HTML_TYPES = {"text/html", "application/xhtml+xml"}
 class PublicFetchError(ValueError):
     pass
 
-def public_target(value):
+def public_target(value, host_policy=None):
     if not isinstance(value, str) or not 0 < len(value) <= 4096:
         raise PublicFetchError("Enlace no válido.")
     if any(ord(c) < 33 or ord(c) == 127 for c in value) or "\\" in value:
@@ -32,7 +32,9 @@ def public_target(value):
         if host.endswith("."):
             host = host[:-1]
         # Restricted platforms use their own importer, not this fallback.
-        if any(host.lower() == site or host.lower().endswith("."+site) for site in ("youtube.com","youtu.be","instagram.com","tiktok.com")):
+        if host_policy is not None and not host_policy(host.lower()):
+            raise PublicFetchError("Dominio no permitido para esta descarga.")
+        if host_policy is None and any(host.lower() == site or host.lower().endswith("."+site) for site in ("youtube.com","youtu.be","instagram.com","tiktok.com")):
             raise PublicFetchError("Esta plataforma requiere su importador específico.")
         # Do not accept bare IPs or internal hostnames.
         if "." not in host or ":" in host:
@@ -67,10 +69,10 @@ class PinnedHTTPS(http.client.HTTPSConnection):
             sock.close()
             raise
 
-def fetch_public(value, output):
-    deadline = time.monotonic()+65
+def fetch_public(value, output, *, host_policy=None, allowed_types=None, max_bytes=None, timeout=65):
+    deadline = time.monotonic()+timeout
     for _ in range(5):
-        u, host, addresses = public_target(value)
+        u, host, addresses = public_target(value, host_policy)
         remaining = deadline-time.monotonic()
         if remaining <= 0:
             raise PublicFetchError("Tiempo de descarga agotado.")
@@ -99,7 +101,11 @@ def fetch_public(value, output):
             content_type = response.getheader("Content-Type","").split(";")[0].strip().lower()
             if content_type not in MEDIA_TYPES and content_type not in HTML_TYPES:
                 raise PublicFetchError("El enlace no ofrece un formato multimedia o HTML compatible.")
+            if allowed_types is not None and content_type not in allowed_types:
+                raise PublicFetchError("Tipo de contenido no admitido para esta descarga.")
             maximum = HTML_LIMIT if content_type in HTML_TYPES else MEDIA_LIMIT
+            if max_bytes is not None:
+                maximum = min(maximum, max_bytes)
             length = response.getheader("Content-Length")
             if length and (not length.isdecimal() or int(length)>maximum):
                 raise PublicFetchError("El recurso supera el tamaño permitido.")

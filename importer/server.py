@@ -37,7 +37,8 @@ MAX_DURATION = 600
 # Sort by the short edge; vertical videos must not be filtered by height.
 FORMAT_SELECTOR = "bv*+ba/b"
 FORMAT_SORT = "res:480,vcodec:h264,acodec:aac"
-SERVICE_VERSION = '2026.11.26.16'
+SERVICE_VERSION = '2026.11.26.17'
+MAX_CLIP_DURATION = 60
 MAX_CLIP_BYTES = 16 * 1024 * 1024
 try:
     DOWNLOADER_VERSION = package_version('yt-dlp')
@@ -187,13 +188,13 @@ def convert_clip(source, output):
         "ffmpeg", "-nostdin", "-v", "error",
         "-protocol_whitelist", "file,pipe", "-f", "matroska",
         "-threads", "2", "-i", str(source),
-        "-map", "0:v:0", "-map", "0:a:0", "-t", "10",
+        "-map", "0:v:0", "-map", "0:a:0", "-t", str(MAX_CLIP_DURATION),
         "-vf", "scale=512:512:force_original_aspect_ratio=decrease:force_divisible_by=2,pad=512:512:(ow-iw)/2:(oh-ih)/2",
         "-c:v", "libx264", "-profile:v", "baseline", "-preset", "veryfast",
-        "-pix_fmt", "yuv420p", "-r", "30", "-crf", "23",
+        "-pix_fmt", "yuv420p", "-r", "30", "-crf", "23", "-maxrate", "1500k", "-bufsize", "3000k",
         "-threads", "2", "-c:a", "aac", "-b:a", "96k",
         "-movflags", "+faststart", str(output),
-    ], 30)
+    ], 90)
     if rc or not output.exists() or not 0 < output.stat().st_size <= MAX_CLIP_BYTES:
         raise ImportFailure("CLIP_CONVERSION", "No se pudo preparar el MP4 con sonido.")
     return output
@@ -224,7 +225,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         route = urlsplit(self.path).path
         if route == "/health":
-            self.reply(200, {"ok": True, "version": SERVICE_VERSION, "maxDuration": MAX_DURATION, "downloader": DOWNLOADER_VERSION, "publicMedia": True, "clipMp4": True})
+            self.reply(200, {"ok": True, "version": SERVICE_VERSION, "maxDuration": MAX_DURATION, "downloader": DOWNLOADER_VERSION, "publicMedia": True, "clipMp4": True, "maxClipDuration": MAX_CLIP_DURATION})
             return
         asset = STATIC_FILES.get(route)
         if not asset:

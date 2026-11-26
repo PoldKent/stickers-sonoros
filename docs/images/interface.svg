@@ -24,7 +24,7 @@
 <rect x="860" y="250" width="239" height="34" rx="7" fill="#38264b"/><text x="979" y="271" font-size="12" text-anchor="middle">Seleccionar archivo</text>
 <rect x="904" y="297" width="150" height="150" rx="12" fill="#120e1a"/>
 <g fill="#ddb5ff"><rect x="946" y="363" width="7" height="18" rx="3"/><rect x="959" y="353" width="7" height="38" rx="3"/><rect x="972" y="340" width="7" height="64" rx="3"/><rect x="985" y="353" width="7" height="38" rx="3"/><rect x="998" y="363" width="7" height="18" rx="3"/></g>
-<text x="860" y="469" font-size="12" fill="#c0afcf">0 – 180 s</text><path d="M912 465H1094" stroke="#ddb5ff" stroke-width="4" stroke-linecap="round"/><circle cx="1000" cy="465" r="7" fill="#ddb5ff"/>
+<text x="860" y="469" font-size="12" fill="#c0afcf">Start – end</text><path d="M912 465H1094" stroke="#ddb5ff" stroke-width="4" stroke-linecap="round"/><circle cx="1000" cy="465" r="7" fill="#ddb5ff"/>
 <rect x="860" y="489" width="239" height="39" rx="8" fill="#ddb5ff"/><text x="979" y="514" font-size="13" text-anchor="middle" font-weight="bold" fill="#241331">Crear sticker sonoro</text>
 <text x="34" y="579" font-size="12" fill="#c0afcf">Illustrative interface / Esquema ilustrativo · Not a screenshot / No es una captura</text>
 </g></svg>

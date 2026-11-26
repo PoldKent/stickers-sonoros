@@ -9,6 +9,8 @@ Video, image or GIF + audio · 9+ FPS for animation · up to 4 MB combined · no
 
 [![Automated checks](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![Production API](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
+**Production-validated version: 2026.11.26.38 (2026-11-26).** GitHub Pages and Render are synchronized. [Editor and converter checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/45870345346), [web deployment](https://github.com/PoldKent/stickers-sonoros/actions/runs/45870344295) and [production diagnostic, second attempt](https://github.com/PoldKent/stickers-sonoros/actions/runs/45870691352) passed for commit [`5c3471a`](https://github.com/PoldKent/stickers-sonoros/commit/5c3471a8b9651537d59debea6fa8dc0aefcd8b2e). Render is API-only; its root redirects with HTTP 308 to the sole official website. Real sending of long/large stickers and native mobile package import still require WhatsApp validation.
+
 ## Quick start
 
 ![Four-screen editor workflow / illustrative diagram](docs/images/interface.svg)
@@ -66,7 +68,9 @@ The editor works in compatible mobile browsers. Save the package on screen 4 and
 
 | Area | Evidence |
 |---|---|
-| Four-screen wizard | Browser CI passed in .37 |
+| Four-screen wizard and translations | Browser CI passed in .38 |
+| Single official website and synchronized API | .38 diagnostic passed: Render root HTTP 308, app.js 404, canonical and noindex correct |
+| Public importer in production | HTTP 200, 788,493-byte MP4; both API CORS preflights passed (OPTIONS 204) |
 | 38-second animation cadence | .36 CI checks 342 ANMF frames, timing and motion across the clip |
 | 240-second image + audio | .35 CI generation, decoded audio and simulated send |
 | Actual WhatsApp send | User-confirmed in .12; long/large files still require real tests |

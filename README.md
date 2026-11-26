@@ -9,6 +9,8 @@ Video, imagen o GIF + audio · 9+ FPS en animaciones · hasta 4 MB combinados ·
 
 [![Pruebas automatizadas](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![API de producción](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
+**Versión validada en producción: 2026.11.26.38 (26/11/2026).** GitHub Pages y Render están sincronizados. [Pruebas del editor y conversor](https://github.com/PoldKent/stickers-sonoros/actions/runs/45870345346), [despliegue web](https://github.com/PoldKent/stickers-sonoros/actions/runs/45870344295) y [diagnóstico de producción, segundo intento](https://github.com/PoldKent/stickers-sonoros/actions/runs/45870691352) aprobados sobre el commit [`5c3471a`](https://github.com/PoldKent/stickers-sonoros/commit/5c3471a8b9651537d59debea6fa8dc0aefcd8b2e). Render es exclusivamente la API; su raíz redirige con HTTP 308 a la única web oficial. El envío real de stickers largos/grandes y la importación nativa móvil siguen sujetos a validación en WhatsApp.
+
 ## Guía rápida
 
 ![Asistente de cuatro pantallas / esquema ilustrativo](docs/images/interface.svg)
@@ -66,7 +68,9 @@ El editor funciona en navegadores móviles compatibles. Guarda el paquete en la 
 
 | Área | Evidencia |
 |---|---|
-| Asistente de cuatro pantallas | CI de navegador aprobada en .37 |
+| Asistente de cuatro pantallas y traducciones | CI de navegador aprobada en .38 |
+| Web oficial única y API sincronizada | Diagnóstico .38 aprobado: HTTP 308 en raíz de Render, 404 en app.js, canonical y noindex correctos |
+| Importador público en producción | HTTP 200, MP4 de 788.493 bytes; CORS de ambas rutas aprobado (OPTIONS 204) |
 | Cadencia de animación de 38 s | CI .36 comprueba 342 cuadros ANMF, tiempos y movimiento a lo largo del clip |
 | Imagen + audio de 240 s | CI .35: generación, audio decodificado y envío simulado |
 | Envío real a WhatsApp | Confirmado por el usuario en .12; faltan pruebas reales de archivos largos/grandes |

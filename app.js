@@ -47,6 +47,7 @@ function clearResult() {
   nativePackage = undefined;
   byId('native-bridge').hidden = true;
   byId('bridge-status').textContent = '';
+  byId('bookmark-status').textContent = '';
   mp4Job?.abort(); mp4Job = undefined;
   if (compatibleUrl) URL.revokeObjectURL(compatibleUrl);
   compatibleClip = compatibleUrl = undefined;
@@ -972,7 +973,8 @@ async function prepareSticker() {
     status.textContent = 'Sticker listo. Sigue los pasos para enviarlo a WhatsApp.';
   } catch (error) {
     if (stickerJob === controller) {
-      state.textContent = controller.signal.aborted ? 'Conversión cancelada. El vídeo sigue disponible.' : (error.message || 'No se pudo generar el sticker.') + ' Puedes guardar el vídeo y crearlo dentro de WhatsApp.';
+      state.textContent = controller.signal.aborted ? 'Conversión cancelada. Puedes reintentar.' : (error.message || 'No se pudo generar el sticker.') + ' Puedes reintentar o usar la alternativa para el teléfono.';
+      status.textContent = controller.signal.aborted ? 'Conversión cancelada. Puedes reintentar.' : 'No se pudo preparar el sticker. Revisa el aviso junto a la vista previa.';
       button.hidden = false;
     }
   } finally {
@@ -981,7 +983,7 @@ async function prepareSticker() {
       progress.hidden = true;
       byId('cancel-sticker').hidden = true;
       button.disabled = false;
-      if (controller.signal.aborted) { button.hidden = false; state.textContent = 'Conversión cancelada. El vídeo sigue disponible.'; }
+      if (controller.signal.aborted) { button.hidden = false; state.textContent = 'Conversión cancelada. Puedes reintentar.'; status.textContent = 'Conversión cancelada. Puedes reintentar.'; }
     }
   }
 }
@@ -1167,15 +1169,15 @@ if(window.StickersSonorosBridge){
   document.addEventListener('sticker-language',updateBookmark);
   bookmark.addEventListener('click',event=>{
     event.preventDefault();
-    byId('bridge-status').textContent='Arrastra el marcador a tu barra de favoritos. Luego úsalo dentro de WhatsApp Web.';
+    byId('bookmark-status').textContent='Arrastra el marcador a tu barra de favoritos. Luego úsalo dentro de WhatsApp Web.';
   });
   byId('copy-bookmark').onclick=async()=>{
-    try{await navigator.clipboard.writeText(address());byId('bridge-status').textContent='Dirección copiada. Crea un marcador nuevo y pega esta dirección en su campo URL.';}
-    catch{byId('bridge-status').textContent='No se pudo copiar. Arrastra el enlace a la barra de marcadores.';}
+    try{await navigator.clipboard.writeText(address());byId('bookmark-status').textContent='Dirección copiada. Crea un marcador nuevo y pega esta dirección en su campo URL.';}
+    catch{byId('bookmark-status').textContent='No se pudo copiar. Arrastra el enlace a la barra de marcadores.';}
   };
 }else{
   bookmark.removeAttribute('href');byId('copy-bookmark').disabled=true;
-  byId('bridge-status').textContent='No se cargó la opción de envío. Recarga la página.';
+  byId('bookmark-status').textContent='No se cargó la opción de envío. Recarga la página.';
 }
 
 byId('check-service').onclick = async () => {

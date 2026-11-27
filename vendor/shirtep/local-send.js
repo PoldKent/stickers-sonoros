@@ -18,7 +18,7 @@
     panel.id = 'ss-local-bridge';
     panel.setAttribute('role','dialog');
     panel.setAttribute('aria-label',t('Enviar sticker sonoro',"Send sound sticker"));
-    Object.assign(panel.style,{maxHeight:'calc(100dvh - 36px)',overflowY:'auto',position:'fixed',zIndex:'2147483647',top:'18px',right:'18px',width:'min(370px,calc(100vw - 36px))',padding:'18px',background:'#202c33',color:'#fff',border:'1px solid #46565e',borderRadius:'12px',boxShadow:'0 8px 30px #0006',font:'14px system-ui,sans-serif',display:'grid',gap:'10px'});
+    Object.assign(panel.style,{maxHeight:'calc(100dvh - 36px)',overflowY:'auto',position:'fixed',zIndex:'2147483647',top:'18px',right:'18px',width:'min(370px,calc(100vw - 36px))',padding:'18px',background:'#1b1e2c',color:'#f4f2fb',border:'1px solid #4e486b',borderRadius:'16px',boxShadow:'0 12px 36px #0008',font:'14px system-ui,sans-serif',display:'grid',gap:'10px'});
     const add = (tag, text) => { const el=document.createElement(tag); if(text) el.textContent=text; panel.append(el); return el; };
     add('strong',t('Stickers Sonoros · Enviar a WhatsApp',"Stickers Sonoros · Send to WhatsApp"));
     add('span',t('Abre el chat de la persona a la que quieres enviar el sticker. Selecciona el archivo que guardaste en Stickers Sonoros.',"Open the recipient's chat. Choose the file you saved in Stickers Sonoros."));
@@ -28,7 +28,10 @@
     status.style.whiteSpace='pre-wrap';
     const send = add('button',t('Enviar sticker con sonido',"Send sticker with sound")); send.disabled=true;
     const close = add('button',t('Cerrar',"Close"));
-    for(const button of [send,close]) Object.assign(button.style,{padding:'9px',border:'1px solid #52646d',borderRadius:'7px',background:'#2a3942',color:'#fff',cursor:'pointer'});
+    for(const button of [send,close]) Object.assign(button.style,{padding:'9px',border:'1px solid #52646d',borderRadius:'7px',background:'#22263a',color:'#f4f2fb',cursor:'pointer',minHeight:'42px',font:'inherit'});
+    Object.assign(send.style,{background:'#c8b5ff',color:'#241b39',borderColor:'#c8b5ff',fontWeight:'700'});
+    Object.assign(status.style,{margin:'2px 0',lineHeight:'1.5',color:'#d9daea'});
+    Object.assign(input.style,{maxWidth:'100%',font:'inherit'});
     document.body.append(panel);
     let data, sending=false;
     close.onclick=()=>{if(!sending)panel.remove();};

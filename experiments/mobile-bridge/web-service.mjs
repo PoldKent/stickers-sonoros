@@ -10,7 +10,7 @@ import pino from 'pino';
 import {preparePackage} from './package-adapter.mjs';
 import {ORIGIN,phoneNumber,trialPackage,readPackage,newBudget,claim,checkDecodedAudio,MAX_SENDS,SESSION_MS} from './web-policy.mjs';
 import {CAPACITY,PAIR_MS,tokenKey,ownJid,limiter,sessionStore} from './public-policy.mjs';
-const VERSION='2026.11.27.55',siteKey=process.env.TURNSTILE_SITE_KEY,secret=process.env.TURNSTILE_SECRET_KEY;
+const VERSION='2026.11.27.56',siteKey=process.env.TURNSTILE_SITE_KEY,secret=process.env.TURNSTILE_SECRET_KEY;
 const enabled=process.env.PUBLIC_BRIDGE_ENABLED==='true'&&Boolean(siteKey&&secret);
 const logger=pino({level:'silent'}),store=sessionStore(),take=limiter();
 let pending=0;

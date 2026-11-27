@@ -170,3 +170,7 @@ Follow-up .54: first CI reached final responsive-language checks and failed only
 ### 2026.11.27.55 — Desktop sound send without creation UI gate
 
 Operator reported the .54 bookmarklet blocks sending because the creation flag is false. Remove that preliminary check, retain explicit chat confirmation, native audio upload and complete-audio validation, acknowledgment checks, and no automatic retry after uncertain delivery. No internal feature overrides or checkbox. Update smoke coverage for false and missing creation flag, including unchanged false flag after send; mock success does not establish actual WhatsApp support. Real recipient delivery and production checks remain pending.
+
+### 2026.11.27.56 — Visual refresh and maintenance cleanup
+
+Baseline .55: browser CI 45948897847, Pages 45948896952 and Render diagnostic 45949028717 passed. Shared slate/lavender design tokens, refreshed sticker/wave logo, updated project banner, workflow artwork, mobile handoff and bookmarklet styling. Retire unused CSS selectors and obsolete translation phrases; clarify bookmark replacement instructions. Keep four-stage navigation, direct native desktop attempt without creation gate, explicit recipient confirmation, account consent, size limits and deployment architecture unchanged. Historical audit and upstream attribution retained. New CI and real device/send verification pending.

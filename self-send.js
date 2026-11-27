@@ -34,7 +34,7 @@ function mount(root,getPackage){
   }catch{message=path==='/v2/send'?'uncertain':'error';if(path==='/v2/send')uncertain=true;else if(path==='/v2/connect'){phase='connecting';}}
   finally{busy=false;update();poll()}
  }
- start.onclick=async()=>{if(busy)return;busy=true;message='busy';update();try{const {response,data}=await call('/v2/config');if(!response.ok||data.version!=='2026.11.27.55'||!data.enabled){message='disabled';return}
+ start.onclick=async()=>{if(busy)return;busy=true;message='busy';update();try{const {response,data}=await call('/v2/config');if(!response.ok||data.version!=='2026.11.27.56'||!data.enabled){message='disabled';return}
   start.hidden=true;form.hidden=false;
   if(!window.turnstile){await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';s.async=true;const timeout=setTimeout(()=>{s.remove();reject(Error('challenge'))},15000);s.onload=()=>{clearTimeout(timeout);resolve()};s.onerror=()=>{clearTimeout(timeout);s.remove();reject(Error('challenge'))};document.head.append(s)})}
   widget=window.turnstile.render(captcha,{sitekey:data.siteKey,action:'sonoro_link',callback:v=>{challenge=v;update()},'expired-callback':()=>{challenge='';update()},'error-callback':()=>{challenge='';message='challenge';update()}});message='';

@@ -4,13 +4,13 @@
 
 **Crea y envía stickers con sonido desde tu celular o computadora.**
 
-[**Abrir la web oficial**](https://poldkent.github.io/stickers-sonoros/) · [English](README.en.md) · [Guía móvil](docs/MOBILE.md#español) · [Apoyar](SUPPORT.md)
+[**Abrir Stickers Sonoros**](https://poldkent.github.io/stickers-sonoros/) · [English](README.en.md) · [Guía móvil](docs/MOBILE.md#español) · [Apoyar](SUPPORT.md)
 
 [![Pruebas](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![Producción](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-**Versión actual del código: 2026.11.27.55.** El operador confirmó el primer envío a chat propio de .49. Las [pruebas .49](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publicación](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) y [diagnóstico del importador](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) finalizaron correctamente. Consulta las ejecuciones actuales para .55. Las cuatro pantallas muestran acciones breves y ayuda desplegable. Las pruebas automatizadas cubren Chromium de escritorio y diseños táctiles de 320–1024 px en español e inglés; los dispositivos físicos iOS/Android requieren validación propia. Se avisa si el navegador carece de codificación nativa Opus o WebP. No equivale a una auditoría externa de seguridad.
+**Versión actual: 2026.11.27.56.** Escritorio y celular comparten una identidad visual renovada. La versión anterior .55 superó las [pruebas de navegador](https://github.com/PoldKent/stickers-sonoros/actions/runs/45948897847), la [publicación en Pages](https://github.com/PoldKent/stickers-sonoros/actions/runs/45948896952) y el [diagnóstico de Render](https://github.com/PoldKent/stickers-sonoros/actions/runs/45949028717). Consulta las [ejecuciones actuales](https://github.com/PoldKent/stickers-sonoros/actions) para .56. La recepción real del sonido y las pruebas en dispositivos físicos iOS/Android son independientes de las pruebas automatizadas.
 
-## Cuatro pasos
+## Crea tu sticker en cuatro pasos
 
 ![Flujo de cuatro etapas](docs/images/workflow.svg)
 
@@ -40,7 +40,7 @@ WhatsApp App es el método predeterminado y utiliza el mismo flujo individual qu
 | Animación | ≥9 FPS |
 | Duración | Sin límite fijo |
 
-El conversor adapta resolución y compresión al presupuesto sin grabar un video intermedio. El JSON pesa más por Base64. Hay límites de memoria, códecs, entrada (80 MiB) y tiempo de procesamiento. Si no cabe a 9 FPS, acorta el tramo o usa una imagen fija. El modo ampliado se retiró tras fallos reportados por el usuario. Tanto el marcador actualizado como el envío individual rechazan archivos cuya imagen y audio sumen más de 1 MB. Si tienes un paquete antiguo más pesado, vuelve a crearlo desde los medios originales. WhatsApp todavía puede rechazar archivos por otros motivos. La firma opcional (40 caracteres) y la URL oficial se incluyen en EXIF, no sobre la imagen; SHA-256 vincula el audio.
+El conversor adapta resolución y compresión al presupuesto sin grabar un video intermedio. El JSON pesa más por Base64. Hay límites de memoria, códecs, entrada (80 MiB) y tiempo de procesamiento. Si no cabe a 9 FPS, acorta el tramo o usa una imagen fija. Tanto el marcador actualizado como el envío individual rechazan archivos cuya imagen y audio sumen más de 1 MB. Si tienes un paquete antiguo más pesado, vuelve a crearlo desde los medios originales. WhatsApp todavía puede rechazar archivos por otros motivos. La firma opcional (40 caracteres) y la URL oficial se incluyen en EXIF, no sobre la imagen; SHA-256 vincula el audio.
 
 ## Privacidad y seguridad
 

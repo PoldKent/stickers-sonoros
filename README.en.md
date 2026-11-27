@@ -4,13 +4,13 @@
 
 **Create and send sound stickers from your phone or computer.**
 
-[**Open the official site**](https://poldkent.github.io/stickers-sonoros/) · [Español](README.md) · [Mobile guide](docs/MOBILE.md#english) · [Support](SUPPORT.md#english)
+[**Launch Stickers Sonoros**](https://poldkent.github.io/stickers-sonoros/) · [Español](README.md) · [Mobile guide](docs/MOBILE.md#english) · [Support](SUPPORT.md#english)
 
 [![Checks](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![Production](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-**Current code version: 2026.11.27.55.** The operator confirmed first .49 self-chat delivery. [.49 checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publication](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) and [importer diagnostic](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) passed. See current runs for .55. All four screens show concise actions and expandable help. Automated checks cover desktop Chromium and touch layouts at 320–1024 px in Spanish and English; actual iOS/Android devices need separate validation. A warning appears if native Opus or WebP encoding is unavailable. This is not an independent security audit.
+**Current version: 2026.11.27.56.** Desktop and mobile share a refreshed visual identity. The previous release .55 passed [browser checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/45948897847), [Pages deployment](https://github.com/PoldKent/stickers-sonoros/actions/runs/45948896952) and [Render diagnostics](https://github.com/PoldKent/stickers-sonoros/actions/runs/45949028717). Check [current CI runs](https://github.com/PoldKent/stickers-sonoros/actions) for .56. Real sound delivery and physical iOS/Android validation are separate from automated tests.
 
-## Four steps
+## Create a sticker in four steps
 
 ![Four-step workflow](docs/images/workflow.svg)
 
@@ -40,7 +40,7 @@ WhatsApp App is the default and uses the same individual flow as mobile. For Wha
 | Animation | ≥9 FPS |
 | Duration | No fixed cap |
 
-The converter adapts resolution and compression to the budget without recording intermediate video. Base64 makes the JSON larger. Memory, codecs, input size (80 MiB) and processing time guards apply. If media cannot fit at 9 FPS, shorten the selection or use a still image. The extended mode was retired after operator-reported failures. Both the updated bookmarklet and individual sender reject combined media above 1 MB. Recreate oversized older packages from the original media. WhatsApp may still reject files for other reasons. Optional signature (40 characters) and official URL are embedded in EXIF, not drawn onto the image; SHA-256 links the audio.
+The converter adapts resolution and compression to the budget without recording intermediate video. Base64 makes the JSON larger. Memory, codecs, input size (80 MiB) and processing time guards apply. If media cannot fit at 9 FPS, shorten the selection or use a still image. Both the updated bookmarklet and individual sender reject combined media above 1 MB. Recreate oversized older packages from the original media. WhatsApp may still reject files for other reasons. Optional signature (40 characters) and official URL are embedded in EXIF, not drawn onto the image; SHA-256 links the audio.
 
 ## Privacy and security
 

@@ -8,7 +8,7 @@
 
 [![Pruebas](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![Producción](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-**Versión actual del código: 2026.11.27.53.** El operador confirmó el primer envío a chat propio de .49. Las [pruebas .49](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publicación](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) y [diagnóstico del importador](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) finalizaron correctamente. Consulta las ejecuciones actuales para .53. Las cuatro pantallas muestran acciones breves y ayuda desplegable. No equivale a una auditoría externa de seguridad.
+**Versión actual del código: 2026.11.27.54.** El operador confirmó el primer envío a chat propio de .49. Las [pruebas .49](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publicación](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) y [diagnóstico del importador](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) finalizaron correctamente. Consulta las ejecuciones actuales para .54. Las cuatro pantallas muestran acciones breves y ayuda desplegable. No equivale a una auditoría externa de seguridad.
 
 ## Cuatro pasos
 
@@ -29,7 +29,7 @@ Si ya tienes un paquete, abre [Enviar sticker guardado](https://poldkent.github.
 
 ## Envío desde computadora
 
-WhatsApp App es el método predeterminado y utiliza el mismo flujo individual que el celular. Si prefieres WhatsApp Web, abre «Otros métodos de envío» en Enviar, descarga el paquete, instala o actualiza el marcador en los favoritos, abre WhatsApp Web y el chat deseado, ejecuta el marcador, selecciona el JSON y confirma el destinatario. El marcador funciona dentro del navegador y no necesita extensiones.
+WhatsApp App es el método predeterminado y utiliza el mismo flujo individual que el celular. Si prefieres WhatsApp Web, abre «Otros métodos de envío» en Enviar, descarga el paquete, instala o actualiza el marcador en los favoritos, abre WhatsApp Web y el chat deseado, ejecuta el marcador, selecciona el JSON y confirma el destinatario. El marcador funciona dentro del navegador y no necesita extensiones. Solo envía si WhatsApp Web tiene habilitado el sonido; no modifica sus funciones internas. Si no está disponible, usa el envío a tu propio WhatsApp. Actualiza los favoritos anteriores.
 
 ## Calidad y formatos
 

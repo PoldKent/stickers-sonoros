@@ -139,7 +139,7 @@ try {
       else if(path==='/v2/status'){assert(paired);assert.equal(request.headers().authorization,sessionToken);body={phase:'ready'}}
       else if(path==='/v2/send'){posts++;assert.equal(request.headers().authorization,sessionToken);assert.deepEqual(request.postDataBuffer(),packageBytes);body={phase:'ready',remaining:5-posts,relayed:true,deliveryConfirmed:false}}
       else throw Error('Unexpected endpoint');
-      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.27.53',...body})});
+      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.27.54',...body})});
     });
     const privatePanel=mobileBridge.locator('.self-bridge');
     assert.equal(await privatePanel.locator('input[type=password]').count(),0);
@@ -163,8 +163,7 @@ try {
     await Promise.all([accepted,privateSend.click()]);
     await privatePanel.getByText('Envío procesado. Comprueba tu propio chat y el sonido.',{exact:true}).waitFor();
     assert.equal(posts,1);assert.equal(connections,1);
-    const weights=await mobileBridge.evaluate(()=>[1,61,240,3600].map(segundosAudio=>SonoroSelfSend.packageWeight({format:'stickers-sonoros/1',webp:'YQ==',ogg:'Yg==',info:{segundosAudio}})));
-    assert.deepEqual(weights,[2,2,2,2]);
+    assert.equal(await mobileBridge.evaluate(()=>typeof SonoroPackage.validate),'function');
     await mobileBridge.screenshot({path:'artifacts/screenshots/mobile-send-es.png',fullPage:true});
     await mobileBridge.unroute(endpoint+'/**');
 
@@ -180,6 +179,7 @@ try {
     await mobileBridge.locator('#mobile-package').setInputFiles({name:'bad.sonoro.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...pack,info:{...pack.info,soundSha256:'invalid'}}))});
     await mobileBridge.waitForFunction(()=>document.querySelector('#mobile-status').textContent.includes('Invalid or damaged'));
     assert.equal(await mobileBridge.locator('#mobile-result').isVisible(),false);
+    assert.equal(await mobileBridge.locator('#self-send-bridge').isVisible(),true);
   }finally{await mobileBridge.close();}
   const appUrl='https://poldkent.github.io/stickers-sonoros/';
   assert.match(readFileSync('index.html','utf8'), /<link rel="canonical" href="https:\/\/poldkent\.github\.io\/stickers-sonoros\/">/);
@@ -253,12 +253,14 @@ try {
   await send.click();
   assert.match(await panel.locator('[role=status]').textContent(),/no está habilitado/);
   assert.equal(await wa.evaluate(()=>window.mockCalls.uploads),0);
-  await panel.locator('#ss-experimental').check();
+  assert.equal(await panel.locator('#ss-experimental').count(),0);
+  assert.equal(await wa.evaluate(()=>window.require('WAWebSoundStickerGating').isSoundStickerCreationEnabled()),false);
+  await wa.evaluate(()=>{window.mockCalls.enabled=true;});
   await send.click();
   await panel.getByText('WhatsApp confirmó el envío.',{exact:false}).waitFor();
   assert.deepEqual(await wa.evaluate(()=>[window.mockCalls.uploads,window.mockCalls.sends]),[1,1]);
   assert.equal(await send.isDisabled(),true);
-  assert.equal(await wa.evaluate(()=>window.require('WAWebSoundStickerGating').isSoundStickerCreationEnabled()),false);
+  assert.equal(await wa.evaluate(()=>window.require('WAWebSoundStickerGating').isSoundStickerCreationEnabled()),true);
   // A real 240-second image+audio package, produced by the shipped converter.
   const longPack=await page.evaluate(async()=>{
     const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
@@ -355,7 +357,7 @@ try {
     const backend='https://stickers-sonoros.onrender.com';
     await pages.route(origin+'/**',route=>{
       const path=new URL(route.request().url()).pathname.replace(/^\/stickers-sonoros\//,'')||'index.html';
-      if (!['index.html','app.js','style.css','vendor/shirtep/convert.js','vendor/shirtep/local-send.js','i18n.js','self-send.js','self-send.css'].includes(path)) return route.abort();
+      if (!['index.html','app.js','style.css','vendor/shirtep/convert.js','vendor/shirtep/local-send.js','i18n.js','self-send.js','self-send.css','package.js'].includes(path)) return route.abort();
       const type=path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':'text/html';
       return route.fulfill({status:200,contentType:type,body:readFileSync(path)});
     });

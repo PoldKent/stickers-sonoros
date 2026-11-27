@@ -21,6 +21,8 @@ jobs:
       - run: |
           node --check app.js
           node --check i18n.js
+          node --check package.js
+          node --check mobile.js
           node --check vendor/shirtep/convert.js
           node --check vendor/shirtep/local-send.js
           node --check tests/smoke.mjs

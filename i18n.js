@@ -327,7 +327,7 @@
     ["Abrir WhatsApp Web ↗","Open WhatsApp Web ↗"],
     ["Selecciona el archivo y envía","Choose the file and send"],
     ["Dentro de WhatsApp Web, pulsa el favorito Enviar sticker sonoro. Selecciona el archivo .sonoro.json que descargaste en el paso 1 y pulsa Enviar sticker con sonido. Confirma el destinatario.","In WhatsApp Web, click the Send sound sticker bookmark. Choose the .sonoro.json file downloaded in step 1, click Send sticker with sound, and confirm the recipient."],
-    ["Si aparece Activar compatibilidad con sonido, marca esa opción antes de enviar. Comprueba que el sticker se reproduce con sonido.","If Enable sound compatibility appears, check it before sending. Make sure the sticker plays with sound."],
+    ["Si tu WhatsApp Web no admite stickers con sonido, utiliza Enviar a mi WhatsApp. No modificamos los controles de WhatsApp.","If WhatsApp Web does not support sound stickers, use Send to my WhatsApp. We do not modify WhatsApp controls."],
     ["Integración no oficial. La disponibilidad depende de WhatsApp. Tu sesión permanece en tu navegador.","Unofficial integration. Availability depends on WhatsApp. Your session stays in your browser."],
     ["Preparando tu sticker con sonido…","Preparing your sound sticker…"],
     ["Tu sticker está listo para enviar.","Your sticker is ready to send."],
@@ -344,7 +344,6 @@
   pairs.push(...[["Posición horizontal en píxeles","Horizontal position in pixels"],["Posición vertical en píxeles","Vertical position in pixels"],["Zoom en porcentaje","Zoom percentage"],["Imán suave al centro y a los bordes. Arrastra la imagen o escribe un valor exacto.","Soft snap to center and edges. Drag the image or enter an exact value."],["Centrar","Center"]]);
   pairs.push(...[["Posición, zoom y rotación","Position, zoom and rotation"],["Rotación","Rotation"],["Girar 90° a la izquierda","Rotate 90° left"],["Girar 90° a la derecha","Rotate 90° right"],["Girar 180°","Rotate 180°"],["Ángulo de rotación","Rotation angle"]]);
   pairs.push(...[["Firma del creador (opcional)","Creator signature (optional)"],["Tu nombre o alias","Your name or nickname"],["La firma se incluye en los datos del sticker. Todos incluyen la atribución y el enlace de la app. No se añade texto sobre la imagen.","The signature is included in sticker metadata. All stickers include the app credit and link. No text is added over the image."],["Metadatos del sticker no válidos.","Invalid sticker metadata."],["No se pudo verificar la firma del sticker.","Could not verify the sticker signature."]]);
-  pairs.push(["El tramo no cabe en 1 MB con al menos 9 FPS y 192 px. Acórtalo o cambia el modo de calidad.","The selection does not fit within 1 MB at 9 FPS or more and 192 px or more. Shorten it or change quality mode."]);
   const exact = new Map(pairs);
   const fragments = [
     [/^Duración: ([\d.]+) s\./, "Duration: $1 s."],
@@ -401,7 +400,7 @@
     if(node.data!==rendered)node.data=rendered;
   }
   function translateAttrs(el){
-    if(!el || el.nodeType!==1)return;
+    if(!el || el.nodeType!==1||el.closest('[data-no-translate]'))return;
     const history=attrStored.get(el)||{};
     for(const key of ["title","aria-label","alt","placeholder","content"]){
       if(key==="content"&&!el.matches('meta[name="description"]'))continue;
@@ -441,15 +440,4 @@
     }
   }).observe(document.documentElement,{childList:true,characterData:true,subtree:true,attributes:true,attributeFilter:['title','aria-label','alt','placeholder','content']});
 
-  // Move the same preview, not a second player or canvas, into the mobile editor.
-  const media=document.getElementById("preview-media");
-  const desktop=document.getElementById("desktop-preview-slot");
-  const mobile=document.getElementById("mobile-preview-slot");
-  const narrow=matchMedia("(max-width: 740px)");
-  function layout(){
-    const target=narrow.matches?mobile:desktop;
-    if(media.parentElement!==target)target.append(media);
-  }
-  narrow.addEventListener?.("change",layout);
-  layout();
 })();

@@ -1,4 +1,4 @@
-# Individual self-send bridge (.53)
+# Individual self-send bridge (.54)
 
 Publicly accessible interface, private session per visitor. No shared operator token, no fixed account, no /v1 route. Set TURNSTILE_SITE_KEY and TURNSTILE_SECRET_KEY for a Turnstile widget restricted to poldkent.github.io (action sonoro_link) and PUBLIC_BRIDGE_ENABLED=true in Render only after reviewing tests and security. Otherwise /health reports publicEnabled:false and pairing/send endpoints reject. Old BRIDGE_* variables are unused; remove from Render. Keep the importer separate.
 

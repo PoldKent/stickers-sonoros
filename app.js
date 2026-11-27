@@ -1011,32 +1011,11 @@ function stickerAttribution() {
   return {packName:stickerPackName,publisher:signature ? signature+' · '+stickerAppUrl : stickerAppUrl,signature};
 }
 async function verifySticker(files) {
-  if (!files.webp?.size || !files.ogg?.size || files.webp.size + files.ogg.size > 1000000 || (files.info?.tipo !== 'image' && !(files.info?.fps >= 9))) throw new Error('Los archivos superan el límite del conversor o están vacíos.');
-  const webp = new Uint8Array(await files.webp.arrayBuffer());
-  const ogg = new Uint8Array(await files.ogg.arrayBuffer());
-  const read = (b,i,n) => String.fromCharCode(...b.subarray(i,i+n));
-  if (read(webp,0,4) !== 'RIFF' || read(webp,8,4) !== 'WEBP' || read(ogg,0,4) !== 'OggS') throw new Error('El formato generado no es válido.');
-  const hash = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.digest('SHA-256',ogg))));
-  // Check the actual EXIF chunk rather than assuming a successful converter implies correct linkage.
-  const dv = new DataView(webp.buffer);
-  let valid = false, attribution;
-  for (let offset = 12; offset + 8 <= webp.length;) {
-    const size = dv.getUint32(offset+4,true), end = offset+8+size;
-    if (end > webp.length) throw new Error('WebP incompleto.');
-    if (read(webp,offset,4) === 'EXIF') {
-      const exif=webp.subarray(offset+8,end);
-      if(exif.length<26)throw new Error('Metadatos del sticker no válidos.');
-      const view=new DataView(exif.buffer,exif.byteOffset,exif.byteLength);
-      const length=view.getUint32(14), start=view.getUint32(18);
-      if(view.getUint32(0)!==0x4d4d002a||view.getUint32(4)!==8||view.getUint16(8)!==1||view.getUint16(10)!==0x5741||start!==26||start+length!==exif.length)throw new Error('Metadatos del sticker no válidos.');
-      attribution=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(exif.subarray(start,start+length)));
-      valid=attribution['sound-sha256']===hash;
-    }
-    offset = end + (size % 2);
-  }
-  if (!valid || files.info?.soundSha256 !== hash) throw new Error('No se pudo verificar la vinculación del sonido.');
+  if(!files.webp?.size||!files.ogg?.size||files.webp.size+files.ogg.size>1000000||(files.info?.tipo!=='image'&&!(files.info?.fps>=9)))throw new Error('Los archivos superan el límite del conversor o están vacíos.');
+  let validated;
+  try{validated=await window.SonoroPackage.validate(await packageBlob(files))}catch{throw new Error('No se pudo verificar la vinculación del sonido.')}
   const expected=stickerAttribution();
-  if(attribution?.['sticker-pack-name']!==expected.packName||attribution?.['sticker-pack-publisher']!==expected.publisher)throw new Error('No se pudo verificar la firma del sticker.');
+  if(validated.meta['sticker-pack-name']!==expected.packName||validated.meta['sticker-pack-publisher']!==expected.publisher)throw new Error('No se pudo verificar la firma del sticker.');
   return {...files.info,...expected,appUrl:stickerAppUrl};
 }
 async function prepareSticker() {
@@ -1281,3 +1260,17 @@ byId('check-service').onclick = async () => {
   finally{clearTimeout(timer);button.disabled=false;}
 };
 document.documentElement.dataset.editorReady = 'true';
+
+{
+  // Move the same preview, not a second player or canvas, into the mobile editor.
+  const media=document.getElementById("preview-media");
+  const desktop=document.getElementById("desktop-preview-slot");
+  const mobile=document.getElementById("mobile-preview-slot");
+  const narrow=matchMedia("(max-width: 740px)");
+  function layout(){
+    const target=narrow.matches?mobile:desktop;
+    if(media.parentElement!==target)target.append(media);
+  }
+  narrow.addEventListener?.("change",layout);
+  layout();
+}

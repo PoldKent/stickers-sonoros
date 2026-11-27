@@ -8,7 +8,7 @@
 
 [![Checks](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![Production](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-**Current code version: 2026.11.27.53.** The operator confirmed first .49 self-chat delivery. [.49 checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publication](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) and [importer diagnostic](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) passed. See current runs for .53. All four screens show concise actions and expandable help. This is not an independent security audit.
+**Current code version: 2026.11.27.54.** The operator confirmed first .49 self-chat delivery. [.49 checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publication](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) and [importer diagnostic](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) passed. See current runs for .54. All four screens show concise actions and expandable help. This is not an independent security audit.
 
 ## Four steps
 
@@ -29,7 +29,7 @@ For an existing package, open [Send saved sticker](https://poldkent.github.io/st
 
 ## Send from a computer
 
-WhatsApp App is the default and uses the same individual flow as mobile. For WhatsApp Web, expand “Other ways to send” in Send, download the package, install or update the bookmarklet in your favorites, open WhatsApp Web and the desired chat, run the bookmarklet, select the JSON and confirm the recipient. The bookmarklet works within the browser without extensions.
+WhatsApp App is the default and uses the same individual flow as mobile. For WhatsApp Web, expand “Other ways to send” in Send, download the package, install or update the bookmarklet in your favorites, open WhatsApp Web and the desired chat, run the bookmarklet, select the JSON and confirm the recipient. The bookmarklet works within the browser without extensions. It only sends when WhatsApp Web enables sound; it does not override its internal functions. Otherwise use self-send. Update older bookmarks.
 
 ## Quality and formats
 

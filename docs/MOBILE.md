@@ -21,3 +21,5 @@ Linking authorizes a server-hosted device that may access messages even with ful
 Status: Turnstile active and first .49 self-send confirmed by the operator. Simultaneous two-account testing and verified closure remain pending. [Setup](../experiments/mobile-bridge/README.md).
 
 Interfaz .51: las instrucciones esenciales permanecen visibles y la ayuda se abre cuando la necesitas. Los riesgos de vincular y la autorización siguen visibles antes de conectar. / .51 interface: essential actions stay visible and help opens when needed. Linking risks and consent remain visible before connecting.
+
+En .54, el marcador de escritorio ya no modifica las funciones de WhatsApp Web para activar sonido. Si no está habilitado, usa el método principal. La validación binaria del paquete se comparte entre editor, lector y marcador; el servidor verifica de nuevo. / In .54 the desktop bookmark no longer overrides WhatsApp Web sound switches. Use the main method if sound is unavailable. Editor, reader and bookmark share binary package validation; the server independently validates again.

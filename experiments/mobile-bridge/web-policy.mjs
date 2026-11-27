@@ -1,8 +1,8 @@
 import {createHash} from 'node:crypto';
-import {MAX_JSON_BYTES} from './package-adapter.mjs';
+import {MAX_JSON_BYTES,MAX_MEDIA_BYTES} from './package-adapter.mjs';
 export const ORIGIN='https://poldkent.github.io';
 export function phoneNumber(s){return typeof s==='string'&&/^[1-9][0-9]{7,14}$/.test(s)}
-export const MAX_MEDIA_BYTES=2_000_000;
+
 export const SESSION_MS=15*60*1000,MAX_SENDS=5,COOLDOWN_MS=5000;
 export function trialPackage(p){
   if(!Number.isSafeInteger(p.audioSeconds)||p.audioSeconds<1||p.webpBuffer.length<1||p.audioBuffer.length<1||p.webpBuffer.length+p.audioBuffer.length>MAX_MEDIA_BYTES)throw Error('trial-limit');

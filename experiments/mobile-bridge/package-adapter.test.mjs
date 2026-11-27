@@ -14,4 +14,6 @@ function fixture(){
   return {format:'stickers-sonoros/1',webp:Buffer.concat([h,body]).toString('base64'),ogg:a.toString('base64'),info:{lado:128,isAnimated:true,segundosAudio:1,soundSha256:digest}};
 }
 test('preserves original payload bytes and dimensions (structural fixture only)',()=>{const p=fixture(),r=preparePackage(JSON.stringify(p));assert.deepEqual(r.webpBuffer,Buffer.from(p.webp,'base64'));assert.deepEqual(r.audioBuffer,Buffer.from(p.ogg,'base64'));assert.equal(r.width,128);assert.equal(r.audioSeconds,1)});
-test('rejects wrong digest, malformed Base64 and oversized envelope',()=>{const p=fixture();assert.throws(()=>preparePackage(JSON.stringify({...p,info:{...p.info,soundSha256:'bad'}})),/linkage/);assert.throws(()=>preparePackage(JSON.stringify({...p,webp:'!!!'})),/Base64/);assert.throws(()=>preparePackage(Buffer.alloc(2800001)),/budget/)});
+test('rejects wrong digest, malformed Base64 and oversized envelope',()=>{const p=fixture();assert.throws(()=>preparePackage(JSON.stringify({...p,info:{...p.info,soundSha256:'bad'}})),/linkage/);assert.throws(()=>preparePackage(JSON.stringify({...p,webp:'!!!'})),/Base64/);assert.throws(()=>preparePackage(Buffer.alloc(1400001)),/budget/)});
+
+test('rejects combined media over 1 MB before parsing chunks',()=>{const p=fixture();p.webp=Buffer.alloc(999937).toString('base64');assert.throws(()=>preparePackage(JSON.stringify(p)),/Media exceeds 1 MB/)});

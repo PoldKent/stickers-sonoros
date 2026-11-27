@@ -56,11 +56,11 @@
       return Uint8Array.from(raw,c=>c.charCodeAt(0));
     }
     async function validate(file) {
-      if(!file||file.size>5500000)throw Error(t('Selecciona un paquete de hasta 5,5 MB.',"Choose a package up to 5.5 MB."));
+      if(!file||file.size>1400000)throw Error(t('Selecciona un sticker guardado de hasta 1 MB de imagen y audio.',"Choose a saved sticker with up to 1 MB of image and audio."));
       const p=JSON.parse(await file.text());
       if(p.format!=='stickers-sonoros/1')throw Error(t('Selecciona un archivo guardado desde Stickers Sonoros.',"Choose a file saved in Stickers Sonoros."));
-      const webp=decode(p.webp,4000000),ogg=decode(p.ogg,4000000);
-      if(webp.length+ogg.length>4000000)throw Error(t('El sticker y su audio superan 4 MB.', 'The sticker and its audio exceed 4 MB.'));
+      const webp=decode(p.webp,1000000),ogg=decode(p.ogg,1000000);
+      if(webp.length+ogg.length>1000000)throw Error(t('El sticker y su audio superan 1 MB.', 'The sticker and its audio exceed 1 MB.'));
       if(read(webp,0,4)!=='RIFF'||read(webp,8,4)!=='WEBP'||read(ogg,0,4)!=='OggS'||!new TextDecoder().decode(ogg.subarray(0,256)).includes('OpusHead'))throw Error(t('La imagen o el sonido del sticker no son válidos.',"The sticker image or sound is invalid."));
       const digest=await hash(ogg), view=new DataView(webp.buffer);
       let linked=false,side=0,animated=false;
@@ -142,7 +142,7 @@
           compatibility.hidden=false; compatibility.style.display='flex';
           throw Error(t('El sonido no está habilitado en esta sesión. Marca Activar compatibilidad con sonido para continuar.',"Sound is not enabled in this session. Enable sound compatibility to continue."));
         }
-        if(!confirm(t('¿Enviar un sticker con sonido al chat «',"Send a sound sticker to chat «")+name(chat)+'»?'+((data.webp.size>1000000||data.ogg.size>1000000)?t(' Un componente supera 1 MB; WhatsApp podría rechazar el envío.',' One component exceeds 1 MB; WhatsApp may reject the send.'):'')+(data.seconds>60?t(' El sticker dura más de un minuto; WhatsApp podría rechazar el envío.',' The sticker exceeds one minute; WhatsApp may reject the send.'):'')+(unavailable?t(' Se activará la compatibilidad temporal con sonido. Se desactivará al terminar. WhatsApp podría rechazar el envío.'," Temporary sound compatibility will be enabled and restored afterwards. WhatsApp may reject the send."):'')))return;
+        if(!confirm(t('¿Enviar un sticker con sonido al chat «',"Send a sound sticker to chat «")+name(chat)+'»?'+(data.seconds>60?t(' El sticker dura más de un minuto; WhatsApp podría rechazar el envío.',' The sticker exceeds one minute; WhatsApp may reject the send.'):'')+(unavailable?t(' Se activará la compatibilidad temporal con sonido. Se desactivará al terminar. WhatsApp podría rechazar el envío.'," Temporary sound compatibility will be enabled and restored afterwards. WhatsApp may reject the send."):'')))return;
         if(activeChat()!==chat)throw Error(t('El chat ha cambiado. Confirma de nuevo.',"The chat changed. Confirm again."));
         if(unavailable)restoreCompatibility=enableTemporaryCompatibility();
       }catch(e){restoreCompatibility?.();msg(e.message);return;}

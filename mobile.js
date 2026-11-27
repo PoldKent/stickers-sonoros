@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id);
 const messages={
 language:['Idioma','Language'],title:['Enviar sticker guardado','Send saved sticker'],intro:['Abre tu paquete sonoro y envíalo a tu propio chat de WhatsApp.','Open your sound sticker package and send it to your own WhatsApp chat.'],
 choose:['Seleccionar archivo .sonoro.json','Choose .sonoro.json file'],back:['Volver al editor','Back to editor'],guide:['Guía móvil','Mobile guide'],
-invalid:['Paquete sonoro no válido o dañado.','Invalid or damaged sound sticker package.'],large:['El puente admite hasta 2 MB de imagen y audio combinados.','The bridge accepts up to 2 MB of combined image and audio.'],loading:['Verificando paquete…','Verifying package…'],ready:['Paquete válido. Continúa con el envío a tu WhatsApp.','Valid package. Continue to send to your WhatsApp.'],still:['Imagen fija','Still image'],animated:['Animación','Animation']};
+invalid:['Paquete sonoro no válido o dañado.','Invalid or damaged sound sticker package.'],large:['El puente admite hasta 1 MB de imagen y audio combinados.','The bridge accepts up to 1 MB of combined image and audio.'],loading:['Verificando paquete…','Verifying package…'],ready:['Paquete válido. Continúa con el envío a tu WhatsApp.','Valid package. Continue to send to your WhatsApp.'],still:['Imagen fija','Still image'],animated:['Animación','Animation']};
 let language='es',statusKey='',current=null,serial=0,urls=[];
 try{language=localStorage.getItem('stickers.language')==='en'?'en':'es'}catch{}
 const t=k=>messages[k]?.[language==='en'?1:0]||k;
@@ -20,13 +20,13 @@ function applyLanguage(){
 $('mobile-language').onchange=()=>{language=$('mobile-language').value;try{localStorage.setItem('stickers.language',language)}catch{}applyLanguage()};
 const fail=k=>{throw new Error(k)};
 const tag=(b,i,n)=>String.fromCharCode(...b.subarray(i,i+n));
-function fromBase64(s){if(typeof s!=='string'||!s.length||s.length>2800000||!/^[A-Za-z0-9+/]+={0,2}$/.test(s))fail('invalid');return Uint8Array.from(atob(s),c=>c.charCodeAt(0));}
+function fromBase64(s){if(typeof s!=='string'||!s.length||s.length>1400000||!/^[A-Za-z0-9+/]+={0,2}$/.test(s))fail('invalid');return Uint8Array.from(atob(s),c=>c.charCodeAt(0));}
 async function validate(file){
-  if(!file||file.size>2800000)fail('large');
+  if(!file||file.size>1400000)fail('large');
   let p;try{p=JSON.parse(await file.text())}catch{fail('invalid')}
   if(p?.format!=='stickers-sonoros/1')fail('invalid');
   const w=fromBase64(p.webp),a=fromBase64(p.ogg);
-  if(w.length+a.length>2000000)fail('large');
+  if(w.length+a.length>1000000)fail('large');
   if(w.length<30||a.length<28||tag(w,0,4)!=='RIFF'||tag(w,8,4)!=='WEBP'||tag(a,0,4)!=='OggS'||!new TextDecoder().decode(a.subarray(0,256)).includes('OpusHead'))fail('invalid');
   const d=new DataView(w.buffer),digest=btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.digest('SHA-256',a))));
   let side=0,frames=0,animated=false,linked=false,durationMs=0,i=12;

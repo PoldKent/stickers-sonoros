@@ -1,8 +1,8 @@
 // Offline adapter for a future explicitly authorized linked-device transport.
 // No network, credentials, session management or automatic sending.
 import { createHash } from 'node:crypto';
-export const MAX_MEDIA_BYTES=2_000_000;
-export const MAX_JSON_BYTES=2_800_000;
+export const MAX_MEDIA_BYTES=1_000_000;
+export const MAX_JSON_BYTES=1_400_000;
 const hash=b=>createHash('sha256').update(b).digest('base64');
 const bad=message=>{throw new Error(message)};
 function decode(s){
@@ -13,11 +13,11 @@ function decode(s){
 }
 export function preparePackage(input){
   const raw=Buffer.isBuffer(input)?input:Buffer.from(input);
-  if(raw.length>MAX_JSON_BYTES)bad('JSON exceeds trial budget');
+  if(raw.length>MAX_JSON_BYTES)bad('JSON exceeds size budget');
   const p=JSON.parse(raw.toString('utf8'));
   if(p?.format!=='stickers-sonoros/1')bad('Unknown package');
   const webp=decode(p.webp),ogg=decode(p.ogg);
-  if(webp.length+ogg.length>MAX_MEDIA_BYTES)bad('Media exceeds 2 MB');
+  if(webp.length+ogg.length>MAX_MEDIA_BYTES)bad('Media exceeds 1 MB');
   if(webp.length<30||webp.toString('ascii',0,4)!=='RIFF'||webp.toString('ascii',8,12)!=='WEBP'||webp.readUInt32LE(4)+8!==webp.length)bad('Invalid WebP');
   if(ogg.length<28||ogg.toString('ascii',0,4)!=='OggS'||!ogg.subarray(0,256).includes(Buffer.from('OpusHead')))bad('Invalid Ogg/Opus');
   let side=0,animated=false,meta,frames=0,ms=0,i=12;

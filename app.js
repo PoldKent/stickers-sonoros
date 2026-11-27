@@ -43,7 +43,6 @@ function clearResult() {
   byId('quality-result').hidden = true;
   byId('quality-result').textContent = '';
   byId('size-result').textContent = '';
-  byId('size-warning').hidden = true;
   nativePackage = undefined;
   conversionRequest = undefined;
   byId('native-bridge').hidden = true;
@@ -75,7 +74,6 @@ function sync() {
   byId('export').disabled = busy || importing || loadingVisual || loadingAudio || !!stickerJob || !visual || !audio;
   byId('quality').disabled = busy || importing || !!stickerJob;
   byId('signature').disabled = busy || importing || !!stickerJob;
-  byId('size-budget').disabled = busy || importing || !!stickerJob;
   byId('sound-row').hidden = mode === 'video';
   byId('visual-trim').hidden = !visual || visual.kind === 'image';
   byId('audio-trim').hidden = mode === 'video' || !audio;
@@ -962,7 +960,7 @@ async function importLink(force) {
 
 function selectionInfo() {
   const info = byId('selection-info');
-  if (!visual || !audio) { info.textContent = 'Selecciona un archivo con audio. Animaciones: mínimo 9 FPS; máximo 2 MB.'; return; }
+  if (!visual || !audio) { info.textContent = 'Selecciona un archivo con audio. Animaciones: mínimo 9 FPS; máximo 1 MB.'; return; }
   try {
     const t = mode === 'video' ? trimmed('v') : trimmed('a');
     info.textContent = 'Duración: ' + t.duration.toFixed(2) + ' s.';
@@ -1012,7 +1010,7 @@ function stickerAttribution() {
   return {packName:stickerPackName,publisher:signature ? signature+' · '+stickerAppUrl : stickerAppUrl,signature};
 }
 async function verifySticker(files) {
-  if (!files.webp?.size || !files.ogg?.size || files.webp.size + files.ogg.size > 2000000 || (byId('size-budget').value === 'compatible' && files.webp.size + files.ogg.size > 1000000) || (files.info?.tipo !== 'image' && !(files.info?.fps >= 9))) throw new Error('Los archivos superan el límite del conversor o están vacíos.');
+  if (!files.webp?.size || !files.ogg?.size || files.webp.size + files.ogg.size > 1000000 || (files.info?.tipo !== 'image' && !(files.info?.fps >= 9))) throw new Error('Los archivos superan el límite del conversor o están vacíos.');
   const webp = new Uint8Array(await files.webp.arrayBuffer());
   const ogg = new Uint8Array(await files.ogg.arrayBuffer());
   const read = (b,i,n) => String.fromCharCode(...b.subarray(i,i+n));
@@ -1060,7 +1058,7 @@ async function prepareSticker() {
     if (caps.opus !== true || caps.webpEncode !== 'image/webp') throw new Error('Este navegador no puede crear el sticker con sonido. Prueba Chrome o Edge actualizado.');
     if (controller.signal.aborted) return;
     const files = await window.WAAS.convert({
-      ...request, profile: byId('quality').value, extended: byId('size-budget').value === 'extended', ...stickerAttribution(), signal: controller.signal,
+      ...request, profile: byId('quality').value, ...stickerAttribution(), signal: controller.signal,
       onProgress(message, fraction) { if (!controller.signal.aborted) { state.textContent = message; if (Number.isFinite(fraction)) progress.value = Math.max(0, Math.min(1, fraction)); } }
     });
     const info = await verifySticker(files);
@@ -1074,7 +1072,6 @@ async function prepareSticker() {
     byId('quality-result').textContent = 'Calidad final: ' + info.lado + ' × ' + info.lado + ' px · ' + (info.fps ? info.fps + ' FPS' : 'Imagen fija');
     byId('quality-result').hidden = false;
     byId('size-result').textContent = 'Peso total: '+((files.webp.size+files.ogg.size)/1000000).toFixed(2)+' MB';
-    byId('size-warning').hidden = files.webp.size + files.ogg.size <= 1000000;
     byId('native-bridge').hidden = false;
     byId('sticker-files').hidden = false;
     state.textContent = 'Tu sticker está listo para enviar.';
@@ -1100,7 +1097,7 @@ async function prepareSticker() {
   }
 }
 byId('signature').addEventListener('input',()=>{ if(conversionRequest || nativePackage) {clearResult();sync();if(visual)paint(visual.frame || visual.media);} });
-for(const id of ['quality','size-budget']) byId(id).addEventListener('change', () => { clearResult(); sync(); if (visual) paint(visual.frame || visual.media); });
+for(const id of ['quality']) byId(id).addEventListener('change', () => { clearResult(); sync(); if (visual) paint(visual.frame || visual.media); });
 byId('prepare-sticker').onclick = prepareSticker;
 byId('cancel-sticker').onclick = () => stickerJob?.abort();
 

@@ -42,7 +42,7 @@ try {
   assert.equal(await page.locator('#position').isVisible(),false);
   assert.equal(await page.locator('[data-screen="3"] .step-help').getAttribute('open'),null);
   assert.equal(await page.locator('#quality').isVisible(),true);
-  assert.equal(await page.locator('#size-budget').isVisible(),true);
+  assert.equal(await page.locator('#size-budget').count(),0);
   await page.locator('#signature').fill('Mi firma 🎵');
   await page.locator('#export').click();
   await page.waitForFunction(()=>!document.querySelector('#sticker-files').hidden || !document.querySelector('#prepare-sticker').hidden || (!document.querySelector('#export').disabled && !document.querySelector('#components').hidden),{},{timeout:120000}).catch(async error=>{throw new Error('Conversion timeout: '+await page.locator('#sticker-state').textContent()+' / '+await page.locator('#status').textContent(),{cause:error});});
@@ -58,8 +58,8 @@ try {
   });
   assert.deepEqual(rank,{sharp:256,smooth:64,limit:9,reject:1,floor:9,belowFloor:0,has9:true,capture:[20,20,12,10,9,9],image:1});
   assert.equal(await page.locator('#quality').inputValue(),'sharp');
-  assert.equal(await page.locator('#size-budget').inputValue(),'compatible');
-  assert.deepEqual(await page.evaluate(()=>{const x=window.WAAS._internals;return [x.webpBudget(false,123456),x.webpBudget(true,123456),x.captureFpsFor(10,'sharp',true),x.captureFpsFor(60,'sharp',true)];}),[876544,1876544,30,9]);
+  assert.equal(await page.locator('#size-budget').count(),0);
+  assert.deepEqual(await page.evaluate(()=>{const x=window.WAAS._internals;return [x.webpBudget(123456),window.WAAS.limits.MAX_TOTAL_BYTES,x.captureFpsFor(10,'sharp'),x.captureFpsFor(60,'sharp')];}),[876544,1000000,20,9]);
   const caps=await page.evaluate(()=>window.WAAS.capabilities());
   assert.equal(caps.opus,true,'Chromium must support Opus');
   assert.equal(caps.webpEncode,'image/webp');
@@ -131,7 +131,7 @@ try {
       else if(path==='/v2/status'){assert(paired);assert.equal(request.headers().authorization,sessionToken);body={phase:'ready'}}
       else if(path==='/v2/send'){posts++;assert.equal(request.headers().authorization,sessionToken);assert.deepEqual(request.postDataBuffer(),packageBytes);body={phase:'ready',remaining:5-posts,relayed:true,deliveryConfirmed:false}}
       else throw Error('Unexpected endpoint');
-      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.27.51',...body})});
+      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.27.52',...body})});
     });
     const privatePanel=mobileBridge.locator('.self-bridge');
     assert.equal(await privatePanel.locator('input[type=password]').count(),0);
@@ -262,7 +262,7 @@ try {
     d.setUint32(16,16,true);d.setUint16(20,1,true);d.setUint16(22,1,true);d.setUint32(24,48000,true);d.setUint32(28,96000,true);d.setUint16(32,2,true);d.setUint16(34,16,true);ascii(36,'data');d.setUint32(40,samples*2,true);
     for(let i=0;i<samples;i++)d.setInt16(44+i*2,Math.round(Math.sin(2*Math.PI*440*i/48000)*3000),true);
     const audio=new File([bytes],'long.wav',{type:'audio/wav'});
-    const out=await window.WAAS.convert({visual:{kind:'image',file:image,start:0,dur:240},audio:{file:audio,start:0,dur:240},fit:'repetir',extended:true});
+    const out=await window.WAAS.convert({visual:{kind:'image',file:image,start:0,dur:240},audio:{file:audio,start:0,dur:240},fit:'repetir'});
     const decoded=await new OfflineAudioContext(1,48000,48000).decodeAudioData(await out.ogg.arrayBuffer());
     if(Math.abs(decoded.duration-240)>0.1)throw Error('Unexpected decoded audio duration: '+decoded.duration);
     const encode=async blob=>{const u=new Uint8Array(await blob.arrayBuffer());let s='';for(let i=0;i<u.length;i+=16384)s+=String.fromCharCode(...u.subarray(i,i+16384));return btoa(s);};
@@ -270,7 +270,7 @@ try {
   });
   assert.equal(longPack.info.segundosAudio,240);
   assert.equal(longPack.info.lado,512);
-  assert(Buffer.from(longPack.webp,'base64').length+Buffer.from(longPack.ogg,'base64').length<=2000000);
+  assert(Buffer.from(longPack.webp,'base64').length+Buffer.from(longPack.ogg,'base64').length<=1000000);
   await panel.locator('input[type=file]').setInputFiles({name:'long.sonoro.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(longPack))});
   await wa.waitForFunction(()=>document.querySelector('#ss-local-bridge [role=status]').textContent.includes('240 s'));
   await wa.evaluate(()=>{window.mockCalls.enabled=true;});
@@ -288,7 +288,7 @@ try {
   await enSend.click();
   await panel.getByText('WhatsApp confirmed the send.',{exact:false}).waitFor();
   assert.deepEqual(await wa.evaluate(()=>[window.mockCalls.uploads,window.mockCalls.sends]),[3,3]);
-  // Legacy 4 MB packages remain readable by the bookmark; this is a structural transport test, not real WhatsApp acceptance.
+  // Both sending routes reject packages above 1 MB combined; this is a structural transport test, not real WhatsApp acceptance.
   function paddedPackage(target) {
     const old=Buffer.from(pack.webp,'base64'), pad=target-old.length-8;
     assert(pad>=0&&pad%2===0);
@@ -297,14 +297,14 @@ try {
     return Buffer.from(JSON.stringify({...pack,webp:bytes.toString('base64')}));
   }
   const audioSize=Buffer.from(pack.ogg,'base64').length;
-  const maxWebp=Math.floor((4000000-audioSize)/2)*2;
+  const maxWebp=Math.floor((1000000-audioSize)/2)*2;
   await panel.locator('input[type=file]').setInputFiles({name:'large.sonoro.json',mimeType:'application/json',buffer:paddedPackage(maxWebp)});
   await wa.waitForFunction(()=>!document.querySelector('#ss-local-bridge button').disabled);
   await enSend.click();
   await panel.getByText('WhatsApp confirmed the send.',{exact:false}).waitFor();
   assert.deepEqual(await wa.evaluate(()=>[window.mockCalls.uploads,window.mockCalls.sends]),[4,4]);
   await panel.locator('input[type=file]').setInputFiles({name:'oversize.sonoro.json',mimeType:'application/json',buffer:paddedPackage(maxWebp+2)});
-  await panel.getByText('The sticker and its audio exceed 4 MB.',{exact:true}).waitFor();
+  await panel.getByText('The sticker and its audio exceed 1 MB.',{exact:true}).waitFor();
   assert.equal(await enSend.isDisabled(),true);
   await wa.close();
   await page.locator('#language').selectOption('es');
@@ -454,13 +454,13 @@ try {
     await cadencePage.locator('#visual').setInputFiles(file);
     const checked=await cadencePage.evaluate(async()=>{
       const file=document.querySelector('#visual').files[0];
-      const out=await WAAS.convert({visual:{kind:'video',file,start:0,dur:38},audio:{file,start:0,dur:38},mode:{fit:'contain',rotation:0,zoom:100,x:0,y:0},side:96,fps:9,extended:true});
+      const out=await WAAS.convert({visual:{kind:'video',file,start:0,dur:38},audio:{file,start:0,dur:38},mode:{fit:'contain',rotation:0,zoom:100,x:0,y:0},side:64,fps:9});
       const chunks=WAAS._internals.readChunks(new Uint8Array(await out.webp.arrayBuffer())).filter(c=>c.fourcc==='ANMF');
       const times=chunks.map(c=>c.data[12]+256*c.data[13]+65536*c.data[14]);
       const unique=[0,1,2].map(i=>new Set(chunks.slice(i*114,(i+1)*114).map(c=>Array.from(c.data.subarray(16)).join(','))).size);
       return {frames:chunks.length,ms:times.reduce((a,b)=>a+b,0),max:Math.max(...times),unique,bytes:out.webp.size+out.ogg.size};
     });
-    assert.equal(checked.frames,342);assert.equal(checked.ms,38000);assert(checked.max<=112);assert(checked.unique.every(n=>n>50));assert(checked.bytes<=2000000);
+    assert.equal(checked.frames,342);assert.equal(checked.ms,38000);assert(checked.max<=112);assert(checked.unique.every(n=>n>50));assert(checked.bytes<=1000000);
   }finally{await cadencePage.close();rmSync(cadenceTemp,{recursive:true,force:true});}
   const qualityPage=await browser.newPage();
   const qualityTemp=mkdtempSync(join(tmpdir(),'sticker-quality-'));
@@ -472,7 +472,6 @@ try {
     await qualityPage.waitForFunction(()=>!document.querySelector('#export').disabled);
     await qualityPage.locator('#wizard-next').click();
     await qualityPage.locator('#wizard-next').click();
-    await qualityPage.locator('#size-budget').selectOption('compatible');
     await qualityPage.locator('#export').click();
     await qualityPage.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
     const result=await qualityPage.evaluate(async()=>{
@@ -485,15 +484,8 @@ try {
     assert.match(await qualityPage.locator('#quality-result').textContent(),/Calidad final:/);
     const fps=Number((await qualityPage.locator('#quality-result').textContent()).match(/(\d+) FPS/)[1]);
     assert(fps>=9);
-    await qualityPage.locator('#size-budget').selectOption('extended');
-    assert.equal(await qualityPage.locator('#sticker-files').isVisible(),false);
-    await qualityPage.locator('#export').click();
-    await qualityPage.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
-    const extendedSizes=await qualityPage.evaluate(async()=>Promise.all(['sticker-image','sticker-audio'].map(async id=>(await (await fetch(document.getElementById(id).src)).blob()).size)));
-    assert(extendedSizes[0]>0&&extendedSizes[1]>0&&extendedSizes[0]+extendedSizes[1]<=2000000);
-    assert(Number((await qualityPage.locator('#quality-result').textContent()).match(/(\d+) FPS/)[1])>=9);
+    assert.equal(await qualityPage.locator('#size-warning').count(),0);
     assert.match(await qualityPage.locator('#size-result').textContent(),/Peso total:/);
-    assert.equal(await qualityPage.locator('#size-warning').isVisible(),(extendedSizes[0]+extendedSizes[1]>1000000));
     await qualityPage.locator('#quality').selectOption('balanced');
     assert.equal(await qualityPage.locator('#sticker-files').isVisible(),false);
   } finally {await qualityPage.close();rmSync(qualityTemp,{recursive:true,force:true});}

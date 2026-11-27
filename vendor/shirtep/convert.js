@@ -7,12 +7,9 @@
   const log = (lvl, ev, data) => (WAAS.log ? WAAS.log(lvl, ev, data) : console.log(ev, data));
 
   const SIDE = 512;                    // lado máximo (WhatsApp usa 512; más grande no se ve mejor y pesa 4 veces más)
-  const MAX_STICKER_BYTES = 1_000_000; // el servidor de WhatsApp rechaza stickers más pesados (HTTP 413)
-  const MAX_TOTAL_BYTES = 2_000_000; // combined trial budget, WhatsApp acceptance not verified
-  const SAFE_BYTES = 900_000;
-  const MAX_AUDIO_BYTES = 1_000_000;   // límite de WhatsApp Web para el audio del sticker
-  function webpBudget(extended, audioBytes = 0) {
-    return (extended ? MAX_TOTAL_BYTES : MAX_STICKER_BYTES) - audioBytes;
+  const MAX_TOTAL_BYTES = 1_000_000; // límite combinado del proyecto: WebP + Ogg
+  function webpBudget(audioBytes = 0) {
+    return MAX_TOTAL_BYTES - audioBytes;
   }
   function estimatedAudioBytes(dur) {
     return Math.min(MAX_TOTAL_BYTES - 65536, Math.ceil(dur * 32000 / 8 * 1.2 + 4096));
@@ -36,8 +33,7 @@
     if (profile === "balanced") return side/512*180 + Math.min(20,fps)*7;
     return side/512*480 + Math.min(30,fps)*4;
   }
-  function captureFpsFor(dur, profile = "sharp", extended = false) {
-    if (extended && profile === "sharp") return dur <= 10 ? 30 : dur <= 20 ? 20 : dur <= 30 ? 15 : 9;
+  function captureFpsFor(dur, profile = "sharp") {
     if (profile === "sharp") return dur <= 10 ? 20 : dur <= 20 ? 12 : dur <= 30 ? 10 : 9;
     if (profile === "balanced") return dur <= 10 ? 25 : dur <= 20 ? 20 : dur <= 40 ? 12 : 9;
     return dur <= 10 ? 30 : dur <= 20 ? 25 : dur <= 40 ? 20 : 15;
@@ -541,13 +537,13 @@
 
   // Codifica el sticker para un lado y fps dados. Empieza con la calidad del lado y la baja
   // solo si hace falta para no pasar de 1 MB.
-  async function encodeWebp(an, side, fps, exifMeta, { onProgress, signal, syncMs = 0, still = false, maxBytes = MAX_STICKER_BYTES }) {
+  async function encodeWebp(an, side, fps, exifMeta, { onProgress, signal, syncMs = 0, still = false, maxBytes = MAX_TOTAL_BYTES }) {
     const { frames, dur, captureFps } = an;
     const canvas = new OffscreenCanvas(side, side);
     const ctx = canvas.getContext("2d");
     const p = plan(frames.length, dur, fps, captureFps);
     const fixedCadence = an.visual.kind !== 'image';
-    const qStart = an.extended ? Math.min(0.95,(Q_BY_SIDE[side] || 0.5)+0.15) : (Q_BY_SIDE[side] || 0.5);
+    const qStart = (Q_BY_SIDE[side] || 0.5);
     const qList = [];
     for (let q = qStart; q >= Q_MIN - 1e-9; q -= 0.1) qList.push(+q.toFixed(2));
     if (qList[qList.length - 1] > Q_MIN) qList.push(Q_MIN);
@@ -844,7 +840,7 @@
   //   "independiente" cada uno conserva su duración (WhatsApp no exige que coincidan).
   // Si la animación es más larga que el audio, con "repetir"/"congelar" se corta al largo del audio.
   // Una imagen fija siempre dura lo que el audio.
-  async function analyze({ file, start = 0, duration, mode = "ajustar", visual, audio, fit = "repetir", profile = "sharp", extended = false, onProgress, signal }) {
+  async function analyze({ file, start = 0, duration, mode = "ajustar", visual, audio, fit = "repetir", profile = "sharp", onProgress, signal }) {
     profile = profileOf(profile);
     if (!visual) visual = { kind: "video", file, start, dur: duration };
     if (!audio) audio = { file: visual.file, start: visual.start, dur: visual.dur };
@@ -853,7 +849,7 @@
     const vDur = visual.kind === "image" ? audio.dur : visual.dur;
     const dur = visual.kind === "image" || fit !== "independiente" ? audio.dur : vDur; // duración del sticker
     const capDur = Math.min(vDur, dur);                                                // lo que se captura
-    const base = { file: visual.file, start: visual.start || 0, visual, audio, fit, dur, vDur, mode, extended: extended === true };
+    const base = { file: visual.file, start: visual.start || 0, visual, audio, fit, dur, vDur, mode };
 
     if (visual.kind === "image") {
       // Un solo cuadro que dura todo el audio: no hay combinaciones de fps que elegir.
@@ -866,7 +862,7 @@
       return an;
     }
 
-    const captureFps = captureFpsFor(dur, profile, base.extended);
+    const captureFps = captureFpsFor(dur, profile);
     const slots = Math.ceil(capDur * captureFps);
     if (slots * 64 * 64 * 4 > CAPTURE_MEM_BYTES) throw new Error('El tramo supera la memoria de captura disponible. Reduce la resolución del archivo original o acorta el tramo.');
     const captureSide = Math.max(64, Math.min(SIDE, Math.floor(Math.sqrt(CAPTURE_MEM_BYTES / (4 * slots)))));
@@ -912,8 +908,8 @@
       }
       prog("Calculando opciones…", 0.8 + (0.2 * ++done) / sides.length);
     }
-    const estimatedAudio=Math.min((base.extended?MAX_TOTAL_BYTES:MAX_STICKER_BYTES)-65536,estimatedAudioBytes(audio.dur));
-    const safeBytes = Math.max(1,webpBudget(base.extended,estimatedAudio)*0.95);
+    const estimatedAudio=estimatedAudioBytes(audio.dur);
+    const safeBytes = Math.max(1,webpBudget(estimatedAudio)*0.95);
     const overhead = 32; // cabecera ANMF + chunk
     const cells = [];
     for (const side of SIDES) for (const fps of FPS_LIST) {
@@ -958,7 +954,7 @@
     log("info", "crear:parametros", { side, fps, compensacionMs: syncMs, estatico: still, estimado: cell && cell.est, estado: cell && cell.estado });
 
     // Audio: la tasa de bits baja en clips largos para no pasar de 1 MB (límite de WhatsApp).
-    const audioBudget = (an.extended ? MAX_TOTAL_BYTES : MAX_STICKER_BYTES) - 65536;
+    const audioBudget = MAX_TOTAL_BYTES - 65536;
     let bitrate = Math.max(6000, Math.min(32000, Math.floor((0.9 * audioBudget * 8) / A.dur)));
     if ((bitrate / 8) * A.dur > 0.97 * audioBudget) throw new Error('El audio no cabe en el presupuesto de tamaño. Reduce el tramo.');
     if (an.visual.kind !== 'image' && !(fps >= 9)) throw new Error('Las animaciones requieren al menos 9 FPS.');
@@ -981,7 +977,8 @@
     if (!oggCheck.ok) throw new Error("El audio generado no se puede reproducir: " + oggCheck.error);
 
     const exifMeta = await stickerMeta({ packName, publisher, soundSha });
-    const w = await encodeWebp(an, side, fps, exifMeta, { onProgress: prog, signal, syncMs, still, maxBytes: webpBudget(an.extended, ogg.length) });
+    const w = await encodeWebp(an, side, fps, exifMeta, { onProgress: prog, signal, syncMs, still, maxBytes: webpBudget(ogg.length) });
+    if(w.bytes.length+ogg.length>MAX_TOTAL_BYTES)throw new Error('El sticker y su audio superan 1 MB.');
     if(an.visual.kind!=='image' && w.frames/dur<9-1e-6)throw new Error('Las animaciones requieren al menos 9 FPS.');
     const info = {
       tipo: an.visual.kind, ajuste: an.fit,
@@ -997,9 +994,9 @@
   }
 
   // Atajo (pruebas): analizar + elegir (automático o fijo) + crear.
-  async function convert({ file, start = 0, duration, mode = "ajustar", visual, audio, fit, still = false, syncMs = 0, side = "auto", fps = "auto", profile = "sharp", extended = false, packName = "", publisher = "", onProgress, signal }) {
+  async function convert({ file, start = 0, duration, mode = "ajustar", visual, audio, fit, still = false, syncMs = 0, side = "auto", fps = "auto", profile = "sharp", packName = "", publisher = "", onProgress, signal }) {
     profile = profileOf(profile);
-    const an = await analyze({ file, start, duration, mode, visual, audio, fit, profile, extended, onProgress, signal });
+    const an = await analyze({ file, start, duration, mode, visual, audio, fit, profile, onProgress, signal });
     try {
       const eligible = an.cells.some(c=>c.estado==='ok'||c.estado==='baja') ? an.cells : an.cells.map(c=>c.estado==='no'?{...c,estado:'baja'}:c);
       const cells = rankedCells(eligible, profile, an.visual.kind === "image")
@@ -1048,6 +1045,6 @@
   WAAS.retagWebp = retagWebp;
   WAAS.create = create;
   WAAS.release = release;
-  WAAS.limits = { SIDE, MAX_STICKER_BYTES, MAX_TOTAL_BYTES, MAX_AUDIO_BYTES, SIDES, FPS_LIST };
+  WAAS.limits = { SIDE, MAX_TOTAL_BYTES, SIDES, FPS_LIST };
   WAAS._internals = { buildOggOpus, buildAnimatedWebp, buildStillWebp, fitTimeline, exifWhatsApp, readChunks, plan, sha256b64, score, rankedCells, captureFpsFor, webpBudget, estimatedAudioBytes };
 })();

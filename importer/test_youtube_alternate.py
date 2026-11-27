@@ -1,7 +1,6 @@
 import tempfile
 import unittest
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 import server
@@ -47,3 +46,13 @@ class AlternateTests(unittest.TestCase):
                 server.fetch_video(URL, Path(directory))
             self.assertEqual(error.exception.code, "SOURCE_FORMAT")
             alternate.assert_called_once_with(URL, Path(directory))
+
+    @patch("server.YOUTUBE_ENGINE", "pytubefix")
+    @patch("server.ALTERNATE_VERSION", "11.3.0")
+    @patch("server.fetch_youtube_alternate", return_value=None)
+    @patch("server.run")
+    def test_independent_engine_does_not_retry_denied_source(self, run, alternate):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(server.ImportFailure):
+                server.fetch_video(URL, Path(directory))
+        run.assert_not_called()

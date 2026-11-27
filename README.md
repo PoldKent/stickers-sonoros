@@ -1,133 +1,79 @@
 # Stickers Sonoros
 
-![Stickers Sonoros — identidad visual](docs/images/brand.svg)
+![Stickers Sonoros](docs/images/brand.svg)
 
-**Crea stickers con sonido para WhatsApp en cuatro pasos sencillos.**  
-Video, imagen o GIF + audio · 9+ FPS en animaciones · hasta 2 MB combinados · sin límite fijo de duración.
+**Crea y envía stickers con sonido desde tu celular o computadora.**
 
-[**Abrir la app oficial**](https://poldkent.github.io/stickers-sonoros/) · [English](README.en.md) · [Guía móvil](docs/MOBILE.md#español) · [Apoyar](SUPPORT.md)
+[**Abrir la web oficial**](https://poldkent.github.io/stickers-sonoros/) · [English](README.en.md) · [Guía móvil](docs/MOBILE.md#español) · [Apoyar](SUPPORT.md)
 
-[![Pruebas automatizadas](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![API de producción](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
+[![Pruebas](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![Producción](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-**Última versión con envío móvil confirmado por el operador: 2026.11.26.44.** [Pruebas del editor](https://github.com/PoldKent/stickers-sonoros/actions/runs/45936518113), [publicación web](https://github.com/PoldKent/stickers-sonoros/actions/runs/45936517767) y [diagnóstico del importador](https://github.com/PoldKent/stickers-sonoros/actions/runs/45936642813) aprobados sobre bcf7d48. La .49 sustituye el acceso reservado por sesiones individuales; requiere activación y validación real del envío a chat propio. Render importador es exclusivamente la API y redirige su raíz con HTTP 308 a la web oficial. El puente separado no es una segunda interfaz web.
+**Versión actual del código: 2026.11.27.50.** El operador confirmó el primer envío a chat propio de .49. Las [pruebas .49](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publicación](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) y [diagnóstico del importador](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) finalizaron correctamente. Consulta las ejecuciones actuales para .50. No equivale a una auditoría externa de seguridad.
 
-## Guía rápida
+## Cuatro pasos
 
-![Asistente de cuatro pantallas / esquema ilustrativo](docs/images/interface.svg)
+![Flujo de cuatro etapas](docs/images/workflow.svg)
 
-| Pantalla | Qué hacer |
-|---|---|
-| **1. Importar** | Elige Video, Imagen + audio o Video/GIF + audio. Pega un enlace HTTPS público o selecciona un archivo local; añade una pista de audio si corresponde. Pulsa **Siguiente** cuando estén listos el contenido y el sonido. |
-| **2. Editar** | Reproduce la vista previa, recorta inicio y final, explora la línea temporal y ajusta encuadre, zoom, posición y rotación. Usa **Usar completo** para restablecer el recorte. Pulsa **Siguiente**. |
-| **3. Crear** | Elige calidad y presupuesto de tamaño, añade opcionalmente una firma y pulsa **Crear sticker sonoro**. Revisa el WebP y audio generados, resolución, FPS y peso total. Pulsa **Siguiente** cuando termine la conversión. |
-| **4. Enviar** | Guarda el paquete `nombre-original.sonoro.json` y sigue las instrucciones de WhatsApp Web descritas abajo. |
+1. **Importar:** selecciona un video, imagen o GIF y audio, o pega un enlace multimedia HTTPS compatible.
+2. **Editar:** ajusta recorte, encuadre, zoom, posición y rotación; puedes usar el contenido completo.
+3. **Crear:** selecciona calidad y presupuesto (1 MB recomendado, 2 MB experimental), añade una firma opcional y genera el sticker.
+4. **Enviar:** conecta tu WhatsApp y confirma el envío a tu propio chat. En computadora también puedes elegir WhatsApp Web.
 
-**Anterior** y **Siguiente** conservan el proyecto y sus ajustes. Los botones numerados también permiten navegar a las etapas accesibles. El envío se desbloquea cuando existe un paquete válido. Cambiar el origen, edición, firma o calidad invalida el resultado anterior; vuelve a generarlo. Usa **Probar un ejemplo** en Importar si no tienes un archivo.
+La edición es local; los enlaces públicos usan la API auxiliar. Prueba el ejemplo integrado si no tienes medios. Los botones de navegación conservan el proyecto; cambiar los medios o ajustes invalida el resultado anterior.
 
-![Importar, editar, crear y enviar](docs/images/workflow.svg)
+## Envío desde el celular
 
-## Edición y calidad
+No necesitas computadora, instalar software ni una clave del administrador. En Enviar, pulsa **Comenzar**, introduce tu número internacional propio, acepta la vinculación y completa Turnstile. En WhatsApp abre **Dispositivos vinculados → Vincular dispositivo → Vincular con número de teléfono** e introduce el código de la web. Regresa, pulsa **Enviar a mi propio chat** y confirma. Desconecta y comprueba los dispositivos vinculados al terminar.
 
-- Se selecciona el archivo completo inicialmente, sin límite temporal fijo. La línea bajo la vista previa muestra posición y duración total, con marcadores de inicio/final y reproducción desde el cursor dentro del tramo.
-- El lienzo de 512 × 512 permite posición exacta (0,1 px), zoom (0,01 %), rotación en pasos de 90°, ajustar/rellenar y alineación magnética. **Centrar** restablece solo la posición; las guías no se exportan. **Usar fotograma + audio** crea un sticker fijo.
-- Todos los modos convierten directamente el archivo original y la pista de audio seleccionada con el encuadre, zoom y rotación elegidos, sin grabar un video intermedio. Los intervalos del WebP animado no se fusionan en pausas largas. Todos los perfiles mantienen al menos 9 FPS codificados; las fuentes estáticas o cuadros repetidos del original no ganan movimiento artificial.
-- **Máxima nitidez** prioriza resolución; **Equilibrado** y **Máxima fluidez** ofrecen otras combinaciones. La resolución de salida y compresión se adaptan al presupuesto. Si no cabe con al menos 9 FPS, reduce el tramo o usa un fotograma fijo.
+Si ya tienes un paquete, abre [Enviar sticker guardado](https://poldkent.github.io/stickers-sonoros/mobile.html). El archivo JSON no es un formato de sticker importable directamente por WhatsApp; no lo adjuntes al chat.
 
-| Límite | Opcional: ampliado experimental | Predeterminado: recomendado |
-|---|---|---|
-| WebP + Ogg combinados | 2.000.000 bytes | 1.000.000 bytes combinados |
+## Envío desde computadora
+
+WhatsApp App utiliza el mismo flujo individual que el celular. Si prefieres WhatsApp Web, selecciona esa opción en Enviar, descarga el paquete, instala o actualiza el marcador en los favoritos, abre WhatsApp Web y el chat deseado, ejecuta el marcador, selecciona el JSON y confirma el destinatario. El marcador funciona dentro del navegador y no necesita extensiones.
+
+## Calidad y formatos
+
+| Característica | Recomendado | Ampliado experimental |
+|---|---:|---:|
+| WebP + Ogg/Opus | 1 MB total | 2 MB total |
+| Resolución máxima | 512 × 512 | 512 × 512 |
 | Animación | ≥9 FPS | ≥9 FPS |
 | Duración | Sin límite fijo | Sin límite fijo |
 
-La envoltura JSON pesa más por Base64. Se mantienen las protecciones de entrada local (80 MiB), memoria, códecs y tiempo/peso de las solicitudes del servidor. WhatsApp puede rechazar stickers largos o grandes; 2 MB es el presupuesto experimental del editor, no un límite garantizado por WhatsApp. Los archivos nuevos se limitan a 2.000.000 bytes combinados; el marcador de escritorio conserva la lectura de paquetes anteriores de hasta 4 MB; el puente móvil admite hasta 2 MB. Si falla el envío, usa Compatible (1 MB total).
+El conversor adapta resolución y compresión al presupuesto sin grabar un video intermedio. El JSON pesa más por Base64. Hay límites de memoria, códecs, entrada (80 MiB) y tiempo de procesamiento. Si no cabe a 9 FPS, acorta el tramo o usa una imagen fija. WhatsApp puede rechazar archivos, especialmente de 2 MB. El marcador de escritorio conserva compatibilidad con paquetes antiguos de hasta 4 MB; el envío individual admite hasta 2 MB. La firma opcional (40 caracteres) y la URL oficial se incluyen en EXIF, no sobre la imagen; SHA-256 vincula el audio.
 
-### Firma del creador
+## Privacidad y seguridad
 
-Añade opcionalmente un nombre o alias (40 caracteres). El EXIF conserva el paquete **Creado en Stickers Sonoros**, la URL oficial y la firma opcional. La firma es pública para los destinatarios, no se dibuja sobre la imagen. El audio se vincula con SHA-256; WhatsApp decide cómo mostrar la atribución.
+- No pedimos contraseña de WhatsApp, PIN ni códigos SMS. La vinculación se autoriza en WhatsApp.
+- Turnstile limita la automatización; cada sesión utiliza una clave aleatoria en memoria del navegador. El servidor comprueba la identidad vinculada y solo permite enviar a su propio número.
+- No solicitamos el historial completo ni ofrecemos bandeja de entrada. **Vincular concede a un dispositivo del servidor capacidad potencial de acceder a mensajes.** No es una garantía de confidencialidad absoluta. El transporte no oficial podría provocar restricciones; recomendamos una cuenta secundaria propia.
+- Sesiones temporales de hasta 15 minutos y cinco envíos, dos sesiones simultáneas en la beta. Se intenta cerrar el dispositivo y borrar credenciales temporales; comprueba manualmente Dispositivos vinculados. No hay reintentos automáticos tras entregas inciertas.
+- Los archivos se editan localmente; solo se transmite el paquete al confirmar el envío. Las importaciones remotas se procesan en una API separada. No se guarda un catálogo de stickers.
 
-### Fuentes de importación
-
-Se admiten video, imagen, GIF y audio locales, medios HTTPS públicos y páginas/enlaces sociales compatibles. La API de Render gestiona importaciones remotas compatibles; la edición es local. Si falla TikTok, la alternativa externa [SnapTik](https://snaptik.fi/) es manual y solo para contenido autorizado; la app no envía automáticamente tu enlace.
-
-## Enviar a WhatsApp
-
-En la pantalla 4, **Enviar**:
-
-1. Pulsa **Guardar sticker sonoro** para descargar `nombre-original.sonoro.json`. No adjuntes directamente el JSON al chat.
-2. Muestra la barra de favoritos (Ctrl + Shift + B; Mac: ⌘ + Shift + B). Arrastra **Enviar sticker sonoro** a ella o pulsa **Copiar dirección del marcador** y pégala en la URL de un favorito nuevo. Sustituye los favoritos antiguos.
-3. Pulsa **Abrir WhatsApp Web**, inicia sesión y abre tu propio chat para la primera prueba.
-4. Pulsa el favorito dentro de WhatsApp Web, selecciona el paquete, pulsa **Enviar sticker con sonido**, confirma el destinatario y comprueba la reproducción. Si se ofrece compatibilidad temporal con sonido, puede ser necesario activarla.
-
-Es una integración no oficial adaptada de Shirtep; la sesión permanece en el navegador. La aceptación depende de WhatsApp y de la cuenta. Si falla, prueba Compatible o un tramo más corto. No requiere extensiones.
-
-### Android y iPhone
-
-En el teléfono, crea el sticker y pulsa Enviar a mi WhatsApp. Introduce tu número propio, acepta la vinculación y confirma el envío a tu propio chat. También puedes [enviar un sticker guardado](https://poldkent.github.io/stickers-sonoros/mobile.html). La conexión no es oficial y el acceso individual aún requiere habilitación y pruebas reales.
-
-## Verificación y compatibilidad
-
-| Área | Evidencia |
-|---|---|
-| Asistente de cuatro pantallas y traducciones | CI de navegador aprobada en .38 |
-| Web oficial única y API sincronizada | Diagnóstico .38 aprobado: HTTP 308 en raíz de Render, 404 en app.js, canonical y noindex correctos |
-| Importador público en producción | HTTP 200, MP4 de 788.493 bytes; CORS de ambas rutas aprobado (OPTIONS 204) |
-| Cadencia de animación de 38 s | CI .36 comprueba 342 cuadros ANMF, tiempos y movimiento a lo largo del clip |
-| Imagen + audio de 240 s | CI .35: generación, audio decodificado y envío simulado |
-| Envío real a WhatsApp | Confirmado por el usuario en .12; faltan pruebas reales de archivos largos/grandes |
-| TikTok | Clip de 27,14 s confirmado por el usuario en .18; no universal |
-| Diseño adaptable español/inglés | Chromium a 320, 390, 740 y 1024 px; no certifica dispositivos físicos |
-
-Usa Chrome o Edge actualizados para WebCodecs, WebP y Opus. Los GIF animados requieren ImageDecoder. Importa solo contenido que tengas permiso de utilizar. Las [capturas reales de CI](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) son artefactos temporales; los gráficos del README son esquemas, no capturas.
+Consulta [guía móvil](docs/MOBILE.md), [configuración del puente](experiments/mobile-bridge/README.md) y [auditoría técnica](docs/AUDIT.md). Las pruebas de aislamiento automatizadas no sustituyen pruebas reales simultáneas con cuentas diferentes ni una auditoría independiente.
 
 ## Desarrollo y despliegue
 
-**Editor estático:** desde la raíz, ejecuta `python -m http.server 8000` y abre `http://localhost:8000`. Para importar redes sociales, usa el servicio completo.
-
-```sh
-docker build --target local-editor -t stickers-sonoros .
-docker run --rm -p 8080:8080 stickers-sonoros
-```
-
-Abre `http://localhost:8080`. El Dockerfile de la raíz es el único archivo de construcción.
-
-- GitHub Pages es la única web oficial y sirve el frontend desde `main`. Su URL canónica también se incluye en la firma EXIF de los stickers.
-- Render aloja exclusivamente la API auxiliar, configurada en `index.html`; su raíz redirige permanentemente a la web oficial (HTTP 308). No sirve el editor ni sus archivos estáticos. Las respuestas llevan `X-Robots-Tag: noindex, nofollow`.
-- Render utiliza `render.yaml`, la imagen Docker de producción (sin frontend) y el plan gratuito con despliegue tras superar las comprobaciones. Si no se actualiza automáticamente, usa **Manual sync** en el Blueprint y **Manual Deploy** en el servicio.
-- `/health` informa de versión, capacidades y versión de yt-dlp. El plan gratuito puede entrar en reposo.
-
-| Ruta | Propósito |
+| Servicio | Función |
 |---|---|
-| GET/HEAD `/` | Redirección permanente a la web oficial |
-| GET `/health` | Estado y capacidades |
-| POST `/api/import` | Video social público compatible |
-| POST `/api/media` | Recurso HTTPS público o HTML inerte |
+| [GitHub Pages](https://poldkent.github.io/stickers-sonoros/) | Única web oficial |
+| [Render importador](https://stickers-sonoros.onrender.com/health) | API `/api/media`, `/api/import`, `/health` |
+| [Render Bridge](https://stickers-sonoros-bridge.onrender.com/health) | API individual `/v2` y `/health` |
 
-## Pruebas
+Las raíces de Render redirigen a la web oficial. El importador usa el Dockerfile raíz; el puente utiliza `experiments/mobile-bridge/Dockerfile.web`. Las claves de Turnstile se configuran en Render, nunca en GitHub. Los servicios gratuitos pueden entrar en reposo.
 
 ```sh
-node --check app.js
-node --check i18n.js
+python -m http.server 8000
+# En otra terminal con FFmpeg, Playwright y Chromium instalados:
+node tests/smoke.mjs
+node --test experiments/mobile-bridge/*.test.mjs
 python -m unittest discover -s importer -p 'test_*.py'
 python tests/test_http.py
 python tests/test_format_selection.py
 ```
 
-Para las pruebas de navegador instala Playwright y Chromium en el entorno de desarrollo, inicia el servidor estático en el puerto 8000 y ejecuta `node tests/smoke.mjs`. Las pruebas de navegador utilizan FFmpeg para crear medios de prueba; las de selección necesitan yt-dlp. [Consulta las ejecuciones de CI](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) y [el diagnóstico del servicio real](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml). Las imágenes del README son esquemas ilustrativos; las capturas reales de Chromium se adjuntan a las ejecuciones de CI como artefactos cuando se generan.
-
-## Privacidad y límites
-
-El procesamiento de archivos ocurre localmente por defecto. La importación mediante servidor consulta la URL pública y elimina los archivos temporales después de responder. Los clips editados no se suben al servidor. El importador limita tamaño, tiempo y concurrencia, y el lector HTTPS comprueba dominios, DNS público y TLS. CORS no es autenticación ni sustituye controles de salida de red y aislamiento de infraestructura. No se deben configurar secretos en la instancia pública de importación. Véase [auditoría y seguridad](docs/AUDIT.md).
-
-## ❤️ Apoya el proyecto
-
-Si deseas apoyar voluntariamente el mantenimiento no comercial, consulta [las instrucciones de donación USDC o BBTC por Ethereum (ERC-20)](SUPPORT.md). No uses BTC nativo, otros tokens ni otras redes. La aplicación no vende funciones, no requiere pagos y no automatiza transferencias.
+Las pruebas de selección requieren yt-dlp. Para desarrollo completo local, `docker build --target local-editor -t stickers-sonoros .` y `docker run --rm -p 8080:8080 stickers-sonoros`. El puente real restringe el origen a la web oficial. Los diagnósticos verifican versiones, redirecciones, CORS y acceso sin sesión; no vinculan cuentas. Una importación social real requiere una URL pública autorizada para la prueba opcional. [Historial de CI](https://github.com/PoldKent/stickers-sonoros/actions).
 
 ## Créditos y licencia
 
-El conversor y el mecanismo de publicación adaptado proceden de [Shirtep/WA-audio-stickers, commit 25f7909](https://github.com/Shirtep/WA-audio-stickers/tree/25f790945134f395c4bed4f0deea380ac3a2b778). Se conserva el [aviso de autoría y licencia PolyForm Noncommercial 1.0.0](vendor/shirtep/LICENSE.md); no se otorgan derechos de uso comercial ni se implica asociación oficial con WhatsApp, TikTok o Binance. Confirma con el titular de los derechos cualquier uso o financiación que pueda constituir explotación comercial.
-
-### .49 — Sesión individual para todos / Individual sessions for everyone
-
-Se sustituye el acceso de administrador por una única modalidad de envío personal: número propio, consentimiento, verificación antibots y vinculación de WhatsApp. Cada sesión tiene una clave aleatoria de navegador que nunca debe compartirse. El destinatario se deriva de la identidad autenticada y debe coincidir con el número vinculado. No existe una ruta alternativa con token compartido ni números fijos. La beta comienza con dos sesiones simultáneas, seis solicitudes de vinculación cada diez minutos y una por número en esa ventana, cinco envíos y 15 minutos por sesión. Se mantiene el límite de 2 MB combinado y sin duración fija de archivo. No se solicita historial completo; un dispositivo vinculado puede acceder a mensajes, y el transporte no oficial puede ocasionar restricciones. Se intenta cerrar sesión y borrar credenciales temporales; comprueba manualmente Dispositivos vinculados. Activación pendiente de Turnstile y validación con cuentas propias distintas. No se garantiza entrega a chat propio hasta una prueba real.
-
-The administrator-only flow is replaced with one self-send method: own number, consent, bot challenge and device linking. Each browser session has its own random token. The destination is derived from the authenticated identity and must match the linked number; no shared token or fixed recipients. Beta capacity: two concurrent sessions, six linking attempts per ten minutes, one per phone in that window, five sends and 15 minutes per session. Combined 2 MB cap and no fixed file duration. Full history sync is disabled, but linked devices can access messages; unofficial transport may restrict accounts. Best-effort logout and temporary credential cleanup; manually check Linked devices. Activation requires Turnstile and real testing on separate owned accounts. Self-chat delivery is not yet proven.
+Importa únicamente contenido autorizado. Conversor y marcador adaptados de [Shirtep/WA-audio-stickers (25f7909)](https://github.com/Shirtep/WA-audio-stickers/tree/25f790945134f395c4bed4f0deea380ac3a2b778), bajo [PolyForm Noncommercial 1.0.0](vendor/shirtep/LICENSE.md). Puente experimental basado en Baileys y [wa-sound-sticker](https://github.com/alkhrzmy/wa-sound-sticker). No somos un producto oficial de WhatsApp. No se otorgan derechos comerciales adicionales; consulta al titular de los derechos para usos comerciales. El apoyo al mantenimiento no comercial es voluntario: [SUPPORT.md](SUPPORT.md).

@@ -14,6 +14,16 @@ try {
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto('http://127.0.0.1:8000');
   assert.equal(await page.locator('html').getAttribute('data-editor-ready'),'true');
+  assert.equal(await page.locator('#mobile-onboarding').isVisible(),true);
+  assert.match(await page.locator('#mobile-onboarding').textContent(),/Todo desde tu celular/);
+  assert.equal(await page.locator('#mobile-onboarding details').getAttribute('open'),null);
+  await page.locator('#mobile-onboarding summary').click();
+  assert.match(await page.locator('#mobile-onboarding').innerText(),/dispositivo vinculado puede acceder a mensajes/);
+  await page.locator('#language').selectOption('en');
+  assert.match(await page.locator('#mobile-onboarding').innerText(),/Everything from your phone/);
+  assert.match(await page.locator('#mobile-onboarding').innerText(),/linked device can access messages/);
+  await page.locator('#language').selectOption('es');
+  await page.locator('#mobile-onboarding summary').click();
   await page.locator('#load-link').click();
   assert.match(await page.locator('#link-status').textContent(),/Pega primero/);
   assert.equal(await page.locator('#link-status').getAttribute('data-state'),'error');
@@ -23,6 +33,7 @@ try {
   assert.equal(await page.locator('#export').isVisible(),false);
   await page.locator('#wizard-next').click();
   assert.equal(await page.locator('#position').isVisible(),true);
+  assert.equal(await page.locator('#mobile-onboarding').isVisible(),false);
   assert.equal(await page.locator('#visual').isVisible(),false);
   await page.locator('#wizard-next').click();
   assert.equal(await page.locator('#position').isVisible(),false);
@@ -61,9 +72,9 @@ try {
   assert.equal(await page.locator('#wa-bookmark').isVisible(),false);
   await page.locator('[data-send-method=web]').click();
   assert.equal(await page.locator('#wa-bookmark').isVisible(),true);
-  assert.equal(await page.locator('#private-mobile-bridge').isVisible(),false);
+  assert.equal(await page.locator('#self-send-bridge').isVisible(),false);
   await page.locator('[data-send-method=app]').click();
-  assert.equal(await page.locator('#private-mobile-bridge').isVisible(),true);
+  assert.equal(await page.locator('#self-send-bridge').isVisible(),true);
   await page.screenshot({path:'artifacts/screenshots/desktop-es.png',fullPage:true});
   await page.locator('#language').selectOption('en');
   await page.screenshot({path:'artifacts/screenshots/desktop-en.png',fullPage:true});
@@ -135,7 +146,7 @@ try {
     await Promise.all([accepted,privateSend.click()]);
     await privatePanel.getByText('Envío procesado. Comprueba tu propio chat y el sonido.',{exact:true}).waitFor();
     assert.equal(posts,1);assert.equal(connections,1);
-    const weights=await mobileBridge.evaluate(()=>[1,61,240,3600].map(segundosAudio=>SonoroPrivateMobile.packageWeight({format:'stickers-sonoros/1',webp:'YQ==',ogg:'Yg==',info:{segundosAudio}})));
+    const weights=await mobileBridge.evaluate(()=>[1,61,240,3600].map(segundosAudio=>SonoroSelfSend.packageWeight({format:'stickers-sonoros/1',webp:'YQ==',ogg:'Yg==',info:{segundosAudio}})));
     assert.deepEqual(weights,[2,2,2,2]);
     await mobileBridge.screenshot({path:'artifacts/screenshots/mobile-send-es.png',fullPage:true});
     await mobileBridge.unroute(endpoint+'/**');
@@ -327,7 +338,7 @@ try {
     const backend='https://stickers-sonoros.onrender.com';
     await pages.route(origin+'/**',route=>{
       const path=new URL(route.request().url()).pathname.replace(/^\/stickers-sonoros\//,'')||'index.html';
-      if (!['index.html','app.js','style.css','vendor/shirtep/convert.js','vendor/shirtep/local-send.js','i18n.js','private-mobile.js','private-mobile.css'].includes(path)) return route.abort();
+      if (!['index.html','app.js','style.css','vendor/shirtep/convert.js','vendor/shirtep/local-send.js','i18n.js','self-send.js','self-send.css'].includes(path)) return route.abort();
       const type=path.endsWith('.js')?'text/javascript':path.endsWith('.css')?'text/css':'text/html';
       return route.fulfill({status:200,contentType:type,body:readFileSync(path)});
     });
@@ -675,7 +686,7 @@ try {
       await phone.locator('#wizard-next').click();
       assert.equal(await phone.locator('#wa-bookmark').isVisible(),false);
       assert.equal(await phone.locator('#send-methods').isVisible(),false);
-      assert.equal(await phone.locator('#private-mobile-bridge').isVisible(),true);
+      assert.equal(await phone.locator('#self-send-bridge').isVisible(),true);
       assert.match(await phone.locator('#package-download').textContent(),/Save sound sticker/);
       assert.equal(await phone.locator('#signature').inputValue(),'');
       const unsigned=await phone.evaluate(async()=>{

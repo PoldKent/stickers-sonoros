@@ -1234,10 +1234,10 @@ async function packageBlob(files){
 const sendMethods=byId('send-methods');
 const isPhone=()=>navigator.userAgentData?.mobile===true||/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||(matchMedia('(pointer: coarse)').matches&&innerWidth<=900);
 let sendMethod='app';
-function updateSendMethod(){const mobile=isPhone();if(mobile)sendMethod='app';sendMethods.hidden=mobile;byId('private-mobile-bridge').hidden=sendMethod!=='app';byId('desktop-send-options').hidden=mobile||sendMethod!=='web';for(const b of sendMethods.querySelectorAll('[data-send-method]'))b.setAttribute('aria-pressed',String(b.dataset.sendMethod===sendMethod));}
+function updateSendMethod(){const mobile=isPhone();if(mobile)sendMethod='app';sendMethods.hidden=mobile;byId('self-send-bridge').hidden=sendMethod!=='app';byId('desktop-send-options').hidden=mobile||sendMethod!=='web';for(const b of sendMethods.querySelectorAll('[data-send-method]'))b.setAttribute('aria-pressed',String(b.dataset.sendMethod===sendMethod));}
 for(const b of sendMethods.querySelectorAll('[data-send-method]'))b.addEventListener('click',()=>{sendMethod=b.dataset.sendMethod;updateSendMethod()});
 window.addEventListener('resize',updateSendMethod);updateSendMethod();
-window.SonoroPrivateMobile?.mount(byId('private-mobile-bridge'),async()=>{const files=nativePackage;if(!files)return null;const blob=await packageBlob(files);return nativePackage===files?blob:null});
+window.SonoroSelfSend?.mount(byId('self-send-bridge'),async()=>{const files=nativePackage;if(!files)return null;const blob=await packageBlob(files);return nativePackage===files?blob:null});
 byId('package-download').onclick=async()=>{
   const files=nativePackage;
   if(!files)return;

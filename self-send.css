@@ -1,0 +1,20 @@
+.self-bridge{margin:12px 0;padding:14px;border:1px solid var(--line,#503b67);border-radius:12px;overflow-wrap:anywhere}
+.self-bridge h4{margin:0 0 8px}
+.self-bridge p{font-size:.9rem;line-height:1.5;margin:8px 0}
+.self-bridge label{display:grid;gap:6px;margin:12px 0 4px}
+.self-bridge input{width:100%;min-width:0;box-sizing:border-box;min-height:46px;font-size:16px}
+.self-bridge button{min-height:46px;white-space:normal}
+.self-bridge button.primary{width:100%;margin:8px 0}
+.self-bridge .self-consent{display:flex;align-items:flex-start;gap:8px}
+.self-consent input{width:auto;min-height:0;margin-top:4px}
+.self-pairing{padding:12px;border:1px solid var(--line,#503b67);border-radius:10px}
+.self-pairing strong{display:block;font-size:1.65rem;letter-spacing:.12em;margin:10px 0}
+.self-pairing button{width:100%}
+.self-bridge>p[role=status]{font-weight:600}
+.self-bridge>p[role=status]:empty{display:none}
+.self-bridge .self-help,.self-bridge .self-risk{font-size:.8rem;color:var(--muted)}
+.desktop-send-options{margin-top:12px}
+.send-methods{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.send-methods button{min-height:46px}
+.send-methods button[aria-pressed=true]{border-color:var(--accent,#cfa7ef);background:#49345e;font-weight:700}
+.self-bridge [hidden],#send-methods[hidden],#desktop-send-options[hidden],#self-send-bridge[hidden]{display:none!important}

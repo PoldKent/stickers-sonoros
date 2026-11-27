@@ -1,6 +1,13 @@
 /* Spanish/English presentation layer; does not change media or sending logic. */
 (() => {
   const pairs = [
+    ["Todo desde tu celular.","Everything from your phone."],
+    ["En el último paso, vincula tu WhatsApp con un código y recibe el sticker en tu propio chat. No necesitas una computadora ni compartir tu contraseña.","In the final step, link WhatsApp with a code and receive the sticker in your own chat. No computer or password sharing needed."],
+    ["¿Cómo protegemos tu sesión?","How do we protect your session?"],
+    ["Verificamos la cuenta vinculada, aislamos cada sesión y solo permitimos envíos a tu propio número. La conexión es temporal y puedes desconectarla cuando no hay un envío en curso.","We verify the linked account, isolate each session and only allow sending to your own number. The connection is temporary and you can disconnect when no send is in progress."],
+    ["El servicio no es oficial: un dispositivo vinculado puede acceder a mensajes y WhatsApp podría restringir la cuenta. No pedimos PIN ni códigos SMS. Comprueba los dispositivos vinculados al terminar.","This service is unofficial: a linked device can access messages and WhatsApp may restrict the account. We do not ask for PINs or SMS codes. Check your linked devices when finished."],
+    ["Más información","Learn more"],
+    ["Método de envío","Sending method"],
     ["Enviar sticker guardado (.sonoro.json)","Send saved sticker (.sonoro.json)"],
     ["Selecciona nuevamente los archivos originales.","Select the original files again."],
     ["Ejemplo preparado. Pulsa Siguiente.","Example ready. Select Next."],

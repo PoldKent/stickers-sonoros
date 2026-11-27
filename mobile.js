@@ -58,6 +58,6 @@ $('mobile-package').onchange=async()=>{
   }catch(e){if(n===serial)status(messages[e.message]?e.message:'invalid')}
 };
 window.SonoroMobile={validate};
-window.SonoroPrivateMobile?.mount($('private-mobile-bridge'),()=>current?.file||null);
+window.SonoroSelfSend?.mount($('self-send-bridge'),()=>current?.file||null);
 applyLanguage();
 })();

@@ -111,7 +111,7 @@ try {
       return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.26.45',...body})});
     });
     const privatePanel=mobileBridge.locator('.private-bridge');
-    await privatePanel.locator('summary').click();
+    assert.equal(await privatePanel.getAttribute('open'),'');
     await privatePanel.locator('input[type=password]').fill(token);
     const privateSend=privatePanel.getByRole('button',{name:'Enviar sticker sonoro',exact:true});
     assert.equal(await privateSend.isDisabled(),true);
@@ -137,19 +137,13 @@ try {
     await privatePanel.locator('summary').click();
     await mobileBridge.unroute(endpoint+'/**');
 
-    const saved=await mobileBridge.evaluate(async()=>{const p=await SonoroMobile.validate(document.querySelector('#mobile-package').files[0]);const image=await SonoroMobile.png(p),audio=await SonoroMobile.wav(p);return {side:p.side,seconds:p.seconds,image:image.type,audio:audio.type,audioHeader:new TextDecoder().decode((new Uint8Array(await audio.arrayBuffer())).subarray(0,4))}});
-    assert.equal(saved.seconds,2);assert.equal(saved.image,'image/png');assert.equal(saved.audio,'audio/wav');assert.equal(saved.audioHeader,'RIFF');
-    await mobileBridge.locator('#prepare-video').click();
-    await mobileBridge.waitForFunction(()=>!document.querySelector('#mobile-video-ready').hidden || !document.querySelector('#prepare-video').disabled,{},{timeout:30000});
-    assert.equal(await mobileBridge.locator('#mobile-video-ready').isVisible(),true,await mobileBridge.locator('#mobile-status').textContent());
-    const [prepared]=await Promise.all([mobileBridge.waitForEvent('download'),mobileBridge.locator('#save-video').click()]);
-    assert.match(prepared.suggestedFilename(),/\.(mp4|webm)$/);
-    const streams=JSON.parse(execFileSync('ffprobe',['-v','error','-show_streams','-of','json',await prepared.path()],{encoding:'utf8'})).streams;
-    assert(streams.some(s=>s.codec_type==='video')&&streams.some(s=>s.codec_type==='audio'),'prepared media must contain both video and audio');
-    assert.equal(await mobileBridge.locator('#open-whatsapp').isVisible(),true);
-    assert.equal(await mobileBridge.locator('#open-whatsapp').getAttribute('href'),'whatsapp://send');
+    const saved=await mobileBridge.evaluate(async()=>{const p=await SonoroMobile.validate(document.querySelector('#mobile-package').files[0]);return {side:p.side,seconds:p.seconds,webp:p.webp.size,ogg:p.ogg.size};});
+    assert.equal(saved.seconds,2);assert.equal(saved.webp,adapted.webpBuffer.length);assert.equal(saved.ogg,adapted.audioBuffer.length);
+    assert.equal(await mobileBridge.locator('#prepare-video,#save-png,#save-wav,#save-visual,#save-audio,#mobile-next,#open-whatsapp').count(),0);
+    assert.equal(await mobileBridge.locator('#mobile-image').isVisible(),true);
+    assert.equal(await mobileBridge.locator('#mobile-audio').isVisible(),true);
     await mobileBridge.locator('#mobile-language').selectOption('en');
-    assert.match(await mobileBridge.locator('h1').textContent(),/Prepare for mobile WhatsApp/);
+    assert.match(await mobileBridge.locator('h1').textContent(),/Send saved sticker/);
     assert(await mobileBridge.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
     await mobileBridge.screenshot({path:'artifacts/screenshots/mobile-handoff-en.png',fullPage:true});
     await mobileBridge.locator('#mobile-package').setInputFiles({name:'bad.sonoro.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({...pack,info:{...pack.info,soundSha256:'invalid'}}))});

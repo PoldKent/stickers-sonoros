@@ -39,7 +39,7 @@ Video, image or GIF + audio · 9+ FPS for animation · up to 2 MB combined · no
 | Animation | ≥9 FPS | ≥9 FPS |
 | Duration | No fixed cap | No fixed cap |
 
-The JSON transport envelope is larger because of Base64. The local input guard (80 MiB), memory, available codecs and server request/byte limits still apply. WhatsApp may reject long or large stickers; 2 MB is the experimental editor budget, not a guaranteed WhatsApp limit. New files are capped at 2,000,000 combined bytes; the bookmark and mobile handoff retain support for reading older packages up to 4 MB. If sending fails, use Compatible (1 MB maximum per component).
+The JSON transport envelope is larger because of Base64. The local input guard (80 MiB), memory, available codecs and server request/byte limits still apply. WhatsApp may reject long or large stickers; 2 MB is the experimental editor budget, not a guaranteed WhatsApp limit. New files are capped at 2,000,000 combined bytes; the desktop bookmark retains support for reading older packages up to 4 MB; the mobile bridge accepts up to 2 MB. If sending fails, use Compatible (1 MB maximum per component).
 
 ### Creator signature
 
@@ -62,7 +62,7 @@ This is an unofficial integration adapted from Shirtep; sessions remain in the b
 
 ### Android and iPhone
 
-The editor works in compatible mobile browsers. Save the package on screen 4 and open [Prepare package for mobile WhatsApp](https://poldkent.github.io/stickers-sonoros/mobile.html). The tool validates JSON locally and exports WebP, Ogg, PNG, WAV or prepares a video for WhatsApp's official editor if supported by the browser. After saving the media, Open WhatsApp attempts to launch the app; select the downloaded file in Stickers → Create, not as a chat document. It does not send JSON directly or guarantee native duration, attribution or acceptance. WhatsApp Web sending remains available to preserve the original format. See the [mobile guide](docs/MOBILE.md#english).
+On a phone, create a sticker and use the private bridge on the Send screen. To reuse an existing file, open [Send saved sticker](https://poldkent.github.io/stickers-sonoros/mobile.html). The reader validates the JSON, previews the image and audio and submits them unchanged through the private bridge. A linked secondary account and private access key are required. See the [mobile guide](docs/MOBILE.md#english). The WhatsApp Web bookmark remains available on desktop.
 
 ## Verification and compatibility
 

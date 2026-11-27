@@ -2,28 +2,31 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const messages={
-language:['Idioma','Language'], title:['Preparar para WhatsApp móvil','Prepare for mobile WhatsApp'],intro:['Abre tu paquete sonoro guardado y prepara sus medios para el editor oficial de stickers de WhatsApp. No se sube ningún archivo.','Open your saved sound sticker package and prepare its media for the official WhatsApp sticker editor. No files are uploaded.'],
-choose:['Seleccionar archivo .sonoro.json','Choose .sonoro.json file'],visual:['Guardar imagen WebP original','Save original WebP image'],audio:['Guardar audio Ogg original','Save original Ogg audio'],png:['Guardar fotograma PNG','Save PNG frame'],wav:['Preparar audio WAV','Prepare WAV audio'],video:['Preparar video para el editor móvil','Prepare video for mobile editor'],cancel:['Cancelar preparación','Cancel preparation'],saveVideo:['Guardar video preparado','Save prepared video'],
-videoNote:['El video es un medio de entrada para el editor oficial, no un sticker enviado. La preparación conserva el tramo completo; WhatsApp puede recortarlo o recomprimirlo. MP4 depende del navegador; WebM puede no ser aceptado en el teléfono.','The video is input for the official editor, not a sent sticker. Preparation retains the full selection; WhatsApp may trim or recompress it. MP4 depends on the browser; WebM may not be accepted on your phone.'],
-steps:['Enviar desde la aplicación oficial','Send using the official app'],step1:['Guarda el video preparado o el fotograma PNG y el audio.','Save the prepared video or the PNG frame and audio.'],step2:['Abre WhatsApp en tu teléfono, entra a tu propio chat, abre stickers y pulsa Crear.','Open WhatsApp on your phone, open your own chat, open stickers and tap Create.'],step3:['Selecciona el video o la imagen guardada. Si aparece el botón de audio, conserva el audio del video o elige la pista guardada desde Archivos.','Select the saved video or image. If the audio button appears, keep the video audio or choose the saved track from Files.'],step4:['Revisa el resultado y envíalo desde WhatsApp. Comprueba que se muestra como sticker y reproduce el sonido.','Review and send from WhatsApp. Check that it appears as a sticker and plays sound.'],
-limits:['El editor sonoro móvil se está desplegando gradualmente. No hay un contrato público de importación directa de .sonoro.json. El resultado nativo puede tener otros límites, perder la atribución original o no estar disponible en tu cuenta. No adjuntes el JSON al chat esperando un sticker.','The mobile sound sticker editor is rolling out gradually. There is no public direct .sonoro.json import contract. Native output may have other limits, lose original attribution or be unavailable for your account. Do not attach JSON to a chat expecting a sticker.'],
-back:['Volver al editor','Back to editor'],guide:['Guía móvil','Mobile guide'],invalid:['Paquete sonoro no válido o dañado.','Invalid or damaged sound sticker package.'],large:['El paquete supera el límite de tamaño.','The package exceeds the size limit.'],loading:['Verificando paquete…','Verifying package…'],ready:['Paquete válido. Elige cómo preparar sus medios.','Valid package. Choose how to prepare its media.'],working:['Preparando medios localmente…','Preparing media locally…'],saved:['Medio preparado para descargar.','Media prepared for download.'],videoReady:['Video preparado. Guárdalo y selecciónalo en el editor de stickers de WhatsApp.','Video prepared. Save it and select it in the WhatsApp sticker editor.'],unsupported:['Este navegador no permite preparar video con sonido. Guarda los medios originales o prueba otro navegador.','This browser cannot prepare video with sound. Save the original media or try another browser.'],decode:['No se pudo decodificar el medio en este navegador. Puedes guardar el archivo original.','Could not decode media in this browser. You can save the original file.'],cancelled:['Preparación cancelada.','Preparation cancelled.'],still:['Imagen fija','Still image'],animated:['Animación','Animation']};
-Object.assign(messages,{nextTitle:['Ahora crea el sticker en WhatsApp','Now create the sticker in WhatsApp'],nextHint:['Después de guardar el medio, abre WhatsApp y entra en Stickers → Crear. Selecciona el archivo multimedia, no el JSON. Activa el sonido y envía desde el editor de WhatsApp.','After saving the media, open WhatsApp and go to Stickers → Create. Select the media file, not the JSON. Enable sound and send from the WhatsApp editor.'],openApp:['Abrir WhatsApp','Open WhatsApp'],openFallback:['Si el botón no abre la aplicación, ábrela manualmente. No abre directamente el editor ni envía el archivo.','If the button does not launch the app, open it manually. It does not open the editor directly or send the file.'],noEditor:['Si no aparece el botón de sonido, tu cuenta aún puede no tener la función. Para conservar el sticker original, envíalo con el marcador desde WhatsApp Web a tu propio chat y después úsalo en el teléfono.','If the sound button is missing, your account may not have the feature. To preserve the original sticker, use the WhatsApp Web bookmark to send it to your own chat, then use it on your phone.'],savedNext:['Archivo preparado para guardar. Cuando termine la descarga, abre WhatsApp.','File ready to save. After the download finishes, open WhatsApp.'],mp4Ready:['MP4 · Comprueba que se reproduce con sonido.','MP4 · Check that it plays with sound.'],webmReady:['WebM · WhatsApp puede no reconocer este video. Usa PNG y audio si falla.','WebM · WhatsApp may not recognize this video. Use PNG and audio if it fails.']});
-let language='es', statusKey='', current=null, serial=0, urls=[], job=null, videoFile=null, videoUrl=null;
+language:['Idioma','Language'],title:['Enviar sticker guardado','Send saved sticker'],intro:['Abre tu paquete sonoro y envíalo con el puente privado a WhatsApp App.','Open your sound sticker package and send it to WhatsApp App using the private bridge.'],
+choose:['Seleccionar archivo .sonoro.json','Choose .sonoro.json file'],back:['Volver al editor','Back to editor'],guide:['Guía móvil','Mobile guide'],
+invalid:['Paquete sonoro no válido o dañado.','Invalid or damaged sound sticker package.'],large:['El puente admite hasta 2 MB de imagen y audio combinados.','The bridge accepts up to 2 MB of combined image and audio.'],loading:['Verificando paquete…','Verifying package…'],ready:['Paquete válido. Continúa con el envío privado.','Valid package. Continue to private sending.'],still:['Imagen fija','Still image'],animated:['Animación','Animation']};
+let language='es',statusKey='',current=null,serial=0,urls=[];
 try{language=localStorage.getItem('stickers.language')==='en'?'en':'es'}catch{}
 const t=k=>messages[k]?.[language==='en'?1:0]||k;
 function status(k){statusKey=k;$('mobile-status').textContent=t(k);}
-function applyLanguage(){document.documentElement.lang=language;$('mobile-language').value=language;$('mobile-language').setAttribute('aria-label',t('language'));document.title='Stickers Sonoros · '+t('title');document.querySelectorAll('[data-msg]').forEach(e=>e.textContent=t(e.dataset.msg));$('mobile-guide').href='https://github.com/PoldKent/stickers-sonoros/blob/main/docs/MOBILE.md#'+(language==='en'?'english':'español');if(statusKey)status(statusKey);if(videoFile)$('mobile-video-format').textContent=t(videoFile.type.includes('mp4')?'mp4Ready':'webmReady');if(current)$('mobile-info').textContent=current.side+' px · '+t(current.frames>1?'animated':'still')+' · '+current.seconds+' s';}
+function applyLanguage(){
+  document.documentElement.lang=language;$('mobile-language').value=language;$('mobile-language').setAttribute('aria-label',t('language'));
+  document.title='Stickers Sonoros · '+t('title');
+  document.querySelectorAll('[data-msg]').forEach(e=>e.textContent=t(e.dataset.msg));
+  $('mobile-guide').href='https://github.com/PoldKent/stickers-sonoros/blob/main/docs/MOBILE.md#'+(language==='en'?'english':'español');
+  if(statusKey)status(statusKey);
+  if(current)$('mobile-info').textContent=current.side+' px · '+t(current.frames>1?'animated':'still')+' · '+current.seconds+' s · '+((current.webp.size+current.ogg.size)/1000).toFixed(1)+' KB';
+}
 $('mobile-language').onchange=()=>{language=$('mobile-language').value;try{localStorage.setItem('stickers.language',language)}catch{}applyLanguage()};
 const fail=k=>{throw new Error(k)};
 const tag=(b,i,n)=>String.fromCharCode(...b.subarray(i,i+n));
-function fromBase64(s){if(typeof s!=='string'||!s.length||s.length>5333336||!/^[A-Za-z0-9+/]+={0,2}$/.test(s))fail('invalid');return Uint8Array.from(atob(s),c=>c.charCodeAt(0));}
+function fromBase64(s){if(typeof s!=='string'||!s.length||s.length>2800000||!/^[A-Za-z0-9+/]+={0,2}$/.test(s))fail('invalid');return Uint8Array.from(atob(s),c=>c.charCodeAt(0));}
 async function validate(file){
-  if(!file||file.size>5500000)fail('large');
+  if(!file||file.size>2800000)fail('large');
   let p;try{p=JSON.parse(await file.text())}catch{fail('invalid')}
   if(p?.format!=='stickers-sonoros/1')fail('invalid');
   const w=fromBase64(p.webp),a=fromBase64(p.ogg);
-  if(w.length+a.length>4000000)fail('large');
+  if(w.length+a.length>2000000)fail('large');
   if(w.length<30||a.length<28||tag(w,0,4)!=='RIFF'||tag(w,8,4)!=='WEBP'||tag(a,0,4)!=='OggS'||!new TextDecoder().decode(a.subarray(0,256)).includes('OpusHead'))fail('invalid');
   const d=new DataView(w.buffer),digest=btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.digest('SHA-256',a))));
   let side=0,frames=0,animated=false,linked=false,durationMs=0,i=12;
@@ -36,49 +39,25 @@ async function validate(file){
     i=end+(n&1);
   }
   if(i!==w.length||!linked||p.info?.soundSha256!==digest||p.info?.lado!==side||!side||p.info?.isAnimated!==animated||!Number.isInteger(p.info?.segundosAudio)||p.info.segundosAudio<1)fail('invalid');
-  return {webp:new Blob([w],{type:'image/webp'}),ogg:new Blob([a],{type:'audio/ogg'}),side,frames:Math.max(1,frames),durationMs,seconds:p.info.segundosAudio,name:file.name.replace(/\.sonoro\.json$|\.json$/i,'').replace(/[^\p{L}\p{N}_.-]/gu,'_').slice(0,100)||'sticker'};
+  return {file,webp:new Blob([w],{type:'image/webp'}),ogg:new Blob([a],{type:'audio/ogg'}),side,frames:Math.max(1,frames),durationMs,seconds:p.info.segundosAudio,name:file.name.replace(/\.sonoro\.json$|\.json$/i,'').replace(/[^\p{L}\p{N}_.-]/gu,'_').slice(0,100)||'sticker'};
 }
-function save(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),30000);}
-function clearVideo(){const v=$('mobile-video-preview');v.pause();v.removeAttribute('src');v.load();if(videoUrl)URL.revokeObjectURL(videoUrl);videoUrl=null;videoFile=null;$('mobile-video-ready').hidden=true;}
-function nextStep(){ $('mobile-next').hidden=false;status('savedNext'); }
-function clear(){job?.abort();current=null;clearVideo();$('mobile-result').hidden=true;$('mobile-next').hidden=true;$('mobile-image').removeAttribute('src');$('mobile-audio').pause();$('mobile-audio').removeAttribute('src');$('mobile-audio').load();for(const u of urls)URL.revokeObjectURL(u);urls=[];}
-$('mobile-package').onchange=async()=>{const n=++serial;clear();status('loading');try{const p=await validate($('mobile-package').files[0]);if(n!==serial)return;current=p;urls=[URL.createObjectURL(p.webp),URL.createObjectURL(p.ogg)];$('mobile-image').src=urls[0];$('mobile-audio').src=urls[1];$('mobile-result').hidden=false;status('ready');applyLanguage()}catch(e){if(n===serial)status(messages[e.message]?e.message:'invalid')}};
-$('save-visual').onclick=()=>{if(current){save(current.webp,current.name+'.webp');nextStep()}};
-$('save-audio').onclick=()=>{if(current){save(current.ogg,current.name+'.ogg');nextStep()}};
-async function firstFrame(p){if(typeof ImageDecoder!=='undefined'){const d=new ImageDecoder({data:await p.webp.arrayBuffer(),type:'image/webp'});try{await d.tracks.ready;const {image}=await d.decode({frameIndex:0});try{return await createImageBitmap(image)}finally{image.close()}}finally{d.close()}}return createImageBitmap(p.webp)}
-async function png(p){const b=await firstFrame(p);try{const c=document.createElement('canvas');c.width=c.height=p.side;c.getContext('2d').drawImage(b,0,0,p.side,p.side);return await new Promise((resolve,reject)=>c.toBlob(x=>x?resolve(x):reject(new Error('decode')),'image/png'))}finally{b.close()}}
-async function audioBuffer(p){const c=new OfflineAudioContext(1,1,48000);return c.decodeAudioData(await p.ogg.arrayBuffer())}
-async function wav(p){const buffer=await audioBuffer(p),n=buffer.length,ch=buffer.numberOfChannels,bytes=new ArrayBuffer(44+n*2),v=new DataView(bytes);const ascii=(at,s)=>{for(let i=0;i<s.length;i++)v.setUint8(at+i,s.charCodeAt(i))};ascii(0,'RIFF');v.setUint32(4,bytes.byteLength-8,true);ascii(8,'WAVE');ascii(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,buffer.sampleRate,true);v.setUint32(28,buffer.sampleRate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);ascii(36,'data');v.setUint32(40,n*2,true);const channels=Array.from({length:ch},(_,i)=>buffer.getChannelData(i));for(let i=0;i<n;i++){let x=0;for(const c of channels)x+=c[i]/ch;v.setInt16(44+2*i,Math.round(Math.max(-1,Math.min(1,x))*32767),true)}return new Blob([bytes],{type:'audio/wav'})}
-async function exportMedia(fn,ext){const p=current;if(!p)return;status('working');try{const b=await fn(p);if(current!==p)return;save(b,p.name+ext);nextStep()}catch{if(current===p)status('decode')}}
-$('save-png').onclick=()=>exportMedia(png,'.png');$('save-wav').onclick=()=>exportMedia(wav,'.wav');
-// Separate compatibility export for the official phone editor. Never used for sticker generation.
-async function video(p,signal,onProgress){
-  if(!window.MediaRecorder||!window.AudioContext||!HTMLCanvasElement.prototype.captureStream)fail('unsupported');
-  const mime=['video/mp4;codecs=avc1.42001E,mp4a.40.2','video/mp4','video/webm;codecs=vp8,opus','video/webm'].find(x=>MediaRecorder.isTypeSupported(x));
-  if(!mime)fail('unsupported');
-  const ac=new AudioContext(),canvas=document.createElement('canvas');canvas.width=canvas.height=Math.max(128,p.side+(p.side%2));const ctx=canvas.getContext('2d',{alpha:false});
-  let decoder,bitmap,frame,stream,source,recorder,timer,abortHandler;
-  const check=()=>{if(signal.aborted)fail('cancelled')};
+
+function clear(){
+  current=null;$('mobile-result').hidden=true;$('mobile-image').removeAttribute('src');
+  $('mobile-audio').pause();$('mobile-audio').removeAttribute('src');$('mobile-audio').load();
+  for(const u of urls)URL.revokeObjectURL(u);urls=[];
+}
+$('mobile-package').onchange=async()=>{
+  const n=++serial;clear();status('loading');
   try{
-    await ac.resume();check();const audio=await ac.decodeAudioData(await p.ogg.arrayBuffer());check();
-    const duration=Math.max(audio.duration,p.durationMs/1000), animated=p.frames>1;
-    if(animated){if(!window.ImageDecoder)fail('unsupported');decoder=new ImageDecoder({data:await p.webp.arrayBuffer(),type:'image/webp'});await decoder.tracks.ready;}
-    else bitmap=await firstFrame(p);
-    const ends=[];if(animated){let end=0;for(let i=0;i<decoder.tracks.selectedTrack.frameCount;i++){check();const {image}=await decoder.decode({frameIndex:i});end+=Math.max(1,(image.duration||100000)/1000);ends.push(end);image.close();}}
-    let previous=-1;
-    async function paint(ms){let i=0;if(animated){const time=Math.min(Math.max(0,ms),ends[ends.length-1]-.001);while(i<ends.length-1&&ends[i]<=time)i++;if(i===previous)return;frame?.close();frame=(await decoder.decode({frameIndex:i})).image;previous=i;}ctx.fillStyle='#14101d';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(animated?frame:bitmap,0,0,canvas.width,canvas.height);}
-    await paint(0);check();const dest=ac.createMediaStreamDestination();source=ac.createBufferSource();source.buffer=audio;source.connect(dest);stream=canvas.captureStream(30);for(const track of dest.stream.getAudioTracks())stream.addTrack(track);
-    recorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:2000000,audioBitsPerSecond:96000});const chunks=[];
-    const recorded=new Promise((resolve,reject)=>{recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onstop=()=>resolve(new Blob(chunks,{type:recorder.mimeType||mime}));recorder.onerror=()=>reject(new Error('decode'))});recorded.catch(()=>{});
-    const stopped=new Promise((_,reject)=>{abortHandler=()=>reject(new Error('cancelled'));signal.addEventListener('abort',abortHandler,{once:true})});stopped.catch(()=>{});
-    recorder.start(1000);const start=ac.currentTime;source.start(start);
-    await Promise.race([stopped,recorded.then(()=>{throw new Error('decode')}),(async()=>{while(ac.currentTime-start<duration){check();await paint((ac.currentTime-start)*1000);onProgress(Math.min(1,(ac.currentTime-start)/duration));await new Promise(r=>setTimeout(r,33))}})(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('decode')),(duration+20)*1000)})]);
-    check();recorder.stop();const blob=await recorded;if(!blob.size)fail('decode');return blob;
-  }finally{clearTimeout(timer);if(abortHandler)signal.removeEventListener('abort',abortHandler);try{source?.stop()}catch{}if(recorder&&recorder.state!=='inactive')recorder.stop();stream?.getTracks().forEach(t=>t.stop());frame?.close();bitmap?.close();decoder?.close();await ac.close().catch(()=>{});}
-}
-$('prepare-video').onclick=async()=>{const p=current;if(!p||job)return;const controller=new AbortController();job=controller;clearVideo();$('prepare-video').disabled=true;$('mobile-package').disabled=true;$('cancel-video').hidden=false;$('mobile-progress').hidden=false;$('mobile-progress').value=0;status('working');try{const blob=await video(p,controller.signal,x=>$('mobile-progress').value=x);if(current!==p||controller.signal.aborted)return;videoFile=blob;videoUrl=URL.createObjectURL(blob);$('mobile-video-preview').src=videoUrl;$('mobile-video-format').textContent=t(blob.type.includes('mp4')?'mp4Ready':'webmReady');$('mobile-video-ready').hidden=false;status('videoReady')}catch(e){if(current===p)status(messages[e.message]?e.message:'decode')}finally{if(job===controller){job=null;$('prepare-video').disabled=false;$('mobile-package').disabled=false;$('cancel-video').hidden=true;$('mobile-progress').hidden=true;}}};
-$('cancel-video').onclick=()=>job?.abort();$('save-video').onclick=()=>{if(current&&videoFile){save(videoFile,current.name+(videoFile.type.includes('mp4')?'.mp4':'.webm'));nextStep()}};
-window.SonoroMobile={validate,png,wav};
-window.SonoroPrivateMobile?.mount($('private-mobile-bridge'),()=>current?$('mobile-package').files[0]:null);
+    const p=await validate($('mobile-package').files[0]);if(n!==serial)return;
+    current=p;urls=[URL.createObjectURL(p.webp),URL.createObjectURL(p.ogg)];
+    $('mobile-image').src=urls[0];$('mobile-audio').src=urls[1];
+    $('mobile-result').hidden=false;status('ready');applyLanguage();
+    const panel=$('private-mobile-bridge').querySelector('details');if(panel){panel.open=true;const consent=panel.querySelector('input[type=checkbox]');if(consent){consent.checked=false;consent.dispatchEvent(new Event('change'));}}
+  }catch(e){if(n===serial)status(messages[e.message]?e.message:'invalid')}
+};
+window.SonoroMobile={validate};
+window.SonoroPrivateMobile?.mount($('private-mobile-bridge'),()=>current?.file||null);
 applyLanguage();
 })();

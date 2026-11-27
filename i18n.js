@@ -1,9 +1,7 @@
 /* Spanish/English presentation layer; does not change media or sending logic. */
 (() => {
   const pairs = [
-    ["Abrir paquete sonoro para WhatsApp móvil","Open sound package for mobile WhatsApp"],
-    ["Para usar el editor oficial de WhatsApp en el celular, guarda el paquete y abre la herramienta móvil. No envía directamente el JSON.","To use the official WhatsApp editor on your phone, save the package and open the mobile tool. It does not send the JSON directly."],
-    ["Preparar paquete para WhatsApp móvil","Prepare package for mobile WhatsApp"],
+    ["Enviar sticker guardado (.sonoro.json)","Send saved sticker (.sonoro.json)"],
     ["Selecciona nuevamente los archivos originales.","Select the original files again."],
     ["Ejemplo preparado. Pulsa Siguiente.","Example ready. Select Next."],
     ["Imagen fija","Still image"],
@@ -24,7 +22,7 @@
     ["La animación conserva una cadencia uniforme. Si el original tiene fotogramas repetidos, no se inventa movimiento.","The animation preserves a uniform frame cadence. If the original contains repeated frames, no motion is invented."],
     ["Usar completo","Use full source"],
     ["Si ya tienes el favorito de esta versión, salta este paso. Actualiza los favoritos antiguos.","Skip this step if you have the bookmark for this version. Update older bookmarks."],
-    ["En el celular, guarda el archivo del sticker y pásalo a una computadora. El paquete se envía desde WhatsApp Web. Si tu WhatsApp móvil ya ofrece el botón de audio al crear stickers, también puedes crear uno desde su editor nativo.","On a phone, save the sticker file and transfer it to a computer. Send the package from WhatsApp Web. If your mobile WhatsApp already offers an audio button when creating stickers, you can also create one in its native editor."],
+    ["En el celular, utiliza el puente privado de la pantalla Enviar.","On a phone, use the private bridge on the Send screen."],
     ["Línea de tiempo","Timeline"],
     ["El tramo supera la memoria de captura disponible. Reduce la resolución del archivo original o acorta el tramo.","The selection exceeds available capture memory. Reduce the source resolution or shorten the selection."],
     ["Inicio del video","Video start"],

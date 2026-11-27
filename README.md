@@ -39,7 +39,7 @@ Video, imagen o GIF + audio · 9+ FPS en animaciones · hasta 2 MB combinados ·
 | Animación | ≥9 FPS | ≥9 FPS |
 | Duración | Sin límite fijo | Sin límite fijo |
 
-La envoltura JSON pesa más por Base64. Se mantienen las protecciones de entrada local (80 MiB), memoria, códecs y tiempo/peso de las solicitudes del servidor. WhatsApp puede rechazar stickers largos o grandes; 2 MB es el presupuesto experimental del editor, no un límite garantizado por WhatsApp. Los archivos nuevos se limitan a 2.000.000 bytes combinados; el marcador y el puente móvil conservan la lectura de paquetes anteriores de hasta 4 MB. Si falla el envío, usa Compatible (1 MB máximo por componente).
+La envoltura JSON pesa más por Base64. Se mantienen las protecciones de entrada local (80 MiB), memoria, códecs y tiempo/peso de las solicitudes del servidor. WhatsApp puede rechazar stickers largos o grandes; 2 MB es el presupuesto experimental del editor, no un límite garantizado por WhatsApp. Los archivos nuevos se limitan a 2.000.000 bytes combinados; el marcador de escritorio conserva la lectura de paquetes anteriores de hasta 4 MB; el puente móvil admite hasta 2 MB. Si falla el envío, usa Compatible (1 MB máximo por componente).
 
 ### Firma del creador
 
@@ -62,7 +62,7 @@ Es una integración no oficial adaptada de Shirtep; la sesión permanece en el n
 
 ### Android y iPhone
 
-El editor funciona en navegadores móviles compatibles. Guarda el paquete en la pantalla 4 y abre [Preparar paquete para WhatsApp móvil](https://poldkent.github.io/stickers-sonoros/mobile.html). La herramienta valida el JSON localmente y permite guardar WebP, Ogg, PNG, WAV o preparar un video compatible con el editor oficial de WhatsApp, si el navegador lo admite. Tras guardar los medios, el botón Abrir WhatsApp intenta abrir la app; selecciona el archivo en Stickers → Crear, no como documento del chat. No envía directamente el JSON ni garantiza duración, atribución o aceptación por WhatsApp. Para conservar el formato original, sigue disponible el envío por WhatsApp Web. Consulta la [guía móvil](docs/MOBILE.md#español).
+En el teléfono, crea el sticker y utiliza el puente privado de la pantalla Enviar. Si ya tienes un archivo, abre [Enviar sticker guardado](https://poldkent.github.io/stickers-sonoros/mobile.html). El lector valida el JSON, muestra la imagen y el audio y los envía sin reconversión mediante el puente privado. Requiere una cuenta secundaria vinculada y una clave privada. Consulta la [guía móvil](docs/MOBILE.md#español). El marcador de WhatsApp Web sigue disponible en computadora.
 
 ## Verificación y compatibilidad
 

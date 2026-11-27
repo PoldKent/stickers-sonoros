@@ -1,27 +1,27 @@
 <!doctype html>
-<html lang="es" data-wizard-step="1" data-version="2026.11.26.44">
+<html lang="es" data-wizard-step="1" data-version="2026.11.26.45">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#130f1b">
-<link rel="icon" type="image/svg+xml" href="./assets/logo.svg?v=2026.11.26.44">
+<link rel="icon" type="image/svg+xml" href="./assets/logo.svg?v=2026.11.26.45">
 <meta name="description" content="Crea stickers con sonido para WhatsApp en cuatro pasos: importa, edita, crea y envía. Animaciones desde 9 FPS, hasta 2 MB.">
 <title>Stickers Sonoros · Creador de stickers con sonido</title>
 <link rel="canonical" href="https://poldkent.github.io/stickers-sonoros/">
 <meta property="og:url" content="https://poldkent.github.io/stickers-sonoros/">
 <meta name="robots" content="index, follow">
 <meta name="sticker-import-endpoint" content="https://stickers-sonoros.onrender.com">
-<link rel="stylesheet" href="./style.css?v=2026.11.26.44">
-<script defer src="./vendor/shirtep/convert.js?v=2026.11.26.44"></script>
-<script defer src="./vendor/shirtep/local-send.js?v=2026.11.26.44"></script>
-<script defer src="./i18n.js?v=2026.11.26.44"></script>
-<script defer src="./private-mobile.js?v=2026.11.26.44"></script>
-<link rel="stylesheet" href="./private-mobile.css?v=2026.11.26.44">
-<script type="module" src="./app.js?v=2026.11.26.44"></script>
+<link rel="stylesheet" href="./style.css?v=2026.11.26.45">
+<script defer src="./vendor/shirtep/convert.js?v=2026.11.26.45"></script>
+<script defer src="./vendor/shirtep/local-send.js?v=2026.11.26.45"></script>
+<script defer src="./i18n.js?v=2026.11.26.45"></script>
+<script defer src="./private-mobile.js?v=2026.11.26.45"></script>
+<link rel="stylesheet" href="./private-mobile.css?v=2026.11.26.45">
+<script type="module" src="./app.js?v=2026.11.26.45"></script>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Saltar al editor</a>
-<header><div class="brand"><img class="logo" src="./assets/logo.svg?v=2026.11.26.44" alt="" width="36" height="36"> Stickers Sonoros</div><div class="header-tools"><span class="privacy"><i></i> Edición local</span><label class="language-picker"><span class="sr-only">Idioma</span><select id="language" aria-label="Idioma"><option value="es">Español</option><option value="en">English</option></select></label></div></header>
+<header><div class="brand"><img class="logo" src="./assets/logo.svg?v=2026.11.26.45" alt="" width="36" height="36"> Stickers Sonoros</div><div class="header-tools"><span class="privacy"><i></i> Edición local</span><label class="language-picker"><span class="sr-only">Idioma</span><select id="language" aria-label="Idioma"><option value="es">Español</option><option value="en">English</option></select></label></div></header>
 <main id="main-content">
 <section class="intro"><h1>Dale sonido <em>a tu sticker.</em></h1><p>Importa, edita, crea y envía tu sticker con sonido, una etapa a la vez.</p><nav class="workflow-strip" aria-label="Flujo de trabajo"><button type="button" data-wizard="1" aria-current="step">1. Importar</button><button type="button" data-wizard="2" disabled>2. Editar</button><button type="button" data-wizard="3" disabled>3. Crear</button><button type="button" data-wizard="4" disabled>4. Enviar</button></nav></section>
 <div class="workspace">
@@ -72,7 +72,7 @@
 <div id="sticker-files" hidden>
 <section id="native-bridge" hidden aria-labelledby="send-title">
 <h4 id="send-title">Cómo enviar tu sticker a WhatsApp</h4>
-<p id="attribution-result" data-no-translate class="attribution-result"></p><p class="send-intro">Envíalo con sonido desde WhatsApp Web, sin instalar extensiones.</p>
+<p id="attribution-result" data-no-translate class="attribution-result"></p><p class="send-intro">Envía con sonido desde el puente móvil privado o utiliza el marcador de WhatsApp Web.</p>
 <p class="note">Para usar el editor oficial de WhatsApp en el celular, guarda el paquete y abre la herramienta móvil. No envía directamente el JSON.</p><a class="send-open" href="./mobile.html">Preparar paquete para WhatsApp móvil</a>
 <div id="private-mobile-bridge" data-no-translate></div><ol class="send-steps">
 <li><div class="send-step-body"><h5>Guarda tu sticker</h5><p>Guarda el archivo .sonoro.json. No lo adjuntes al chat.</p><button type="button" id="package-download" class="primary">Guardar sticker sonoro ↓</button><p id="bridge-status" role="status" aria-live="polite"></p></div></li>
@@ -89,7 +89,7 @@
 </div>
 <nav class="wizard-navigation" aria-label="Navegación entre etapas"><button type="button" id="wizard-prev" disabled>← Anterior</button><span id="wizard-counter" aria-live="polite">1 / 4</span><button class="primary" type="button" id="wizard-next" disabled>Siguiente →</button></nav>
 </main>
-<footer><div class="footer-main"><div class="footer-brand"><img src="./assets/logo.svg?v=2026.11.26.44" alt="" width="32" height="32"><div><strong>Stickers Sonoros</strong><small>Versión 2026.11.26.44</small></div></div><nav class="footer-links" aria-label="Información del proyecto"><a id="guide-link" href="https://github.com/PoldKent/stickers-sonoros/blob/main/README.md">Guía de uso</a><a href="https://github.com/PoldKent/stickers-sonoros">GitHub</a><a id="support-link" href="https://github.com/PoldKent/stickers-sonoros/blob/main/SUPPORT.md">Apoyar el proyecto</a><button id="check-service" type="button" class="subtle">Comprobar servidor</button></nav></div><p id="service-status" role="status" aria-live="polite"></p><div class="footer-credit">Conversor de <a href="https://github.com/Shirtep/WA-audio-stickers">Stickers con sonido, de Shirtep</a> · <a href="./vendor/shirtep/LICENSE.md">Licencia de uso no comercial</a></div></footer>
+<footer><div class="footer-main"><div class="footer-brand"><img src="./assets/logo.svg?v=2026.11.26.45" alt="" width="32" height="32"><div><strong>Stickers Sonoros</strong><small>Versión 2026.11.26.45</small></div></div><nav class="footer-links" aria-label="Información del proyecto"><a id="guide-link" href="https://github.com/PoldKent/stickers-sonoros/blob/main/README.md">Guía de uso</a><a href="https://github.com/PoldKent/stickers-sonoros">GitHub</a><a id="support-link" href="https://github.com/PoldKent/stickers-sonoros/blob/main/SUPPORT.md">Apoyar el proyecto</a><button id="check-service" type="button" class="subtle">Comprobar servidor</button></nav></div><p id="service-status" role="status" aria-live="polite"></p><div class="footer-credit">Conversor de <a href="https://github.com/Shirtep/WA-audio-stickers">Stickers con sonido, de Shirtep</a> · <a href="./vendor/shirtep/LICENSE.md">Licencia de uso no comercial</a></div></footer>
 <script>
 (function () {
   var status = document.getElementById('link-status');

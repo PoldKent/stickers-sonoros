@@ -648,7 +648,7 @@ try {
     assert.equal(await phone.locator('#wizard-prev').textContent(),'← Back');
     assert.match(await phone.locator('#export').textContent(),/Create sound sticker/);
     assert.equal(await phone.locator('#signature').getAttribute('placeholder'),'Your name or nickname');
-    assert.equal(await phone.locator('#link-input').getAttribute('placeholder'),'Web page, video, image or audio');
+    assert.equal(await phone.locator('#link-input').getAttribute('placeholder'),'Video, image or audio link');
     assert.equal(await phone.locator('#support-link').textContent(),'Support the project');
     assert.match(await phone.locator('#support-link').getAttribute('href'),/#english$/);
     assert.match(await phone.locator('#guide-link').getAttribute('href'),/README\.en\.md$/);

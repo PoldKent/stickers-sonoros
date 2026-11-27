@@ -149,7 +149,7 @@ try {
       else if(path==='/v2/status'){assert(paired);assert.equal(request.headers().authorization,sessionToken);body={phase:'ready'}}
       else if(path==='/v2/send'){posts++;assert.equal(request.headers().authorization,sessionToken);assert.deepEqual(request.postDataBuffer(),packageBytes);body={phase:'ready',remaining:5-posts,relayed:true,deliveryConfirmed:false}}
       else throw Error('Unexpected endpoint');
-      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.27.54',...body})});
+      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.27.55',...body})});
     });
     const privatePanel=mobileBridge.locator('.self-bridge');
     assert.equal(await privatePanel.locator('input[type=password]').count(),0);
@@ -260,17 +260,13 @@ try {
   await send.click();
   assert.equal(await wa.evaluate(()=>window.mockCalls.uploads),0);
   await wa.evaluate(()=>{window.mockCalls.confirm=true;window.mockCalls.enabled=false;});
-  await send.click();
-  assert.match(await panel.locator('[role=status]').textContent(),/no está habilitado/);
-  assert.equal(await wa.evaluate(()=>window.mockCalls.uploads),0);
   assert.equal(await panel.locator('#ss-experimental').count(),0);
   assert.equal(await wa.evaluate(()=>window.require('WAWebSoundStickerGating').isSoundStickerCreationEnabled()),false);
-  await wa.evaluate(()=>{window.mockCalls.enabled=true;});
   await send.click();
   await panel.getByText('WhatsApp confirmó el envío.',{exact:false}).waitFor();
   assert.deepEqual(await wa.evaluate(()=>[window.mockCalls.uploads,window.mockCalls.sends]),[1,1]);
   assert.equal(await send.isDisabled(),true);
-  assert.equal(await wa.evaluate(()=>window.require('WAWebSoundStickerGating').isSoundStickerCreationEnabled()),true);
+  assert.equal(await wa.evaluate(()=>window.require('WAWebSoundStickerGating').isSoundStickerCreationEnabled()),false);
   // A real 240-second image+audio package, produced by the shipped converter.
   const longPack=await page.evaluate(async()=>{
     const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
@@ -299,6 +295,8 @@ try {
   assert.deepEqual(await wa.evaluate(()=>[window.mockCalls.uploads,window.mockCalls.sends]),[2,2]);
   await panel.getByRole('button',{name:'Cerrar'}).click();
   await page.locator('#language').selectOption('en');
+  // The creation UI gate may also be absent entirely on some clients.
+  await wa.evaluate(()=>{const original=window.require;window.require=name=>{if(name==='WAWebSoundStickerGating')throw Error('missing gate');return original(name);};});
   const enBookmark=await page.locator('#wa-bookmark').getAttribute('href');
   await wa.evaluate(code=>{(0,eval)(decodeURIComponent(code.slice('javascript:'.length)));},enBookmark);
   await panel.getByText('Stickers Sonoros · Send to WhatsApp',{exact:true}).waitFor();

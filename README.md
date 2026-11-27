@@ -8,7 +8,7 @@
 
 [![Pruebas](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![Producción](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-**Versión actual del código: 2026.11.27.54.** El operador confirmó el primer envío a chat propio de .49. Las [pruebas .49](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publicación](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) y [diagnóstico del importador](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) finalizaron correctamente. Consulta las ejecuciones actuales para .54. Las cuatro pantallas muestran acciones breves y ayuda desplegable. Las pruebas automatizadas cubren Chromium de escritorio y diseños táctiles de 320–1024 px en español e inglés; los dispositivos físicos iOS/Android requieren validación propia. Se avisa si el navegador carece de codificación nativa Opus o WebP. No equivale a una auditoría externa de seguridad.
+**Versión actual del código: 2026.11.27.55.** El operador confirmó el primer envío a chat propio de .49. Las [pruebas .49](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publicación](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) y [diagnóstico del importador](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) finalizaron correctamente. Consulta las ejecuciones actuales para .55. Las cuatro pantallas muestran acciones breves y ayuda desplegable. Las pruebas automatizadas cubren Chromium de escritorio y diseños táctiles de 320–1024 px en español e inglés; los dispositivos físicos iOS/Android requieren validación propia. Se avisa si el navegador carece de codificación nativa Opus o WebP. No equivale a una auditoría externa de seguridad.
 
 ## Cuatro pasos
 
@@ -29,7 +29,7 @@ Si ya tienes un paquete, abre [Enviar sticker guardado](https://poldkent.github.
 
 ## Envío desde computadora
 
-WhatsApp App es el método predeterminado y utiliza el mismo flujo individual que el celular. Si prefieres WhatsApp Web, abre «Otros métodos de envío» en Enviar, descarga el paquete, instala o actualiza el marcador en los favoritos, abre WhatsApp Web y el chat deseado, ejecuta el marcador, selecciona el JSON y confirma el destinatario. El marcador funciona dentro del navegador y no necesita extensiones. Solo envía si WhatsApp Web tiene habilitado el sonido; no modifica sus funciones internas. Si no está disponible, usa el envío a tu propio WhatsApp. Actualiza los favoritos anteriores.
+WhatsApp App es el método predeterminado y utiliza el mismo flujo individual que el celular. Si prefieres WhatsApp Web, abre «Otros métodos de envío» en Enviar, descarga el paquete, instala o actualiza el marcador en los favoritos, abre WhatsApp Web y el chat deseado, ejecuta el marcador, selecciona el JSON y confirma el destinatario. El marcador funciona dentro del navegador y no necesita extensiones. Intenta enviar el sonido directamente sin casilla ni bloqueo previo por el indicador de creación; no modifica las funciones internas de WhatsApp. Si el cliente no admite el envío o no confirma el audio, revisa el chat antes de reintentar y usa el envío a tu propio WhatsApp como alternativa. Actualiza los favoritos anteriores.
 
 ## Calidad y formatos
 

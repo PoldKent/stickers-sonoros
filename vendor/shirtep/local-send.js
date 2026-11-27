@@ -69,8 +69,8 @@
       try{
         chat=activeChat();
         if(!chat)throw Error(t('Abre primero un chat de WhatsApp.',"Open a WhatsApp chat first."));
-        const gate=ns('WAWebSoundStickerGating');
-        if(gate.isSoundStickerCreationEnabled()!==true)throw Error(t('El sonido no está habilitado en esta sesión. Utiliza Enviar a mi WhatsApp.','Sound is not enabled in this session. Use Send to my WhatsApp.'));
+        // Creation UI availability is not proof of transport capability.
+        // Do not override WhatsApp internals; let native upload/send report support.
         if(!confirm(t('¿Enviar un sticker con sonido al chat «',"Send a sound sticker to chat «")+name(chat)+'»?'))return;
         if(activeChat()!==chat)throw Error(t('El chat ha cambiado. Confirma de nuevo.',"The chat changed. Confirm again."));
       }catch(e){msg(e.message);return;}
@@ -96,7 +96,7 @@
         const response=await prep.sendToChat({chat,options:{stickerAudio}});
         if(response?.messageSendResult!==ns('WAWebSendMsgResultAction').SendMsgResult.OK)throw Error(t('WhatsApp no confirmó el envío.',"WhatsApp did not confirm the send."));
         const sent=response.msg;
-        if(!sent||!(sent.stickerAudio||sent.attributes?.stickerAudio))throw Error(t('El cliente no confirmó que el mensaje contiene audio.',"The client did not confirm the message contains audio."));
+        if(!sent||!(sent.stickerAudio||sent.attributes?.stickerAudio))throw Error(t('WhatsApp no confirmó que el mensaje contenga audio. Revisa el chat; si falta el sonido, utiliza Enviar a mi WhatsApp.',"WhatsApp did not confirm that the message contains audio. Check the chat; if sound is missing, use Send to my WhatsApp."));
         msg(t('Sticker enviado. Comprobando la entrega…',"Sticker sent. Checking confirmation…"));
         const until=Date.now()+15000,ACK=ns('WAWebAck').ACK;
         while(Date.now()<until&&sent.ack<ACK.SENT&&sent.ack>=0)await new Promise(r=>setTimeout(r,300));
@@ -104,7 +104,7 @@
         else {msg(t('El mensaje se creó, pero la confirmación no llegó o fue negativa. Revisa el chat antes de volver a enviar.',"The message was created but confirmation was missing or negative. Check the chat before retrying."));}
         data=undefined;
       }catch(e){
-        msg((e.message||t('Error del cliente WhatsApp',"WhatsApp client error")) + (attempted?t(' Revisa el chat antes de volver a intentar.'," Check the chat before retrying."):t(' No se envió el sticker.'," The sticker was not sent.")));
+        msg((e.message||t('Error del cliente WhatsApp',"WhatsApp client error")) + (attempted?t(' Revisa el chat antes de volver a intentar.'," Check the chat before retrying."):t(' No se envió el sticker. Si WhatsApp Web no admite el envío, utiliza Enviar a mi WhatsApp.'," The sticker was not sent. If WhatsApp Web does not support sending, use Send to my WhatsApp.")));
         if(attempted)data=undefined;
       }finally{
         sending=false;input.disabled=false;close.disabled=false;send.disabled=!data;

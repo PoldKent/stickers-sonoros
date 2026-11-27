@@ -100,47 +100,39 @@ try {
     await mobileBridge.goto('http://127.0.0.1:8000/mobile.html');
     await mobileBridge.locator('#mobile-package').setInputFiles({name:'ejemplo.sonoro.json',mimeType:'application/json',buffer:packageBytes});
     await mobileBridge.locator('#mobile-result').waitFor({state:'visible'});
-    // Mobile-only private bridge: simulate transport, never connect WhatsApp in CI.
-    const endpoint='https://stickers-sonoros-bridge.onrender.com', token='test-token-'+('x'.repeat(32));
-    let posts=0, paired=false,connections=0;
+    // Self-send UI with simulated CAPTCHA and transport, never real account access.
+    const endpoint='https://stickers-sonoros-bridge.onrender.com';
+    let posts=0,paired=false,connections=0,sessionToken='';
+    await mobileBridge.evaluate(()=>{window.turnstile={render:(el,o)=>{o.callback('mock-challenge');return 1},remove:()=>{}}});
     await mobileBridge.route(endpoint+'/**',async route=>{
       const request=route.request(),path=new URL(request.url()).pathname;
       const headers={'Access-Control-Allow-Origin':'http://127.0.0.1:8000','Access-Control-Allow-Headers':'authorization, content-type','Access-Control-Allow-Methods':'GET, POST, OPTIONS'};
       if(request.method()==='OPTIONS')return route.fulfill({status:204,headers});
-      assert.equal(request.headers().authorization,'Bearer '+token);
       let body;
-      if(path==='/v1/connect'){connections++;paired=true;body={phase:'pairing',pairingCode:'TEST1234'};}
-      else if(path==='/v1/status'){assert(paired);body={phase:'ready'};}
-      else if(path==='/v1/send'){posts++;assert.deepEqual(request.postDataBuffer(),packageBytes);assert.equal(request.headers()['x-bridge-tier'],undefined);body={phase:'ready',remaining:5-posts,relayed:true,deliveryConfirmed:false};}
-      else throw Error('Unexpected private endpoint');
-      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.27.48',...body})});
+      if(path==='/v2/config'){body={enabled:true,siteKey:'mock'}}
+      else if(path==='/v2/connect'){connections++;paired=true;sessionToken=request.headers().authorization;assert.match(sessionToken,/^Bearer [a-f0-9]{64}$/);assert.deepEqual(request.postDataJSON(),{phone:'59170000000',challenge:'mock-challenge',consent:true});body={phase:'pairing',pairingCode:'TEST1234'}}
+      else if(path==='/v2/status'){assert(paired);assert.equal(request.headers().authorization,sessionToken);body={phase:'ready'}}
+      else if(path==='/v2/send'){posts++;assert.equal(request.headers().authorization,sessionToken);assert.deepEqual(request.postDataBuffer(),packageBytes);body={phase:'ready',remaining:5-posts,relayed:true,deliveryConfirmed:false}}
+      else throw Error('Unexpected endpoint');
+      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.27.49',...body})});
     });
-    const privatePanel=mobileBridge.locator('.private-bridge');
-    assert.equal(await privatePanel.getAttribute('open'),'');
-    const connect=privatePanel.getByRole('button',{name:'Conectar WhatsApp',exact:true});
-    await privatePanel.locator('input[type=password]').fill('short');
+    const privatePanel=mobileBridge.locator('.self-bridge');
+    assert.equal(await privatePanel.locator('input[type=password]').count(),0);
+    await privatePanel.getByRole('button',{name:'Comenzar',exact:true}).click();
+    await privatePanel.locator('input[type=tel]').fill('+591 70000000');
+    const connect=privatePanel.getByRole('button',{name:'Conectar mi WhatsApp',exact:true});
     assert.equal(await connect.isDisabled(),true);
-    await privatePanel.locator('input[type=password]').fill(token);
-    const privateSend=privatePanel.getByRole('button',{name:'Enviar sticker sonoro',exact:true});
-    assert.equal(await privateSend.isVisible(),false);
+    await privatePanel.locator('input[type=checkbox]').check();
     await connect.click();
     await privatePanel.getByText('TEST1234',{exact:true}).waitFor();
-    await privatePanel.getByText('WhatsApp conectado. Ya puedes enviar tu sticker.',{exact:true}).waitFor();
-    assert.equal(await privatePanel.locator('input[type=password]').isVisible(),false);
-    assert.equal(await privatePanel.locator('select,input[type=checkbox]').count(),0);
-    mobileBridge.once('dialog',dialog=>dialog.dismiss());await privateSend.click();
-    await privatePanel.getByText('WhatsApp conectado. Ya puedes enviar tu sticker.',{exact:true}).waitFor();
-    assert.equal(posts,0);
-    mobileBridge.once('dialog',dialog=>dialog.accept());await privateSend.click();
-    await privatePanel.getByText(/El puente procesó el envío/).waitFor();
-    assert.equal(posts,1);
-    await privateSend.waitFor({state:'visible'});
-    mobileBridge.once('dialog',dialog=>dialog.accept());await privateSend.click();
-    await privatePanel.getByText(/El puente procesó el envío/).waitFor();
-    assert.equal(posts,2);assert.equal(connections,1);
+    await privatePanel.getByText('Conectado. El sticker se enviará únicamente a tu propio chat.',{exact:true}).waitFor();
+    const privateSend=privatePanel.getByRole('button',{name:'Enviar a mi propio chat',exact:true});
+    mobileBridge.once('dialog',d=>d.dismiss());await privateSend.click();assert.equal(posts,0);
+    mobileBridge.once('dialog',d=>d.accept());await privateSend.click();
+    await privatePanel.getByText('Envío procesado. Comprueba tu propio chat y el sonido.',{exact:true}).waitFor();
+    assert.equal(posts,1);assert.equal(connections,1);
     const weights=await mobileBridge.evaluate(()=>[1,61,240,3600].map(segundosAudio=>SonoroPrivateMobile.packageWeight({format:'stickers-sonoros/1',webp:'YQ==',ogg:'Yg==',info:{segundosAudio}})));
     assert.deepEqual(weights,[2,2,2,2]);
-    // Two confirmed UI requests are mocked; actual duplicate rejection is tested separately.
     await mobileBridge.screenshot({path:'artifacts/screenshots/mobile-send-es.png',fullPage:true});
     await mobileBridge.unroute(endpoint+'/**');
 

@@ -54,7 +54,7 @@ $('mobile-package').onchange=async()=>{
     current=p;urls=[URL.createObjectURL(p.webp),URL.createObjectURL(p.ogg)];
     $('mobile-image').src=urls[0];$('mobile-audio').src=urls[1];
     $('mobile-result').hidden=false;status('ready');applyLanguage();
-    const panel=$('private-mobile-bridge').querySelector('details');if(panel)panel.open=true;
+    // Self-send panel is visible after package validation.
   }catch(e){if(n===serial)status(messages[e.message]?e.message:'invalid')}
 };
 window.SonoroMobile={validate};

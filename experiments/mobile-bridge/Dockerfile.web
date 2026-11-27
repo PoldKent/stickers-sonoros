@@ -3,7 +3,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends git ffmpeg ca-c
 WORKDIR /app
 COPY package.json ./
 RUN npm install --omit=dev --no-audit --no-fund
-COPY package-adapter.mjs web-policy.mjs web-service.mjs ./
+COPY package-adapter.mjs web-policy.mjs web-service.mjs public-policy.mjs ./
 USER node
 ENV NODE_ENV=production PORT=8080
 EXPOSE 8080

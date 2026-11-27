@@ -9,7 +9,7 @@ Video, imagen o GIF + audio · 9+ FPS en animaciones · hasta 2 MB combinados ·
 
 [![Pruebas automatizadas](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![API de producción](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-**Última versión con envío móvil confirmado por el operador: 2026.11.26.44.** [Pruebas del editor](https://github.com/PoldKent/stickers-sonoros/actions/runs/45936518113), [publicación web](https://github.com/PoldKent/stickers-sonoros/actions/runs/45936517767) y [diagnóstico del importador](https://github.com/PoldKent/stickers-sonoros/actions/runs/45936642813) aprobados sobre bcf7d48. La .45 amplía el puente privado; consultar su CI y pruebas reales antes de considerarla validada. Render importador es exclusivamente la API y redirige su raíz con HTTP 308 a la web oficial. El puente separado no es una segunda interfaz web.
+**Última versión con envío móvil confirmado por el operador: 2026.11.26.44.** [Pruebas del editor](https://github.com/PoldKent/stickers-sonoros/actions/runs/45936518113), [publicación web](https://github.com/PoldKent/stickers-sonoros/actions/runs/45936517767) y [diagnóstico del importador](https://github.com/PoldKent/stickers-sonoros/actions/runs/45936642813) aprobados sobre bcf7d48. La .49 sustituye el acceso reservado por sesiones individuales; requiere activación y validación real del envío a chat propio. Render importador es exclusivamente la API y redirige su raíz con HTTP 308 a la web oficial. El puente separado no es una segunda interfaz web.
 
 ## Guía rápida
 

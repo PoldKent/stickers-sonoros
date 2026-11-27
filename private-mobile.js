@@ -30,12 +30,12 @@ function mount(root,getPackage){
   const response=await fetch(BASE+path,{method,headers:{...(token?{Authorization:'Bearer '+token}:{}),...(body?{'Content-Type':'application/json'}:{})},body,cache:'no-store',credentials:'omit',redirect:'error',signal:AbortSignal.timeout(90000)});
   return {response,data:await response.json()};
  }
- function poll(){clearTimeout(timer);if(token&&['connecting','pairing'].includes(phase))timer=setTimeout(()=>act('/v2/status'),2500)}
+ function poll(){clearTimeout(timer);if(token&&['connecting','pairing'].includes(phase))timer=setTimeout(()=>act('/v2/status'),2500);else if(token&&phase==='ready')timer=setTimeout(()=>act('/v2/status'),30000)}
  async function act(path,method='GET',body){
   if(busy)return;busy=true;update();
   try{const {response,data}=await call(path,method,body);
    if(data.phase){phase=data.phase;code.textContent=data.pairingCode||''}
-   if(response.ok){message=data.relayed?'relayed':phase==='pairing'?'':phase;if(['closed','failed','uncertain'].includes(phase)){const m=message;reset();message=m}}
+   if(response.ok){if(path!=='/v2/status'||message!=='relayed'||phase!=='ready')message=data.relayed?'relayed':phase==='pairing'?'':phase;if(['closed','failed','uncertain'].includes(phase)){const m=message;reset();message=m}}
    else{message=data.error||'error';if(response.status===410||path==='/v2/connect'){const m=message;reset();message=m}else if(path==='/v2/send'&&response.status>=500){uncertain=true;message='uncertain'}}
   }catch{message=path==='/v2/send'?'uncertain':'error';if(path==='/v2/send')uncertain=true;else if(path==='/v2/connect'){phase='connecting';}}
   finally{busy=false;update();poll()}
@@ -49,7 +49,7 @@ function mount(root,getPackage){
   token=Array.from(crypto.getRandomValues(new Uint8Array(32)),x=>x.toString(16).padStart(2,'0')).join('');const body=JSON.stringify({phone:number,challenge,consent:true});form.hidden=true;phone.value='';challenge='';if(widget!==undefined){window.turnstile?.remove(widget);widget=undefined}act('/v2/connect','POST',body)};
  stop.onclick=()=>act('/v2/stop','POST');
  copy.onclick=()=>navigator.clipboard.writeText(code.textContent).catch(()=>{});
- send.onclick=async()=>{if(busy||phase!=='ready'||uncertain)return;busy=true;update();try{const body=await getPackage();const weight=body&&packageWeight(JSON.parse(await body.text()));if(!weight){message='invalid';return}if(!confirm(t(weight>1000000?'large':'confirm')))return;busy=false;await act('/v2/send','POST',body)}catch{message='error'}finally{busy=false;update()}};
+ send.onclick=async()=>{if(busy||phase!=='ready'||uncertain)return;busy=true;update();try{const body=await getPackage();const weight=body&&packageWeight(JSON.parse(await body.text()));if(!weight){message='invalid';return}if(!confirm(t(weight>1000000?'large':'confirm'))){message='ready';return;}busy=false;await act('/v2/send','POST',body)}catch{message='error'}finally{busy=false;update()}};
  document.addEventListener('sticker-language',update);document.getElementById('mobile-language')?.addEventListener('change',()=>queueMicrotask(update));update();
 }
 window.SonoroPrivateMobile={mount,packageWeight};

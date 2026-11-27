@@ -2,9 +2,9 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const messages={
-language:['Idioma','Language'],title:['Enviar sticker guardado','Send saved sticker'],intro:['Abre tu paquete sonoro y envíalo con el puente privado a WhatsApp App.','Open your sound sticker package and send it to WhatsApp App using the private bridge.'],
+language:['Idioma','Language'],title:['Enviar sticker guardado','Send saved sticker'],intro:['Abre tu paquete sonoro y envíalo a tu propio chat de WhatsApp.','Open your sound sticker package and send it to your own WhatsApp chat.'],
 choose:['Seleccionar archivo .sonoro.json','Choose .sonoro.json file'],back:['Volver al editor','Back to editor'],guide:['Guía móvil','Mobile guide'],
-invalid:['Paquete sonoro no válido o dañado.','Invalid or damaged sound sticker package.'],large:['El puente admite hasta 2 MB de imagen y audio combinados.','The bridge accepts up to 2 MB of combined image and audio.'],loading:['Verificando paquete…','Verifying package…'],ready:['Paquete válido. Continúa con el envío privado.','Valid package. Continue to private sending.'],still:['Imagen fija','Still image'],animated:['Animación','Animation']};
+invalid:['Paquete sonoro no válido o dañado.','Invalid or damaged sound sticker package.'],large:['El puente admite hasta 2 MB de imagen y audio combinados.','The bridge accepts up to 2 MB of combined image and audio.'],loading:['Verificando paquete…','Verifying package…'],ready:['Paquete válido. Continúa con el envío a tu WhatsApp.','Valid package. Continue to send to your WhatsApp.'],still:['Imagen fija','Still image'],animated:['Animación','Animation']};
 let language='es',statusKey='',current=null,serial=0,urls=[];
 try{language=localStorage.getItem('stickers.language')==='en'?'en':'es'}catch{}
 const t=k=>messages[k]?.[language==='en'?1:0]||k;

@@ -22,7 +22,7 @@
     ["La animación conserva una cadencia uniforme. Si el original tiene fotogramas repetidos, no se inventa movimiento.","The animation preserves a uniform frame cadence. If the original contains repeated frames, no motion is invented."],
     ["Usar completo","Use full source"],
     ["Si ya tienes el favorito de esta versión, salta este paso. Actualiza los favoritos antiguos.","Skip this step if you have the bookmark for this version. Update older bookmarks."],
-    ["En el celular, utiliza el puente privado de la pantalla Enviar.","On a phone, use the private bridge on the Send screen."],
+    ["En el celular, utiliza Enviar a mi WhatsApp.","On a phone, use Send to my WhatsApp."],
     ["Línea de tiempo","Timeline"],
     ["El tramo supera la memoria de captura disponible. Reduce la resolución del archivo original o acorta el tramo.","The selection exceeds available capture memory. Reduce the source resolution or shorten the selection."],
     ["Inicio del video","Video start"],

@@ -9,7 +9,7 @@ Video, image or GIF + audio · 9+ FPS for animation · up to 2 MB combined · no
 
 [![Automated checks](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![Production API](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-**Latest version with operator-confirmed mobile sending: 2026.11.26.44.** [Editor checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/45936518113), [Pages deployment](https://github.com/PoldKent/stickers-sonoros/actions/runs/45936517767) and [importer diagnostic](https://github.com/PoldKent/stickers-sonoros/actions/runs/45936642813) passed for bcf7d48. Version .45 extends the private bridge; check its CI and real-device tests before calling it validated. Render importer is API-only and redirects its root with HTTP 308 to the official site. The separate bridge does not serve another web interface.
+**Latest version with operator-confirmed mobile sending: 2026.11.26.44.** [Editor checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/45936518113), [Pages deployment](https://github.com/PoldKent/stickers-sonoros/actions/runs/45936517767) and [importer diagnostic](https://github.com/PoldKent/stickers-sonoros/actions/runs/45936642813) passed for bcf7d48. Version .49 replaces administrator access with individual sessions; activation and real self-chat tests are pending. Render importer is API-only and redirects its root with HTTP 308 to the official site. The separate bridge does not serve another web interface.
 
 ## Quick start
 

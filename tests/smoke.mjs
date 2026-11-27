@@ -127,8 +127,12 @@ try {
     await privatePanel.getByText('TEST1234',{exact:true}).waitFor();
     await privatePanel.getByText('Conectado. El sticker se enviará únicamente a tu propio chat.',{exact:true}).waitFor();
     const privateSend=privatePanel.getByRole('button',{name:'Enviar a mi propio chat',exact:true});
-    mobileBridge.once('dialog',d=>d.dismiss());await privateSend.click();assert.equal(posts,0);
-    mobileBridge.once('dialog',d=>d.accept());await privateSend.click();
+    const dismissed=mobileBridge.waitForEvent('dialog').then(d=>d.dismiss());
+    await Promise.all([dismissed,privateSend.click()]);
+    await mobileBridge.waitForFunction(()=>!document.querySelector('.self-bridge [data-self-msg=send]').disabled);
+    assert.equal(posts,0);
+    const accepted=mobileBridge.waitForEvent('dialog').then(d=>d.accept());
+    await Promise.all([accepted,privateSend.click()]);
     await privatePanel.getByText('Envío procesado. Comprueba tu propio chat y el sonido.',{exact:true}).waitFor();
     assert.equal(posts,1);assert.equal(connections,1);
     const weights=await mobileBridge.evaluate(()=>[1,61,240,3600].map(segundosAudio=>SonoroPrivateMobile.packageWeight({format:'stickers-sonoros/1',webp:'YQ==',ogg:'Yg==',info:{segundosAudio}})));

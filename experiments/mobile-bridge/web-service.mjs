@@ -10,7 +10,7 @@ import pino from 'pino';
 import {preparePackage} from './package-adapter.mjs';
 import {ORIGIN,authorized,phoneNumber,trialPackage,readPackage} from './web-policy.mjs';
 const secret=process.env.BRIDGE_TOKEN, pairNumber=process.env.BRIDGE_PAIR_NUMBER, receiver=process.env.BRIDGE_RECIPIENT_NUMBER;
-if(!secret||secret.length<32||!phoneNumber(pairNumber)||!phoneNumber(receiver)||pairNumber===receiver)throw Error('Configure a strong BRIDGE_TOKEN and distinct owned secondary / receiving numbers in the service environment.');
+const configured=Boolean(secret&&secret.length>=32&&phoneNumber(pairNumber)&&phoneNumber(receiver)&&pairNumber!==receiver);
 const logger=pino({level:'silent'});
 let phase='idle',code='',codeUntil=0,sock,folder,timer,auth,closed=false,requested=false,restarts=0;
 const status=()=>({phase,pairingCode:phase==='pairing'&&Date.now()<codeUntil?code:undefined,trial:{maxSeconds:3,maxComponentBytes:500000}});
@@ -51,10 +51,11 @@ async function start(){
 }
 function reply(res,n,data){res.writeHead(n,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Robots-Tag':'noindex, nofollow'});res.end(JSON.stringify(data))}
 const server=createServer({requestTimeout:20000,headersTimeout:10000},async(req,res)=>{
-  if(req.url==='/health'&&req.method==='GET')return reply(res,200,{ok:true});
+  if(req.url==='/health'&&req.method==='GET')return reply(res,200,{ok:true,configured});
   if(req.headers.origin!==ORIGIN)return reply(res,403,{error:'origin'});
   res.setHeader('Access-Control-Allow-Origin',ORIGIN);res.setHeader('Vary','Origin');
   if(req.method==='OPTIONS'){res.writeHead(204,{'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type','Cache-Control':'no-store'});return res.end()}
+  if(!configured)return reply(res,503,{error:'not-configured'});
   if(!authorized(req.headers.authorization,secret))return reply(res,401,{error:'auth'});
   if(req.method==='GET'&&req.url==='/v1/status')return reply(res,200,status());
   if(req.method==='POST'&&req.url==='/v1/connect'){await start();return reply(res,200,status())}
@@ -77,5 +78,5 @@ const server=createServer({requestTimeout:20000,headersTimeout:10000},async(req,
   }
   return reply(res,404,{error:'route'});
 });
-server.listen(Number(process.env.PORT||8080),'0.0.0.0',()=>console.log('Private one-shot bridge ready; no pairing started.'));
+server.listen(Number(process.env.PORT||8080),'0.0.0.0',()=>console.log(configured?'Private one-shot bridge ready; no pairing started.':'Private bridge inactive: configure environment in Render. No pairing started.'));
 process.once('SIGTERM',()=>void close().finally(()=>server.close()));

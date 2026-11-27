@@ -1012,7 +1012,7 @@ function stickerAttribution() {
   return {packName:stickerPackName,publisher:signature ? signature+' · '+stickerAppUrl : stickerAppUrl,signature};
 }
 async function verifySticker(files) {
-  if (!files.webp?.size || !files.ogg?.size || files.webp.size + files.ogg.size > 2000000 || (byId('size-budget').value === 'compatible' && (files.webp.size > 1000000 || files.ogg.size > 1000000)) || (files.info?.tipo !== 'image' && !(files.info?.fps >= 9))) throw new Error('Los archivos superan el límite del conversor o están vacíos.');
+  if (!files.webp?.size || !files.ogg?.size || files.webp.size + files.ogg.size > 2000000 || (byId('size-budget').value === 'compatible' && files.webp.size + files.ogg.size > 1000000) || (files.info?.tipo !== 'image' && !(files.info?.fps >= 9))) throw new Error('Los archivos superan el límite del conversor o están vacíos.');
   const webp = new Uint8Array(await files.webp.arrayBuffer());
   const ogg = new Uint8Array(await files.ogg.arrayBuffer());
   const read = (b,i,n) => String.fromCharCode(...b.subarray(i,i+n));
@@ -1074,7 +1074,7 @@ async function prepareSticker() {
     byId('quality-result').textContent = 'Calidad final: ' + info.lado + ' × ' + info.lado + ' px · ' + (info.fps ? info.fps + ' FPS' : 'Imagen fija') + (info.lado < 256 ? ' · Resolución reducida. Para mejorar la nitidez, elige un tramo más corto.' : '');
     byId('quality-result').hidden = false;
     byId('size-result').textContent = 'Peso total: '+((files.webp.size+files.ogg.size)/1000000).toFixed(2)+' MB';
-    byId('size-warning').hidden = files.webp.size <= 1000000 && files.ogg.size <= 1000000;
+    byId('size-warning').hidden = files.webp.size + files.ogg.size <= 1000000;
     byId('native-bridge').hidden = false;
     byId('sticker-files').hidden = false;
     state.textContent = 'Tu sticker está listo para enviar.';
@@ -1231,6 +1231,12 @@ async function packageBlob(files){
   const {lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl,fps,cuadros,duracion,fpsEfectivos}=files.info;
   return new Blob([JSON.stringify({format:'stickers-sonoros/1',webp,ogg,info:{lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl,fps,cuadros,duracion,fpsEfectivos}})],{type:'application/json'});
 }
+const sendMethods=byId('send-methods');
+const isPhone=()=>navigator.userAgentData?.mobile===true||/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||(matchMedia('(pointer: coarse)').matches&&innerWidth<=900);
+let sendMethod='app';
+function updateSendMethod(){const mobile=isPhone();if(mobile)sendMethod='app';sendMethods.hidden=mobile;byId('private-mobile-bridge').hidden=sendMethod!=='app';byId('desktop-send-options').hidden=mobile||sendMethod!=='web';for(const b of sendMethods.querySelectorAll('[data-send-method]'))b.setAttribute('aria-pressed',String(b.dataset.sendMethod===sendMethod));}
+for(const b of sendMethods.querySelectorAll('[data-send-method]'))b.addEventListener('click',()=>{sendMethod=b.dataset.sendMethod;updateSendMethod()});
+window.addEventListener('resize',updateSendMethod);updateSendMethod();
 window.SonoroPrivateMobile?.mount(byId('private-mobile-bridge'),async()=>{const files=nativePackage;if(!files)return null;const blob=await packageBlob(files);return nativePackage===files?blob:null});
 byId('package-download').onclick=async()=>{
   const files=nativePackage;

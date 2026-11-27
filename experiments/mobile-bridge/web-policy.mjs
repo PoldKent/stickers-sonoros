@@ -7,11 +7,10 @@ export function authorized(header,secret){
   return a.length===b.length&&timingSafeEqual(a,b);
 }
 export function phoneNumber(s){return typeof s==='string'&&/^[1-9][0-9]{7,14}$/.test(s)}
-export const TIERS=Object.freeze({small:{maxSeconds:3,maxBytes:1000000,maxComponentBytes:499999},medium:{maxSeconds:15,maxBytes:1000000,maxComponentBytes:1000000},extended:{maxSeconds:60,maxBytes:2000000,maxComponentBytes:2000000}});
+export const MAX_MEDIA_BYTES=2_000_000;
 export const SESSION_MS=15*60*1000,MAX_SENDS=5,COOLDOWN_MS=5000;
-export function trialPackage(p,tier='small'){
-  const t=Object.hasOwn(TIERS,tier)?TIERS[tier]:null;
-  if(!t||!Number.isSafeInteger(p.audioSeconds)||p.audioSeconds<1||p.audioSeconds>t.maxSeconds||p.webpBuffer.length<1||p.audioBuffer.length<1||p.webpBuffer.length>t.maxComponentBytes||p.audioBuffer.length>t.maxComponentBytes||p.webpBuffer.length+p.audioBuffer.length>t.maxBytes)throw Error('trial-limit');
+export function trialPackage(p){
+  if(!Number.isSafeInteger(p.audioSeconds)||p.audioSeconds<1||p.webpBuffer.length<1||p.audioBuffer.length<1||p.webpBuffer.length+p.audioBuffer.length>MAX_MEDIA_BYTES)throw Error('trial-limit');
   return p;
 }
 // A session records only media digests, never message bodies or credentials.
@@ -32,10 +31,11 @@ export async function readPackage(req){
   return Buffer.concat(chunks,n);
 }
 
-// 48 kHz mono signed 16-bit PCM. Accept the converter's integer-second rounding but enforce the real tier cap.
-export function checkDecodedAudio(bytes,declared,tier){
-  const t=Object.hasOwn(TIERS,tier)?TIERS[tier]:null;
-  const seconds=bytes/96000;
-  if(!t||!Number.isSafeInteger(bytes)||bytes<=0||bytes%2||seconds>t.maxSeconds+0.02||Math.max(1,Math.round(seconds))!==declared)throw Error('trial-limit');
+// FFmpeg decodes to a null sink; parse the final progress timestamp, not an untrusted declared duration.
+export function checkDecodedAudio(progress,declared){
+  if(typeof progress!=='string'||!Number.isSafeInteger(declared)||declared<1||!/^progress=end\r?$/m.test(progress))throw Error('decode');
+  const times=[...progress.matchAll(/^out_time_us=(\d+)\r?$/gm)];
+  const seconds=Number(times.at(-1)?.[1])/1e6;
+  if(!Number.isFinite(seconds)||seconds<=0||Math.max(1,Math.round(seconds))!==declared)throw Error('decode');
   return seconds;
 }

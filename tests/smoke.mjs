@@ -41,8 +41,8 @@ try {
   });
   assert.deepEqual(rank,{sharp:256,smooth:64,limit:9,reject:1,floor:9,belowFloor:0,has9:true,capture:[20,20,12,10,9,9],image:1});
   assert.equal(await page.locator('#quality').inputValue(),'sharp');
-  assert.equal(await page.locator('#size-budget').inputValue(),'extended');
-  assert.deepEqual(await page.evaluate(()=>{const x=window.WAAS._internals;return [x.webpBudget(false,123456),x.webpBudget(true,123456),x.captureFpsFor(10,'sharp',true),x.captureFpsFor(60,'sharp',true)];}),[1000000,1876544,30,9]);
+  assert.equal(await page.locator('#size-budget').inputValue(),'compatible');
+  assert.deepEqual(await page.evaluate(()=>{const x=window.WAAS._internals;return [x.webpBudget(false,123456),x.webpBudget(true,123456),x.captureFpsFor(10,'sharp',true),x.captureFpsFor(60,'sharp',true)];}),[876544,1876544,30,9]);
   const caps=await page.evaluate(()=>window.WAAS.capabilities());
   assert.equal(caps.opus,true,'Chromium must support Opus');
   assert.equal(caps.webpEncode,'image/webp');
@@ -59,9 +59,11 @@ try {
   assert.equal(await page.locator('#download').count(),0);
   assert.equal(await page.locator('#share').count(),0);
   assert.equal(await page.locator('#wa-bookmark').isVisible(),false);
-  await page.locator('#desktop-send-options > summary').click();
+  await page.locator('[data-send-method=web]').click();
   assert.equal(await page.locator('#wa-bookmark').isVisible(),true);
-  await page.locator('#desktop-send-options > summary').click();
+  assert.equal(await page.locator('#private-mobile-bridge').isVisible(),false);
+  await page.locator('[data-send-method=app]').click();
+  assert.equal(await page.locator('#private-mobile-bridge').isVisible(),true);
   await page.screenshot({path:'artifacts/screenshots/desktop-es.png',fullPage:true});
   await page.locator('#language').selectOption('en');
   await page.screenshot({path:'artifacts/screenshots/desktop-en.png',fullPage:true});
@@ -76,7 +78,7 @@ try {
   await visualAudit.screenshot({path:'artifacts/screenshots/mobile-editor-en.png',fullPage:true});
   await visualAudit.close();
   const sizes = await page.evaluate(async()=>Promise.all(['sticker-image','sticker-audio'].map(async id=>(await (await fetch(document.getElementById(id).src)).blob()).size)));
-  assert(sizes.every(size=>size>0)&&sizes.reduce((a,b)=>a+b,0)<=2000000);
+  assert(sizes.every(size=>size>0)&&sizes.reduce((a,b)=>a+b,0)<=1000000);
   // Export the actual converted package and execute the bookmarklet against mock WA modules.
   const [download] = await Promise.all([page.waitForEvent('download'),page.locator('#package-download').click()]);
   assert.equal(download.suggestedFilename(),'ejemplo.sonoro.json');
@@ -103,15 +105,15 @@ try {
     let posts=0, paired=false,connections=0;
     await mobileBridge.route(endpoint+'/**',async route=>{
       const request=route.request(),path=new URL(request.url()).pathname;
-      const headers={'Access-Control-Allow-Origin':'http://127.0.0.1:8000','Access-Control-Allow-Headers':'authorization, content-type, x-bridge-tier','Access-Control-Allow-Methods':'GET, POST, OPTIONS'};
+      const headers={'Access-Control-Allow-Origin':'http://127.0.0.1:8000','Access-Control-Allow-Headers':'authorization, content-type','Access-Control-Allow-Methods':'GET, POST, OPTIONS'};
       if(request.method()==='OPTIONS')return route.fulfill({status:204,headers});
       assert.equal(request.headers().authorization,'Bearer '+token);
       let body;
       if(path==='/v1/connect'){connections++;paired=true;body={phase:'pairing',pairingCode:'TEST1234'};}
       else if(path==='/v1/status'){assert(paired);body={phase:'ready'};}
-      else if(path==='/v1/send'){posts++;assert.deepEqual(request.postDataBuffer(),packageBytes);assert.equal(request.headers()['x-bridge-tier'],'small');body={phase:'ready',remaining:5-posts,relayed:true,deliveryConfirmed:false};}
+      else if(path==='/v1/send'){posts++;assert.deepEqual(request.postDataBuffer(),packageBytes);assert.equal(request.headers()['x-bridge-tier'],undefined);body={phase:'ready',remaining:5-posts,relayed:true,deliveryConfirmed:false};}
       else throw Error('Unexpected private endpoint');
-      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.26.45',...body})});
+      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.27.48',...body})});
     });
     const privatePanel=mobileBridge.locator('.private-bridge');
     assert.equal(await privatePanel.getAttribute('open'),'');
@@ -136,8 +138,8 @@ try {
     mobileBridge.once('dialog',dialog=>dialog.accept());await privateSend.click();
     await privatePanel.getByText(/El puente procesó el envío/).waitFor();
     assert.equal(posts,2);assert.equal(connections,1);
-    const tiers=await mobileBridge.evaluate(()=>[1,10,40,61].map(segundosAudio=>SonoroPrivateMobile.chooseTier({format:'stickers-sonoros/1',webp:'YQ==',ogg:'Yg==',info:{segundosAudio}})));
-    assert.deepEqual(tiers,['small','medium','extended',null]);
+    const weights=await mobileBridge.evaluate(()=>[1,61,240,3600].map(segundosAudio=>SonoroPrivateMobile.packageWeight({format:'stickers-sonoros/1',webp:'YQ==',ogg:'Yg==',info:{segundosAudio}})));
+    assert.deepEqual(weights,[2,2,2,2]);
     // Two confirmed UI requests are mocked; actual duplicate rejection is tested separately.
     await mobileBridge.screenshot({path:'artifacts/screenshots/mobile-send-es.png',fullPage:true});
     await mobileBridge.unroute(endpoint+'/**');
@@ -463,6 +465,7 @@ try {
       return {side:image.naturalWidth,size:(await (await fetch(image.src)).blob()).size};
     });
     assert(result.side>=64&&result.size<=1000000);
+    assert(result.size+await qualityPage.locator('#sticker-audio').evaluate(async a=>(await (await fetch(a.src)).blob()).size)<=1000000);
     assert.match(await qualityPage.locator('#quality-result').textContent(),/Calidad final:/);
     const fps=Number((await qualityPage.locator('#quality-result').textContent()).match(/(\d+) FPS/)[1]);
     assert(fps>=9);
@@ -474,7 +477,7 @@ try {
     assert(extendedSizes[0]>0&&extendedSizes[1]>0&&extendedSizes[0]+extendedSizes[1]<=2000000);
     assert(Number((await qualityPage.locator('#quality-result').textContent()).match(/(\d+) FPS/)[1])>=9);
     assert.match(await qualityPage.locator('#size-result').textContent(),/Peso total:/);
-    assert.equal(await qualityPage.locator('#size-warning').isVisible(),(extendedSizes[0]>1000000||extendedSizes[1]>1000000));
+    assert.equal(await qualityPage.locator('#size-warning').isVisible(),(extendedSizes[0]+extendedSizes[1]>1000000));
     await qualityPage.locator('#quality').selectOption('balanced');
     assert.equal(await qualityPage.locator('#sticker-files').isVisible(),false);
   } finally {await qualityPage.close();rmSync(qualityTemp,{recursive:true,force:true});}
@@ -670,11 +673,13 @@ try {
       await phone.locator('#export').click();
       await phone.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
       assert.match(await phone.locator('#sticker-state').textContent(),/Your sticker is ready to send/);
-      assert.equal(await phone.locator('#send-title').textContent(),'How to send your sticker to WhatsApp');
+      assert.equal(await phone.locator('#send-title').textContent(),'Send your sticker');
       assert.equal(await phone.locator('.send-steps > li').count(),4);
       assert.equal(await phone.locator('#download').count(),0);
       await phone.locator('#wizard-next').click();
-      assert.equal(await phone.locator('#wa-bookmark').isVisible(),true);
+      assert.equal(await phone.locator('#wa-bookmark').isVisible(),false);
+      assert.equal(await phone.locator('#send-methods').isVisible(),false);
+      assert.equal(await phone.locator('#private-mobile-bridge').isVisible(),true);
       assert.match(await phone.locator('#package-download').textContent(),/Save sound sticker/);
       assert.equal(await phone.locator('#signature').inputValue(),'');
       const unsigned=await phone.evaluate(async()=>{

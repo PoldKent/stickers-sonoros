@@ -33,13 +33,13 @@ Video, imagen o GIF + audio · 9+ FPS en animaciones · hasta 2 MB combinados ·
 - Todos los modos convierten directamente el archivo original y la pista de audio seleccionada con el encuadre, zoom y rotación elegidos, sin grabar un video intermedio. Los intervalos del WebP animado no se fusionan en pausas largas. Todos los perfiles mantienen al menos 9 FPS codificados; las fuentes estáticas o cuadros repetidos del original no ganan movimiento artificial.
 - **Máxima nitidez** prioriza resolución; **Equilibrado** y **Máxima fluidez** ofrecen otras combinaciones. La resolución de salida y compresión se adaptan al presupuesto. Si no cabe con al menos 9 FPS, reduce el tramo o usa un fotograma fijo.
 
-| Límite | Predeterminado: Calidad ampliada | Opcional: Compatible |
+| Límite | Opcional: ampliado experimental | Predeterminado: recomendado |
 |---|---|---|
-| WebP + Ogg combinados | 2.000.000 bytes | Hasta 1 MB por componente |
+| WebP + Ogg combinados | 2.000.000 bytes | 1.000.000 bytes combinados |
 | Animación | ≥9 FPS | ≥9 FPS |
 | Duración | Sin límite fijo | Sin límite fijo |
 
-La envoltura JSON pesa más por Base64. Se mantienen las protecciones de entrada local (80 MiB), memoria, códecs y tiempo/peso de las solicitudes del servidor. WhatsApp puede rechazar stickers largos o grandes; 2 MB es el presupuesto experimental del editor, no un límite garantizado por WhatsApp. Los archivos nuevos se limitan a 2.000.000 bytes combinados; el marcador de escritorio conserva la lectura de paquetes anteriores de hasta 4 MB; el puente móvil admite hasta 2 MB. Si falla el envío, usa Compatible (1 MB máximo por componente).
+La envoltura JSON pesa más por Base64. Se mantienen las protecciones de entrada local (80 MiB), memoria, códecs y tiempo/peso de las solicitudes del servidor. WhatsApp puede rechazar stickers largos o grandes; 2 MB es el presupuesto experimental del editor, no un límite garantizado por WhatsApp. Los archivos nuevos se limitan a 2.000.000 bytes combinados; el marcador de escritorio conserva la lectura de paquetes anteriores de hasta 4 MB; el puente móvil admite hasta 2 MB. Si falla el envío, usa Compatible (1 MB total).
 
 ### Firma del creador
 
@@ -131,3 +131,9 @@ El conversor y el mecanismo de publicación adaptado proceden de [Shirtep/WA-aud
 El primer envío de sticker auténtico, audio, favoritos y reenvío fue confirmado por el operador con .44. La versión .45 incorpora URL fija, sesiones temporales reutilizables y niveles experimentales hasta 2 MB; su aceptación real está pendiente. Consulta [la guía móvil](docs/MOBILE.md). El puente usa un cliente no oficial con riesgo de restricciones; no es una API oficial.
 
 En .47 el envío móvil está guiado: introduce la clave de acceso, conecta WhatsApp y confirma el envío. El nivel de prueba se selecciona automáticamente; no necesitas configurar la URL ni conocer los límites técnicos. El marcador de computadora se encuentra en una sección desplegable.
+
+### .48 — Un único presupuesto de creación / One creation budget
+
+En Crear: 1 MB total recomendado por defecto, 2 MB total opcional experimental. En Enviar no se seleccionan tamaños ni niveles. El puente recibe el paquete original, valida hasta 2.000.000 bytes combinados y decodifica el audio completo sin tope fijo de duración; se mantienen límites de recursos y sesión. En computadora se elige WhatsApp App (predeterminado) o WhatsApp Web (marcador); en móvil solo WhatsApp App. El operador reportó compatibilidad hasta 1 MB sin límite fijo de duración observado; 2 MB y duraciones arbitrarias no son garantía de WhatsApp. La clave privada y el destinatario fijo se mantienen.
+
+In Create: 1 MB combined recommended by default, optional experimental 2 MB. Send does not select size or tier. The bridge receives the unchanged package, validates up to 2,000,000 combined bytes and decodes full audio without a fixed duration ceiling; resource/session guards remain. Desktop offers WhatsApp App (default) or WhatsApp Web (bookmark); mobile only WhatsApp App. The operator reported compatibility up to 1 MB without a fixed duration limit observed; 2 MB and arbitrary durations are not guaranteed by WhatsApp. Private key and fixed recipient remain.

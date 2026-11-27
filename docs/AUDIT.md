@@ -132,3 +132,7 @@ Replaced the redundant native-editor preparation screen with a saved-package sen
 ### 2026.11.27.47 — Guided nontechnical sending UI
 
 The .46 browser CI and Pages publication passed. Replaced the all-at-once technical panel with state-dependent access, pairing and send controls, immediate short-key feedback, automatic tier selection, explicit per-message confirmation, collapsed desktop bookmark instructions, and compact bilingual warnings. Added mocked cancellation, auto-poll pairing, two sends and tier selection tests. The bridge API remains .45 and is not redeployed for this frontend change. No new real-device claim. CI and public importer synchronization pending.
+
+### 2026.11.27.48 — Device-aware send and single creation budget
+
+Default combined generation budget 1 MB, optional 2 MB experimental, enforced by converter and app. Desktop switches between App (default) and Web, mobile hides the Web route. Removed tier selection and fixed duration caps from bridge UI/API; validate complete decoded audio progress with a null sink and bounded processing time/output. Existing private session protections unchanged. Operator reports up to 1 MB works without a fixed time limit; larger or arbitrary-duration real delivery not independently verified. Unit/browser tests updated, Pages and both API deployments pending.

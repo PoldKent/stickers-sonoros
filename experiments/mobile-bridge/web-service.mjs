@@ -8,13 +8,13 @@ import makeWASocket,{useMultiFileAuthState,DisconnectReason,proto,Browsers} from
 import {sendSoundSticker,installSoundStickerCodec} from 'wa-sound-sticker';
 import pino from 'pino';
 import {preparePackage} from './package-adapter.mjs';
-import {ORIGIN,authorized,phoneNumber,trialPackage,readPackage,TIERS,SESSION_MS,MAX_SENDS,COOLDOWN_MS,newBudget,claim,checkDecodedAudio} from './web-policy.mjs';
+import {ORIGIN,authorized,phoneNumber,trialPackage,readPackage,MAX_MEDIA_BYTES,SESSION_MS,MAX_SENDS,COOLDOWN_MS,newBudget,claim,checkDecodedAudio} from './web-policy.mjs';
 const secret=process.env.BRIDGE_TOKEN, pairNumber=process.env.BRIDGE_PAIR_NUMBER, receiver=process.env.BRIDGE_RECIPIENT_NUMBER;
 const configured=Boolean(secret&&secret.length>=32&&phoneNumber(pairNumber)&&phoneNumber(receiver)&&pairNumber!==receiver);
 const logger=pino({level:'silent'});
 let session=null,lastPhase='idle',cleanup=null;
 const active=s=>session===s&&!s.closed;
-const status=()=>{const s=session;return {version:'2026.11.26.45',phase:s?.phase||lastPhase,pairingCode:s?.phase==='pairing'&&Date.now()<s.codeUntil?s.code:undefined,expiresAt:s?.expiresAt||null,remaining:s?MAX_SENDS-s.budget.attempts:0,cooldownMs:s?.budget.last===null?0:Math.max(0,COOLDOWN_MS-(Date.now()-(s?.budget.last||0))),tiers:TIERS};};
+const status=()=>{const s=session;return {version:'2026.11.27.48',phase:s?.phase||lastPhase,pairingCode:s?.phase==='pairing'&&Date.now()<s.codeUntil?s.code:undefined,expiresAt:s?.expiresAt||null,remaining:s?MAX_SENDS-s.budget.attempts:0,cooldownMs:s?.budget.last===null?0:Math.max(0,COOLDOWN_MS-(Date.now()-(s?.budget.last||0))),maxMediaBytes:MAX_MEDIA_BYTES};};
 async function close(s,next='closed'){
   if(!active(s))return cleanup;
   s.closed=true;lastPhase=next;s.phase=next;s.code='';clearTimeout(s.timer);
@@ -54,10 +54,10 @@ async function start(){
 }
 function reply(res,n,data){res.writeHead(n,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Robots-Tag':'noindex, nofollow'});res.end(JSON.stringify(data))}
 const server=createServer({requestTimeout:20000,headersTimeout:10000},async(req,res)=>{
-  if(req.url==='/health'&&req.method==='GET')return reply(res,200,{ok:true,configured,version:'2026.11.26.45'});
+  if(req.url==='/health'&&req.method==='GET')return reply(res,200,{ok:true,configured,version:'2026.11.27.48'});
   if(req.headers.origin!==ORIGIN)return reply(res,403,{error:'origin'});
   res.setHeader('Access-Control-Allow-Origin',ORIGIN);res.setHeader('Vary','Origin');
-  if(req.method==='OPTIONS'){res.writeHead(204,{'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type, X-Bridge-Tier','Cache-Control':'no-store'});return res.end()}
+  if(req.method==='OPTIONS'){res.writeHead(204,{'Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Authorization, Content-Type','Cache-Control':'no-store'});return res.end()}
   if(!configured)return reply(res,503,{error:'not-configured'});
   if(!authorized(req.headers.authorization,secret))return reply(res,401,{error:'auth'});
   if(req.method==='GET'&&req.url==='/v1/status')return reply(res,200,status());
@@ -70,12 +70,11 @@ const server=createServer({requestTimeout:20000,headersTimeout:10000},async(req,
     s.phase='validating';
     let p;
     try{
-      const tier=req.headers['x-bridge-tier']||'small';
-      p=trialPackage(preparePackage(await readPackage(req)),tier);
-      // Bound decoded PCM to at most 60.5 s; do not trust JSON-declared duration.
-      const audio=spawnSync('ffmpeg',['-v','error','-xerror','-f','ogg','-i','pipe:0','-map','0:a:0','-t',String(TIERS[tier].maxSeconds+0.5),'-ac','1','-ar','48000','-f','s16le','pipe:1'],{input:p.audioBuffer,timeout:10000,maxBuffer:6_000_000});
+      p=trialPackage(preparePackage(await readPackage(req)));
+      // Decode the full audio without retaining PCM or imposing a fixed media duration.
+      const audio=spawnSync('ffmpeg',['-v','error','-xerror','-nostats','-progress','pipe:1','-f','ogg','-i','pipe:0','-map','0:a:0','-f','null','-'],{input:p.audioBuffer,timeout:30000,maxBuffer:262144,encoding:'utf8'});
       if(audio.status!==0)throw Error('decode');
-      checkDecodedAudio(audio.stdout.length,p.audioSeconds,tier);
+      checkDecodedAudio(audio.stdout,p.audioSeconds);
       if(!active(s)||s.phase!=='validating')return reply(res,409,{error:'closed',...status()});
       claim(s.budget,p);
     }catch(e){if(active(s))s.phase='ready';const reason=['trial-limit','quota','cooldown','duplicate','size','decode'].includes(e.message)?e.message:'invalid-package';return reply(res,422,{error:reason,...status(),deliveryConfirmed:false});}
@@ -89,5 +88,5 @@ const server=createServer({requestTimeout:20000,headersTimeout:10000},async(req,
   }
   return reply(res,404,{error:'route'});
 });
-server.listen(Number(process.env.PORT||8080),'0.0.0.0',()=>console.log(configured?'Private bounded bridge .45 ready; no pairing started.':'Private bridge inactive: configure environment in Render. No pairing started.'));
+server.listen(Number(process.env.PORT||8080),'0.0.0.0',()=>console.log(configured?'Private bounded bridge .48 ready; no pairing started.':'Private bridge inactive: configure environment in Render. No pairing started.'));
 process.once('SIGTERM',()=>void (session?close(session):Promise.resolve()).finally(()=>server.close()));

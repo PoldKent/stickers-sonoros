@@ -33,13 +33,13 @@ Video, image or GIF + audio · 9+ FPS for animation · up to 2 MB combined · no
 - All modes convert the original media and selected audio track directly using the crop/zoom/rotation settings, without recording an intermediate video. Animated WebP intervals are not merged into long holds. All animation profiles keep at least 9 encoded FPS; static sources and repeated original frames do not gain artificial motion.
 - **Maximum sharpness** favors resolution; **Balanced** and **Maximum smoothness** trade resolution for motion. Output resolution and compression adapt to the budget. If it cannot fit at 9 FPS or above, shorten the selection or use a still frame.
 
-| Limit | Default: Extended quality | Optional: Compatible |
+| Limit | Optional: experimental extended | Default: recommended |
 |---|---|---|
-| Combined WebP + Ogg | 2,000,000 bytes | Up to 1 MB per component |
+| Combined WebP + Ogg | 2,000,000 bytes | 1,000,000 combined bytes |
 | Animation | ≥9 FPS | ≥9 FPS |
 | Duration | No fixed cap | No fixed cap |
 
-The JSON transport envelope is larger because of Base64. The local input guard (80 MiB), memory, available codecs and server request/byte limits still apply. WhatsApp may reject long or large stickers; 2 MB is the experimental editor budget, not a guaranteed WhatsApp limit. New files are capped at 2,000,000 combined bytes; the desktop bookmark retains support for reading older packages up to 4 MB; the mobile bridge accepts up to 2 MB. If sending fails, use Compatible (1 MB maximum per component).
+The JSON transport envelope is larger because of Base64. The local input guard (80 MiB), memory, available codecs and server request/byte limits still apply. WhatsApp may reject long or large stickers; 2 MB is the experimental editor budget, not a guaranteed WhatsApp limit. New files are capped at 2,000,000 combined bytes; the desktop bookmark retains support for reading older packages up to 4 MB; the mobile bridge accepts up to 2 MB. If sending fails, use Compatible (1 MB total).
 
 ### Creator signature
 
@@ -131,3 +131,9 @@ The converter and adapted publishing mechanism come from [Shirtep/WA-audio-stick
 The operator confirmed first native sticker receipt, audio, favorites and forwarding on .44. Version .45 adds a fixed endpoint, bounded reusable sessions and experimental tiers up to 2 MB; real acceptance is pending. See the [mobile guide](docs/MOBILE.md). The bridge uses an unofficial client with account restriction risk; it is not an official API.
 
 In .47 mobile sending is guided: enter the access key, connect WhatsApp and confirm the send. The trial tier is selected automatically; no URL or technical limit configuration is required. The desktop bookmark is in a collapsible section.
+
+### .48 — Un único presupuesto de creación / One creation budget
+
+En Crear: 1 MB total recomendado por defecto, 2 MB total opcional experimental. En Enviar no se seleccionan tamaños ni niveles. El puente recibe el paquete original, valida hasta 2.000.000 bytes combinados y decodifica el audio completo sin tope fijo de duración; se mantienen límites de recursos y sesión. En computadora se elige WhatsApp App (predeterminado) o WhatsApp Web (marcador); en móvil solo WhatsApp App. El operador reportó compatibilidad hasta 1 MB sin límite fijo de duración observado; 2 MB y duraciones arbitrarias no son garantía de WhatsApp. La clave privada y el destinatario fijo se mantienen.
+
+In Create: 1 MB combined recommended by default, optional experimental 2 MB. Send does not select size or tier. The bridge receives the unchanged package, validates up to 2,000,000 combined bytes and decodes full audio without a fixed duration ceiling; resource/session guards remain. Desktop offers WhatsApp App (default) or WhatsApp Web (bookmark); mobile only WhatsApp App. The operator reported compatibility up to 1 MB without a fixed duration limit observed; 2 MB and arbitrary durations are not guaranteed by WhatsApp. Private key and fixed recipient remain.

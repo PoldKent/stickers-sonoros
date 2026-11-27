@@ -12,7 +12,7 @@
   const SAFE_BYTES = 900_000;
   const MAX_AUDIO_BYTES = 1_000_000;   // límite de WhatsApp Web para el audio del sticker
   function webpBudget(extended, audioBytes = 0) {
-    return extended ? MAX_TOTAL_BYTES - audioBytes : MAX_STICKER_BYTES;
+    return (extended ? MAX_TOTAL_BYTES : MAX_STICKER_BYTES) - audioBytes;
   }
   function estimatedAudioBytes(dur) {
     return Math.min(MAX_TOTAL_BYTES - 65536, Math.ceil(dur * 32000 / 8 * 1.2 + 4096));
@@ -912,7 +912,8 @@
       }
       prog("Calculando opciones…", 0.8 + (0.2 * ++done) / sides.length);
     }
-    const safeBytes = base.extended ? webpBudget(true, estimatedAudioBytes(audio.dur)) * 0.95 : SAFE_BYTES;
+    const estimatedAudio=Math.min((base.extended?MAX_TOTAL_BYTES:MAX_STICKER_BYTES)-65536,estimatedAudioBytes(audio.dur));
+    const safeBytes = Math.max(1,webpBudget(base.extended,estimatedAudio)*0.95);
     const overhead = 32; // cabecera ANMF + chunk
     const cells = [];
     for (const side of SIDES) for (const fps of FPS_LIST) {
@@ -957,7 +958,7 @@
     log("info", "crear:parametros", { side, fps, compensacionMs: syncMs, estatico: still, estimado: cell && cell.est, estado: cell && cell.estado });
 
     // Audio: la tasa de bits baja en clips largos para no pasar de 1 MB (límite de WhatsApp).
-    const audioBudget = an.extended ? MAX_TOTAL_BYTES - 65536 : MAX_AUDIO_BYTES;
+    const audioBudget = (an.extended ? MAX_TOTAL_BYTES : MAX_STICKER_BYTES) - 65536;
     let bitrate = Math.max(6000, Math.min(32000, Math.floor((0.9 * audioBudget * 8) / A.dur)));
     if ((bitrate / 8) * A.dur > 0.97 * audioBudget) throw new Error('El audio no cabe en el presupuesto de tamaño. Reduce el tramo.');
     if (an.visual.kind !== 'image' && !(fps >= 9)) throw new Error('Las animaciones requieren al menos 9 FPS.');

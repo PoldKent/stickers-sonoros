@@ -6,8 +6,7 @@ title:['Enviar a WhatsApp','Send to WhatsApp'],
 intro:['Puente experimental no oficial. Usa solo una cuenta secundaria propia; existe riesgo de restricciones. Sesión temporal: hasta 5 envíos, 15 minutos, mismo destinatario autorizado. No se guarda tu clave.','Unofficial experimental bridge. Use only a secondary account you own; restrictions are possible. Temporary session: up to 5 sends, 15 minutes, same authorized recipient. Your key is not stored.'],
 token:['Clave de acceso','Access key'],connect:['Conectar WhatsApp','Connect WhatsApp'],refresh:['Revisar conexión','Check connection'],send:['Enviar sticker sonoro','Send sound sticker'],stop:['Cerrar sesión','Close session'],confirm:['Autorizo un envío de este paquete al destinatario fijo del puente.','I authorize one send of this package to the bridge’s fixed recipient.'],
 pair:['En WhatsApp de la cuenta secundaria: Dispositivos vinculados → Vincular dispositivo → Vincular con número de teléfono. Introduce el código allí. No lo compartas.','On the secondary account: Linked devices → Link a device → Link with phone number. Enter the code there. Do not share it.'],
-tier:['Nivel de prueba','Trial level'],small:['Inicial · 1–3 s, menos de 500 KB por componente','Initial · 1–3 s, under 500 KB per component'],medium:['Intermedio · hasta 15 s y 1 MB total','Intermediate · up to 15 s and 1 MB total'],extended:['Ampliado · hasta 60 s y 2 MB total (sin validar)','Extended · up to 60 s and 2 MB total (unverified)'],
-idle:['Sin conectar.','Not connected.'],connecting:['Conectando…','Connecting…'],pairing:['Vinculación pendiente.','Linking pending.'],ready:['WhatsApp conectado. Ya puedes enviar tu sticker.','WhatsApp connected. You can now send your sticker.'],validating:['Validando el paquete.','Validating package.'],sending:['Enviando. No repitas la solicitud.','Sending. Do not repeat the request.'],relayed:['El puente procesó el envío. Comprueba recepción y sonido en WhatsApp. La entrega no está confirmada por el servidor.','The bridge relayed the message. Check reception and sound in WhatsApp. Delivery is not confirmed by the server.'],closed:['Sesión cerrada. Desvincula el dispositivo de prueba en WhatsApp.','Session closed. Unlink the test device in WhatsApp.'],failed:['Sesión fallida o expirada. Desvincula el dispositivo.','Session failed or expired. Unlink the device.'],uncertain:['Entrega incierta. Revisa el chat antes de iniciar otra sesión; no se reenvió automáticamente.','Delivery uncertain. Check the chat before starting another session; no automatic resend.'],config:['Introduce tu clave de acceso (al menos 32 caracteres).','Enter your access key (at least 32 characters).'],error:['No se pudo completar la solicitud. Comprueba el servicio. Si pulsaste Enviar, revisa el chat antes de reintentar.','Request did not complete. Check the service. If you pressed Send, check the chat before retrying.'],busy:['Procesando solicitud…','Processing request…'],missing:['No hay un paquete válido disponible.','No valid package is available.'],docs:['Guía y riesgos del puente privado','Private bridge guide and risks'],remaining:['Envíos restantes: ','Remaining sends: '],duplicate:['Este paquete ya se intentó enviar en esta sesión. Comprueba el chat.','This package was already attempted in this session. Check the chat.'],cooldown:['Espera al menos 5 segundos entre envíos.','Wait at least 5 seconds between sends.'],'trial-limit':['Este sticker supera los límites de envío. Reduce su duración o tamaño.','This sticker exceeds the sending limits. Reduce its duration or size.'],quota:['Límite de sesión alcanzado.','Session limit reached.'],'invalid-package':['Paquete no válido.','Invalid package.'],decode:['El audio no se pudo decodificar.','Audio could not be decoded.'],auth:['Clave incorrecta.','Incorrect key.'],'not-configured':['El puente aún no está configurado.','Bridge not configured.'],'not-ready':['Comprueba el estado antes de enviar.','Check status before sending.'],version:['El servidor necesita la versión .45. Comprueba el despliegue antes de continuar.','The server requires version .45. Check deployment before continuing.']};
+idle:['Sin conectar.','Not connected.'],connecting:['Conectando…','Connecting…'],pairing:['Vinculación pendiente.','Linking pending.'],ready:['WhatsApp conectado. Ya puedes enviar tu sticker.','WhatsApp connected. You can now send your sticker.'],validating:['Validando el paquete.','Validating package.'],sending:['Enviando. No repitas la solicitud.','Sending. Do not repeat the request.'],relayed:['El puente procesó el envío. Comprueba recepción y sonido en WhatsApp. La entrega no está confirmada por el servidor.','The bridge relayed the message. Check reception and sound in WhatsApp. Delivery is not confirmed by the server.'],closed:['Sesión cerrada. Desvincula el dispositivo de prueba en WhatsApp.','Session closed. Unlink the test device in WhatsApp.'],failed:['Sesión fallida o expirada. Desvincula el dispositivo.','Session failed or expired. Unlink the device.'],uncertain:['Entrega incierta. Revisa el chat antes de iniciar otra sesión; no se reenvió automáticamente.','Delivery uncertain. Check the chat before starting another session; no automatic resend.'],config:['Introduce tu clave de acceso (al menos 32 caracteres).','Enter your access key (at least 32 characters).'],error:['No se pudo completar la solicitud. Comprueba el servicio. Si pulsaste Enviar, revisa el chat antes de reintentar.','Request did not complete. Check the service. If you pressed Send, check the chat before retrying.'],busy:['Procesando solicitud…','Processing request…'],missing:['No hay un paquete válido disponible.','No valid package is available.'],docs:['Guía y riesgos del puente privado','Private bridge guide and risks'],remaining:['Envíos restantes: ','Remaining sends: '],duplicate:['Este paquete ya se intentó enviar en esta sesión. Comprueba el chat.','This package was already attempted in this session. Check the chat.'],cooldown:['Espera al menos 5 segundos entre envíos.','Wait at least 5 seconds between sends.'],'trial-limit':['Este sticker supera los límites de envío. Vuelve a Crear y reduce su tamaño.','This sticker exceeds the sending limits. Return to Create and reduce its size.'],quota:['Límite de sesión alcanzado.','Session limit reached.'],'invalid-package':['Paquete no válido.','Invalid package.'],decode:['El audio no se pudo decodificar.','Audio could not be decoded.'],auth:['Clave incorrecta.','Incorrect key.'],'not-configured':['El puente aún no está configurado.','Bridge not configured.'],'not-ready':['Comprueba el estado antes de enviar.','Check status before sending.'],version:['El servidor necesita la versión .48. Comprueba el despliegue antes de continuar.','The server requires version .48. Check deployment before continuing.']};
 Object.assign(strings,{
 intro:['Conecta tu WhatsApp una vez y envía tus stickers con sonido.','Connect WhatsApp once and send your sound stickers.'],
 accessHelp:['Usa la clave que te dio el administrador del servicio. No es tu contraseña de WhatsApp.','Use the key provided by the service administrator. It is not your WhatsApp password.'],
@@ -18,19 +17,15 @@ pair:['1. Abre WhatsApp en tu cuenta secundaria. 2. En Dispositivos vinculados, 
 copyCode:['Copiar código','Copy code'],copied:['Código copiado. Pégalo únicamente en WhatsApp.','Code copied. Paste it only in WhatsApp.'],
 ready:['WhatsApp conectado. Ya puedes enviar tu sticker.','WhatsApp connected. You can now send your sticker.'],
 confirmSend:['¿Enviar este sticker con sonido al número receptor configurado para el servicio?','Send this sound sticker to the configured receiving number?'],
-confirmExtended:['Este sticker requiere un envío ampliado todavía experimental. ¿Enviar al número receptor configurado? WhatsApp podría rechazarlo.','This sticker requires an experimental extended send. Send to the configured receiving number? WhatsApp may reject it.'],
+confirmExtended:['Este sticker pesa más de 1 MB. ¿Enviar al número receptor configurado? WhatsApp podría rechazarlo.','This sticker weighs more than 1 MB. Send to the configured receiving number? WhatsApp may reject it.'],
 recipient:['Se enviará al número receptor configurado por el administrador.','It will be sent to the receiving number configured by the administrator.'],
 details:['Información de la sesión','Session information'],sessionInfo:['Hasta 5 envíos en 15 minutos. Espera 5 segundos entre stickers distintos. Cierra la sesión y desvincula el dispositivo al terminar. No guardamos la clave.','Up to 5 sends in 15 minutes. Wait 5 seconds between different stickers. Close the session and unlink the device when finished. We do not store the key.'],
 reconnect:['Conectar de nuevo','Connect again'],size:['El sticker supera el tamaño permitido.','The sticker exceeds the allowed size.']
 });
-function chooseTier(p){
+function packageWeight(p){
   const bytes=s=>typeof s==='string'?Math.floor(s.length*3/4)-(s.endsWith('==')?2:s.endsWith('=')?1:0):NaN;
-  const w=bytes(p?.webp),a=bytes(p?.ogg),seconds=Number(p?.info?.segundosAudio);
-  if(p?.format!=='stickers-sonoros/1'||!Number.isSafeInteger(seconds)||seconds<1||!Number.isFinite(w)||!Number.isFinite(a)||w<1||a<1)return null;
-  if(seconds<=3&&w<500000&&a<500000)return 'small';
-  if(seconds<=15&&w+a<=1000000)return 'medium';
-  if(seconds<=60&&w+a<=2000000)return 'extended';
-  return null;
+  const w=bytes(p?.webp),a=bytes(p?.ogg),seconds=p?.info?.segundosAudio;
+  return p?.format==='stickers-sonoros/1'&&Number.isSafeInteger(seconds)&&seconds>=1&&w>0&&a>0&&w+a<=2000000?w+a:null;
 }
 function mount(root,getPackage){
   if(!root)return;
@@ -69,14 +64,14 @@ function mount(root,getPackage){
   function reset(){clearTimeout(autoTimer);phase='idle';msg=key.value.length&&key.value.length<32?'accessShort':'idle';uncertain=false;left=null;pairing.hidden=true;code.textContent='';update()}
   key.oninput=reset;
   function schedule(){clearTimeout(autoTimer);if(panel.open&&['connecting','pairing'].includes(phase)&&!uncertain)autoTimer=setTimeout(()=>request('/v1/status'),2500)}
-  async function request(path,method='GET',body,tier){
+  async function request(path,method='GET',body){
     if(working)return;
     if(key.value.length<32){msg='accessShort';update();return}
     working=true;msg=path==='/v1/send'?'sending':'busy';update();
     try{
-      const response=await fetch(ENDPOINT+path,{method,headers:{Authorization:'Bearer '+key.value,...(body?{'Content-Type':'application/json','X-Bridge-Tier':tier}:{})},body,cache:'no-store',credentials:'omit',redirect:'error',signal:AbortSignal.timeout(90000)});
+      const response=await fetch(ENDPOINT+path,{method,headers:{Authorization:'Bearer '+key.value,...(body?{'Content-Type':'application/json'}:{})},body,cache:'no-store',credentials:'omit',redirect:'error',signal:AbortSignal.timeout(90000)});
       const data=await response.json();
-      if(response.ok&&data.version!=='2026.11.26.45'){phase='idle';msg='version';if(path==='/v1/send')uncertain=true;return;}
+      if(response.ok&&data.version!=='2026.11.27.48'){phase='idle';msg='version';if(path==='/v1/send')uncertain=true;return;}
       if(typeof data.phase==='string'&&Object.hasOwn(strings,data.phase))phase=data.phase;
       if(Number.isInteger(data.remaining))left=data.remaining;
       pairing.hidden=phase!=='pairing'||typeof data.pairingCode!=='string';code.textContent=pairing.hidden?'':data.pairingCode;
@@ -92,14 +87,14 @@ function mount(root,getPackage){
     preparing=true;msg='busy';update();
     try{
       const body=await getPackage();if(!body){msg='missing';return;}
-      const p=JSON.parse(await body.text()),tier=chooseTier(p);
-      if(!tier){msg='trial-limit';return;}
-      if(!window.confirm(t(tier==='extended'?'confirmExtended':'confirmSend'))){msg='ready';return;}
-      await request('/v1/send','POST',body,tier);
+      const p=JSON.parse(await body.text()),weight=packageWeight(p);
+      if(!weight){msg='trial-limit';return;}
+      if(!window.confirm(t(weight>1000000?'confirmExtended':'confirmSend'))){msg='ready';return;}
+      await request('/v1/send','POST',body);
     }catch{msg='missing'}finally{preparing=false;update()}
   };
   panel.addEventListener('toggle',()=>{if(!panel.open)clearTimeout(autoTimer);else schedule()});
   document.addEventListener('sticker-language',update);document.getElementById('mobile-language')?.addEventListener('change',()=>queueMicrotask(update));update();
 }
-window.SonoroPrivateMobile={mount,chooseTier};
+window.SonoroPrivateMobile={mount,packageWeight};
 })();

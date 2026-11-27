@@ -14,9 +14,8 @@
 .self-bridge>p[role=status]:empty{display:none}
 .self-bridge .self-help,.self-bridge .self-risk{font-size:.8rem;color:var(--muted)}
 .desktop-send-options{margin-top:12px}
-.send-methods{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
-.send-methods button{min-height:46px}
-.send-methods button[aria-pressed=true]{border-color:var(--accent,#cfa7ef);background:#49345e;font-weight:700}
-.self-bridge [hidden],#send-methods[hidden],#desktop-send-options[hidden],#self-send-bridge[hidden]{display:none!important}
+.self-bridge [hidden],#desktop-send-options[hidden],#self-send-bridge[hidden]{display:none!important}
 
 .self-pairing ol{padding-left:22px;margin:8px 0;font-size:.9rem;line-height:1.55}.self-pairing li+li{margin-top:4px}.self-bridge .step-help{margin:6px 0}.self-bridge .self-risk{font-size:.83rem;line-height:1.5}
+
+#native-bridge>.desktop-send-options{margin:12px 0 0;padding-top:9px;border-top:1px solid var(--line)}#native-bridge>.desktop-send-options>summary{cursor:pointer;font-size:.82rem;font-weight:500;color:var(--muted);padding:8px 0;min-height:36px;box-sizing:border-box}#native-bridge>.desktop-send-options>summary:hover{color:var(--accent)}#native-bridge .alternate-send-title{margin:8px 0 4px}

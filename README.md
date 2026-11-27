@@ -8,7 +8,7 @@
 
 [![Pruebas](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![Producción](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-**Versión actual del código: 2026.11.27.52.** El operador confirmó el primer envío a chat propio de .49. Las [pruebas .49](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publicación](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) y [diagnóstico del importador](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) finalizaron correctamente. Consulta las ejecuciones actuales para .52. Las cuatro pantallas muestran acciones breves y ayuda desplegable. No equivale a una auditoría externa de seguridad.
+**Versión actual del código: 2026.11.27.53.** El operador confirmó el primer envío a chat propio de .49. Las [pruebas .49](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publicación](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) y [diagnóstico del importador](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) finalizaron correctamente. Consulta las ejecuciones actuales para .53. Las cuatro pantallas muestran acciones breves y ayuda desplegable. No equivale a una auditoría externa de seguridad.
 
 ## Cuatro pasos
 
@@ -17,7 +17,7 @@
 1. **Importar:** selecciona un video, imagen o GIF y audio, o pega un enlace multimedia HTTPS compatible.
 2. **Editar:** ajusta recorte, encuadre, zoom, posición y rotación; puedes usar el contenido completo.
 3. **Crear:** selecciona calidad (límite automático de 1 MB total), añade una firma opcional y genera el sticker.
-4. **Enviar:** conecta tu WhatsApp y confirma el envío a tu propio chat. En computadora también puedes elegir WhatsApp Web.
+4. **Enviar:** conecta tu WhatsApp y confirma el envío a tu propio chat. En computadora, WhatsApp Web está disponible como alternativa dentro de «Otros métodos de envío».
 
 La edición es local; los enlaces públicos usan la API auxiliar. Prueba el ejemplo integrado si no tienes medios. Los botones de navegación conservan el proyecto; cambiar los medios o ajustes invalida el resultado anterior.
 
@@ -29,7 +29,7 @@ Si ya tienes un paquete, abre [Enviar sticker guardado](https://poldkent.github.
 
 ## Envío desde computadora
 
-WhatsApp App utiliza el mismo flujo individual que el celular. Si prefieres WhatsApp Web, selecciona esa opción en Enviar, descarga el paquete, instala o actualiza el marcador en los favoritos, abre WhatsApp Web y el chat deseado, ejecuta el marcador, selecciona el JSON y confirma el destinatario. El marcador funciona dentro del navegador y no necesita extensiones.
+WhatsApp App es el método predeterminado y utiliza el mismo flujo individual que el celular. Si prefieres WhatsApp Web, abre «Otros métodos de envío» en Enviar, descarga el paquete, instala o actualiza el marcador en los favoritos, abre WhatsApp Web y el chat deseado, ejecuta el marcador, selecciona el JSON y confirma el destinatario. El marcador funciona dentro del navegador y no necesita extensiones.
 
 ## Calidad y formatos
 

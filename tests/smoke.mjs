@@ -76,13 +76,21 @@ try {
   assert.equal(await page.locator('#download').count(),0);
   assert.equal(await page.locator('#share').count(),0);
   assert.equal(await page.locator('#wa-bookmark').isVisible(),false);
-  await page.locator('[data-send-method=web]').click();
+  assert.equal(await page.locator('#self-send-bridge').isVisible(),true);
+  const otherMethods=page.locator('#desktop-send-options');
+  assert.equal(await otherMethods.isVisible(),true);
+  assert.equal(await otherMethods.getAttribute('open'),null);
+  assert.equal(await page.locator('#send-methods').count(),0);
+  await otherMethods.locator(':scope > summary').click();
   assert.equal(await page.locator('#wa-bookmark').isVisible(),true);
-  assert.equal(await page.locator('#self-send-bridge').isVisible(),false);
-  await page.locator('[data-send-method=app]').click();
+  assert.equal(await page.locator('#self-send-bridge').isVisible(),true);
+  await otherMethods.locator(':scope > summary').click();
+  assert.equal(await page.locator('#wa-bookmark').isVisible(),false);
   assert.equal(await page.locator('#self-send-bridge').isVisible(),true);
   await page.screenshot({path:'artifacts/screenshots/desktop-es.png',fullPage:true});
   await page.locator('#language').selectOption('en');
+  assert.equal(await otherMethods.locator(':scope > summary').textContent(),'Other ways to send');
+  assert.equal(await otherMethods.getAttribute('open'),null);
   await page.screenshot({path:'artifacts/screenshots/desktop-en.png',fullPage:true});
   await page.locator('#language').selectOption('es');
   const visualAudit=await browser.newPage({viewport:{width:320,height:800},isMobile:true,hasTouch:true});
@@ -131,7 +139,7 @@ try {
       else if(path==='/v2/status'){assert(paired);assert.equal(request.headers().authorization,sessionToken);body={phase:'ready'}}
       else if(path==='/v2/send'){posts++;assert.equal(request.headers().authorization,sessionToken);assert.deepEqual(request.postDataBuffer(),packageBytes);body={phase:'ready',remaining:5-posts,relayed:true,deliveryConfirmed:false}}
       else throw Error('Unexpected endpoint');
-      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.27.52',...body})});
+      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.27.53',...body})});
     });
     const privatePanel=mobileBridge.locator('.self-bridge');
     assert.equal(await privatePanel.locator('input[type=password]').count(),0);
@@ -686,7 +694,8 @@ try {
       assert.equal(await phone.locator('#download').count(),0);
       await phone.locator('#wizard-next').click();
       assert.equal(await phone.locator('#wa-bookmark').isVisible(),false);
-      assert.equal(await phone.locator('#send-methods').isVisible(),false);
+      assert.equal(await phone.locator('#desktop-send-options').isVisible(),false);
+      assert.equal(await phone.locator('#send-methods').count(),0);
       assert.equal(await phone.locator('#self-send-bridge').isVisible(),true);
       assert.match(await phone.locator('#package-download').textContent(),/Save sound sticker/);
       assert.equal(await phone.locator('#signature').inputValue(),'');

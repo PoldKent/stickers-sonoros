@@ -46,6 +46,7 @@ function clearResult() {
   nativePackage = undefined;
   conversionRequest = undefined;
   byId('native-bridge').hidden = true;
+  byId('desktop-send-options').open = false;
   byId('bridge-status').textContent = '';
   byId('bookmark-status').textContent = '';
   stopSourcePreview();
@@ -1228,12 +1229,10 @@ async function packageBlob(files){
   const {lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl,fps,cuadros,duracion,fpsEfectivos}=files.info;
   return new Blob([JSON.stringify({format:'stickers-sonoros/1',webp,ogg,info:{lado,isAnimated,segundosAudio,soundSha256,packName,publisher,signature,appUrl,fps,cuadros,duracion,fpsEfectivos}})],{type:'application/json'});
 }
-const sendMethods=byId('send-methods');
+const desktopSendOptions=byId('desktop-send-options');
 const isPhone=()=>navigator.userAgentData?.mobile===true||/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||(matchMedia('(pointer: coarse)').matches&&innerWidth<=900);
-let sendMethod='app';
-function updateSendMethod(){const mobile=isPhone();if(mobile)sendMethod='app';sendMethods.hidden=mobile;byId('self-send-bridge').hidden=sendMethod!=='app';byId('desktop-send-options').hidden=mobile||sendMethod!=='web';for(const b of sendMethods.querySelectorAll('[data-send-method]'))b.setAttribute('aria-pressed',String(b.dataset.sendMethod===sendMethod));}
-for(const b of sendMethods.querySelectorAll('[data-send-method]'))b.addEventListener('click',()=>{sendMethod=b.dataset.sendMethod;updateSendMethod()});
-window.addEventListener('resize',updateSendMethod);updateSendMethod();
+function updateDesktopSendOptions(){const mobile=isPhone();desktopSendOptions.hidden=mobile;if(mobile)desktopSendOptions.open=false;}
+window.addEventListener('resize',updateDesktopSendOptions);updateDesktopSendOptions();
 window.SonoroSelfSend?.mount(byId('self-send-bridge'),async()=>{const files=nativePackage;if(!files)return null;const blob=await packageBlob(files);return nativePackage===files?blob:null});
 byId('package-download').onclick=async()=>{
   const files=nativePackage;

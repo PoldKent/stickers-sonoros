@@ -8,7 +8,7 @@
 
 [![Checks](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![Production](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-**Current code version: 2026.11.27.52.** The operator confirmed first .49 self-chat delivery. [.49 checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publication](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) and [importer diagnostic](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) passed. See current runs for .52. All four screens show concise actions and expandable help. This is not an independent security audit.
+**Current code version: 2026.11.27.53.** The operator confirmed first .49 self-chat delivery. [.49 checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publication](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) and [importer diagnostic](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) passed. See current runs for .53. All four screens show concise actions and expandable help. This is not an independent security audit.
 
 ## Four steps
 
@@ -17,7 +17,7 @@
 1. **Import:** select video, image or GIF and audio, or paste a supported public HTTPS media link.
 2. **Edit:** adjust trim, framing, zoom, position and rotation; use the full source if desired.
 3. **Create:** select quality (automatic 1 MB combined limit), add an optional signature and generate the sticker.
-4. **Send:** connect WhatsApp and confirm sending to your own chat. Desktop also offers WhatsApp Web.
+4. **Send:** connect WhatsApp and confirm sending to your own chat. Desktop also offers WhatsApp Web under “Other ways to send”.
 
 Editing is local; public links use the separate importer API. Try the built-in example if you have no media. Navigation retains the project; changing media or settings invalidates the previous result.
 
@@ -29,7 +29,7 @@ For an existing package, open [Send saved sticker](https://poldkent.github.io/st
 
 ## Send from a computer
 
-WhatsApp App uses the same individual flow as mobile. For WhatsApp Web choose that option in Send, download the package, install or update the bookmarklet in your favorites, open WhatsApp Web and the desired chat, run the bookmarklet, select the JSON and confirm the recipient. The bookmarklet works within the browser without extensions.
+WhatsApp App is the default and uses the same individual flow as mobile. For WhatsApp Web, expand “Other ways to send” in Send, download the package, install or update the bookmarklet in your favorites, open WhatsApp Web and the desired chat, run the bookmarklet, select the JSON and confirm the recipient. The bookmarklet works within the browser without extensions.
 
 ## Quality and formats
 

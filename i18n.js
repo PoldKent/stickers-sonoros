@@ -338,12 +338,32 @@
     ["Vista previa del sticker final","Final sticker preview"],
     ["Esta es la calidad real del sticker. Los clips largos pueden necesitar una resolución menor.","This is the actual sticker quality. Long clips may need a lower resolution."],
     ["Este navegador no puede crear el sticker con sonido. Prueba Chrome o Edge actualizado.","This browser cannot create the sound sticker. Try updated Chrome or Edge."],
-    ["Puedes reintentar o elegir un tramo más corto.","You can retry or choose a shorter selection."]
+    ["Puedes reintentar o elegir un tramo más corto.","You can retry or choose a shorter selection."],
+    ["¿No se pudo importar el video?","Couldn't import the video?"],
+    ["Calidad del sticker","Sticker quality"],
+    ["Máxima nitidez (recomendado)","Maximum sharpness (recommended)"],
+    ["Equilibrado","Balanced"],
+    ["Máxima fluidez","Maximum smoothness"],
+    ["El tramo no cabe con la calidad elegida. Acórtalo, cambia el modo de calidad o usa fotograma + audio.","The selection does not fit with the chosen quality. Shorten it, change quality mode, or use frame + audio."],
+    ["Posición horizontal en píxeles","Horizontal position in pixels"],
+    ["Posición vertical en píxeles","Vertical position in pixels"],
+    ["Zoom en porcentaje","Zoom percentage"],
+    ["Centrar","Center"],
+    ["Posición, zoom y rotación","Position, zoom and rotation"],
+    ["Rotación","Rotation"],
+    ["Girar 90° a la izquierda","Rotate 90° left"],
+    ["Girar 90° a la derecha","Rotate 90° right"],
+    ["Girar 180°","Rotate 180°"],
+    ["Ángulo de rotación","Rotation angle"],
+    ["Firma del creador (opcional)","Creator signature (optional)"],
+    ["Tu nombre o alias","Your name or nickname"],
+    ["La firma se incluye en los datos del sticker. Todos incluyen la atribución y el enlace de la app. No se añade texto sobre la imagen.","The signature is included in sticker metadata. All stickers include the app credit and link. No text is added over the image."],
+    ["Metadatos del sticker no válidos.","Invalid sticker metadata."],
+    ["No se pudo verificar la firma del sticker.","Could not verify the sticker signature."],
+    ["No se pudo importar el enlace. Selecciona un archivo original que tengas permiso de usar.","Could not import the link. Choose an original file you have permission to use."],
+    ["Este navegador no permite crear stickers con sonido. Prueba un navegador actualizado o envía un sticker guardado.","This browser cannot create sound stickers. Try an updated browser or send a saved sticker."],
+    ["Seleccionar archivo","Choose file"]
   ];
-  pairs.push(...[["¿No se pudo importar el video?","Couldn't import the video?"],["Si tienes permiso para descargarlo, abre SnapTik, pega el enlace y guarda el video. Después vuelve aquí y selecciona el archivo descargado.","If you have permission to download it, open SnapTik, paste the link and save the video. Then return here and choose the downloaded file."],["Abrir SnapTik ↗","Open SnapTik ↗"],["Seleccionar video descargado","Choose downloaded video"],["Servicio externo. No enviamos tu enlace automáticamente.","External service. We do not automatically send your link."],["Calidad del sticker","Sticker quality"],["Máxima nitidez (recomendado)","Maximum sharpness (recommended)"],["Equilibrado","Balanced"],["Máxima fluidez","Maximum smoothness"],["El tramo no cabe con la calidad elegida. Acórtalo, cambia el modo de calidad o usa fotograma + audio.","The selection does not fit with the chosen quality. Shorten it, change quality mode, or use frame + audio."],["Resolución reducida. Para mejorar la nitidez, elige un tramo más corto.","Reduced resolution. Choose a shorter selection to improve sharpness."],]);
-  pairs.push(...[["Posición horizontal en píxeles","Horizontal position in pixels"],["Posición vertical en píxeles","Vertical position in pixels"],["Zoom en porcentaje","Zoom percentage"],["Imán suave al centro y a los bordes. Arrastra la imagen o escribe un valor exacto.","Soft snap to center and edges. Drag the image or enter an exact value."],["Centrar","Center"]]);
-  pairs.push(...[["Posición, zoom y rotación","Position, zoom and rotation"],["Rotación","Rotation"],["Girar 90° a la izquierda","Rotate 90° left"],["Girar 90° a la derecha","Rotate 90° right"],["Girar 180°","Rotate 180°"],["Ángulo de rotación","Rotation angle"]]);
-  pairs.push(...[["Firma del creador (opcional)","Creator signature (optional)"],["Tu nombre o alias","Your name or nickname"],["La firma se incluye en los datos del sticker. Todos incluyen la atribución y el enlace de la app. No se añade texto sobre la imagen.","The signature is included in sticker metadata. All stickers include the app credit and link. No text is added over the image."],["Metadatos del sticker no válidos.","Invalid sticker metadata."],["No se pudo verificar la firma del sticker.","Could not verify the sticker signature."]]);
   const exact = new Map(pairs);
   const fragments = [
     [/^Duración: ([\d.]+) s\./, "Duration: $1 s."],

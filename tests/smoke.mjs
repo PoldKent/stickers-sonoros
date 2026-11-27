@@ -15,6 +15,7 @@ try {
   await page.goto('http://127.0.0.1:8000');
   assert.equal(await page.locator('html').getAttribute('data-editor-ready'),'true');
   assert.equal(await page.locator('#mobile-onboarding').isVisible(),true);
+  await page.screenshot({path:'artifacts/screenshots/desktop-import-es.png',fullPage:true});
   assert.equal(await page.getByText('Ayuda para importar',{exact:true}).isVisible(),true);
   assert.equal(await page.locator('[data-screen="1"] .step-help').getAttribute('open'),null);
   assert.match(await page.locator('#mobile-onboarding').textContent(),/Todo desde tu celular/);
@@ -24,6 +25,7 @@ try {
   await page.locator('#language').selectOption('en');
   assert.match(await page.locator('#mobile-onboarding').innerText(),/Everything from your phone/);
   assert.match(await page.locator('#mobile-onboarding').innerText(),/linked device can access messages/);
+  await page.screenshot({path:'artifacts/screenshots/desktop-import-en.png',fullPage:true});
   await page.locator('#language').selectOption('es');
   await page.locator('#mobile-onboarding summary').click();
   await page.locator('#load-link').click();
@@ -38,11 +40,19 @@ try {
   assert.equal(await page.locator('[data-screen="2"] .step-help').getAttribute('open'),null);
   assert.equal(await page.locator('#mobile-onboarding').isVisible(),false);
   assert.equal(await page.locator('#visual').isVisible(),false);
+  await page.screenshot({path:'artifacts/screenshots/desktop-edit-es.png',fullPage:true});
+  await page.locator('#language').selectOption('en');
+  await page.screenshot({path:'artifacts/screenshots/desktop-edit-en.png',fullPage:true});
+  await page.locator('#language').selectOption('es');
   await page.locator('#wizard-next').click();
   assert.equal(await page.locator('#position').isVisible(),false);
   assert.equal(await page.locator('[data-screen="3"] .step-help').getAttribute('open'),null);
   assert.equal(await page.locator('#quality').isVisible(),true);
   assert.equal(await page.locator('#size-budget').count(),0);
+  await page.screenshot({path:'artifacts/screenshots/desktop-create-es.png',fullPage:true});
+  await page.locator('#language').selectOption('en');
+  await page.screenshot({path:'artifacts/screenshots/desktop-create-en.png',fullPage:true});
+  await page.locator('#language').selectOption('es');
   await page.locator('#signature').fill('Mi firma 🎵');
   await page.locator('#export').click();
   await page.waitForFunction(()=>!document.querySelector('#sticker-files').hidden || !document.querySelector('#prepare-sticker').hidden || (!document.querySelector('#export').disabled && !document.querySelector('#components').hidden),{},{timeout:120000}).catch(async error=>{throw new Error('Conversion timeout: '+await page.locator('#sticker-state').textContent()+' / '+await page.locator('#status').textContent(),{cause:error});});
@@ -438,7 +448,7 @@ try {
   await finder.locator('#load-link').click();
   await finder.waitForFunction(()=>document.querySelector('#link-status').textContent.includes('No se puede conectar con Render'));
   await finder.close();
-  // Failed TikTok import shows the manual external fallback; no automatic request to SnapTik.
+  // Failed import offers local authorized media, not a third-party downloader.
   const fallback=await browser.newPage();
   await fallback.route('**/health',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({ok:true,version:'2026.11.26.24',publicMedia:true,tiktokPublicDownload:true})}));
   let failedImports=0;
@@ -446,13 +456,13 @@ try {
   await fallback.goto('http://127.0.0.1:8000');
   await fallback.locator('#link-input').fill('https://www.tiktok.com/@example/video/12345');
   await fallback.locator('#load-link').click();
-  await fallback.locator('#tiktok-alternative').waitFor({state:'visible'});
+  await fallback.locator('#local-import-alternative').waitFor({state:'visible'});
   assert.equal(failedImports,1);
-  assert.equal(await fallback.locator('#tiktok-alternative a').getAttribute('href'),'https://snaptik.fi/');
+  assert.equal(await fallback.locator('#local-import-alternative a').count(),0);
   await fallback.locator('#language').selectOption('en');
-  assert.equal(await fallback.locator('#tiktok-alternative a').textContent(),'Open SnapTik ↗');
+  assert.equal(await fallback.locator('#choose-local-file').textContent(),'Choose file');
   await fallback.locator('#demo').click();
-  assert.equal(await fallback.locator('#tiktok-alternative').isVisible(),false);
+  assert.equal(await fallback.locator('#local-import-alternative').isVisible(),false);
   await fallback.close();
   // Inspect actual ANMF chunks, not the nominal FPS label, over a 38-second moving source.
   const cadencePage=await browser.newPage();
@@ -650,7 +660,9 @@ try {
     await phone.waitForFunction(()=>document.documentElement.dataset.editorReady==='true'&&!!window.StickerUI);
     assert.equal(await phone.locator('#preview-media').evaluate(e=>e.parentElement.id),width<=740?'mobile-preview-slot':'desktop-preview-slot');
     assert(await phone.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
+    if(width===390)await phone.screenshot({path:'artifacts/screenshots/mobile-import-es.png',fullPage:true});
     await phone.locator('#language').selectOption('en');
+    if(width===390)await phone.screenshot({path:'artifacts/screenshots/mobile-import-en.png',fullPage:true});
     assert.equal(await phone.locator('html').getAttribute('lang'),'en');
     assert.equal(await phone.title(),'Stickers Sonoros · Sound sticker maker');
     assert.match(await phone.locator('meta[name=description]').getAttribute('content'),/four steps/);
@@ -684,10 +696,16 @@ try {
     await phone.locator('#language').selectOption('en');
     assert.match(await phone.locator('#selection-info').textContent(),/Duration: 2\.00 s/);
     const englishBookmark=await phone.locator('#wa-bookmark').getAttribute('href');
-    assert.match(decodeURIComponent(englishBookmark),/\)\("en"\)$/);
+    assert.match(decodeURIComponent(englishBookmark),/\)\("en",async function validatePackage\(/);
     if(width===390){
       await phone.locator('#wizard-next').click();
+      assert(await phone.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
       await phone.locator('#wizard-next').click();
+      assert(await phone.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+      await phone.screenshot({path:'artifacts/screenshots/mobile-create-en.png',fullPage:true});
+      await phone.locator('#language').selectOption('es');
+      await phone.screenshot({path:'artifacts/screenshots/mobile-create-es.png',fullPage:true});
+      await phone.locator('#language').selectOption('en');
       await phone.locator('#export').click();
       await phone.locator('#sticker-files').waitFor({state:'visible',timeout:120000});
       assert.match(await phone.locator('#sticker-state').textContent(),/Your sticker is ready to send/);

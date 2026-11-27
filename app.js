@@ -601,15 +601,7 @@ canvas.addEventListener('pointercancel',endCropDrag);
 canvas.addEventListener('lostpointercapture',endCropDrag);
 const linkStatus = byId('link-status');
 function showLinkState(message, state = 'info') {
-  const fallback = byId('tiktok-alternative');
-  fallback.hidden = true;
-  if (state === 'error') {
-    try {
-      const url = new URL(linkInput.value.trim());
-      if (url.protocol === 'https:' && /^(?:(?:www|m|vm|vt)\.)?tiktok\.com$/i.test(url.hostname)
-          && !/cancelada|Espera a que termine/i.test(message)) fallback.hidden = false;
-    } catch {}
-  }
+  byId('local-import-alternative').hidden=state!=='error'||!/^https:\/\//i.test(linkInput.value.trim())||/cancelada|Espera a que termine/i.test(message);
   linkStatus.dataset.state = state;
   linkStatus.textContent = message;
 }
@@ -619,10 +611,9 @@ const configuredEndpoint = document.querySelector('meta[name="sticker-import-end
 // Deployment configuration belongs to the administrator, never to the user.
 const isPages = location.hostname.endsWith('.github.io');
 const importEndpoint = isPages ? configuredEndpoint : location.origin;
-try { localStorage.removeItem('sticker-import-endpoint'); } catch {}
 let linkTimer;
 let lastLink = '';
-byId('choose-tiktok-file').onclick = () => { switchToVideo(); byId('visual').click(); };
+byId('choose-local-file').onclick = () => byId('visual').click();
 function switchToVideo() {
   if (mode !== 'video') modes.find(button => button.dataset.mode === 'video').click();
 }
@@ -1259,7 +1250,7 @@ byId('check-service').onclick = async () => {
   } catch(error) {note.textContent=error.name==='AbortError'?'El servidor no respondió a tiempo.':error.message;}
   finally{clearTimeout(timer);button.disabled=false;}
 };
-document.documentElement.dataset.editorReady = 'true';
+
 
 {
   // Move the same preview, not a second player or canvas, into the mobile editor.
@@ -1274,3 +1265,15 @@ document.documentElement.dataset.editorReady = 'true';
   narrow.addEventListener?.("change",layout);
   layout();
 }
+
+// Check required native capabilities before the user spends time editing.
+(async()=>{
+  const note=byId('browser-support');
+  try{
+    const caps=await window.WAAS.capabilities();
+    if(caps.opus===true&&caps.webpEncode==='image/webp')return;
+  }catch{}
+  note.hidden=false;
+  note.textContent='Este navegador no permite crear stickers con sonido. Prueba un navegador actualizado o envía un sticker guardado.';
+})();
+document.documentElement.dataset.editorReady = 'true';

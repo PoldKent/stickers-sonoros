@@ -19,3 +19,5 @@ For a saved package, use [Send saved sticker](https://poldkent.github.io/sticker
 Linking authorizes a server-hosted device that may access messages even with full history sync disabled and no inbox storage. This unofficial client may cause restrictions; use an owned secondary account. Sessions last up to 15 minutes and five sends; beta capacity is two sessions. Disconnect and check Linked devices afterward. If delivery is uncertain, check the chat before retrying. Previous operator-reported 1 MB success does not prove this new self-send path; 2 MB remains experimental.
 
 Status: Turnstile active and first .49 self-send confirmed by the operator. Simultaneous two-account testing, verified closure and extended 2 MB testing remain pending. [Setup](../experiments/mobile-bridge/README.md).
+
+Interfaz .51: las instrucciones esenciales permanecen visibles y la ayuda se abre cuando la necesitas. Los riesgos de vincular y la autorización siguen visibles antes de conectar. / .51 interface: essential actions stay visible and help opens when needed. Linking risks and consent remain visible before connecting.

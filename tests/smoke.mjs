@@ -15,6 +15,8 @@ try {
   await page.goto('http://127.0.0.1:8000');
   assert.equal(await page.locator('html').getAttribute('data-editor-ready'),'true');
   assert.equal(await page.locator('#mobile-onboarding').isVisible(),true);
+  assert.equal(await page.getByText('Ayuda para importar',{exact:true}).isVisible(),true);
+  assert.equal(await page.locator('[data-screen="1"] .step-help').getAttribute('open'),null);
   assert.match(await page.locator('#mobile-onboarding').textContent(),/Todo desde tu celular/);
   assert.equal(await page.locator('#mobile-onboarding details').getAttribute('open'),null);
   await page.locator('#mobile-onboarding summary').click();
@@ -33,10 +35,14 @@ try {
   assert.equal(await page.locator('#export').isVisible(),false);
   await page.locator('#wizard-next').click();
   assert.equal(await page.locator('#position').isVisible(),true);
+  assert.equal(await page.locator('[data-screen="2"] .step-help').getAttribute('open'),null);
   assert.equal(await page.locator('#mobile-onboarding').isVisible(),false);
   assert.equal(await page.locator('#visual').isVisible(),false);
   await page.locator('#wizard-next').click();
   assert.equal(await page.locator('#position').isVisible(),false);
+  assert.equal(await page.locator('[data-screen="3"] .step-help').getAttribute('open'),null);
+  assert.equal(await page.locator('#quality').isVisible(),true);
+  assert.equal(await page.locator('#size-budget').isVisible(),true);
   await page.locator('#signature').fill('Mi firma 🎵');
   await page.locator('#export').click();
   await page.waitForFunction(()=>!document.querySelector('#sticker-files').hidden || !document.querySelector('#prepare-sticker').hidden || (!document.querySelector('#export').disabled && !document.querySelector('#components').hidden),{},{timeout:120000}).catch(async error=>{throw new Error('Conversion timeout: '+await page.locator('#sticker-state').textContent()+' / '+await page.locator('#status').textContent(),{cause:error});});
@@ -125,7 +131,7 @@ try {
       else if(path==='/v2/status'){assert(paired);assert.equal(request.headers().authorization,sessionToken);body={phase:'ready'}}
       else if(path==='/v2/send'){posts++;assert.equal(request.headers().authorization,sessionToken);assert.deepEqual(request.postDataBuffer(),packageBytes);body={phase:'ready',remaining:5-posts,relayed:true,deliveryConfirmed:false}}
       else throw Error('Unexpected endpoint');
-      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.27.50',...body})});
+      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.27.51',...body})});
     });
     const privatePanel=mobileBridge.locator('.self-bridge');
     assert.equal(await privatePanel.locator('input[type=password]').count(),0);
@@ -133,9 +139,12 @@ try {
     await privatePanel.locator('input[type=tel]').fill('+591 70000000');
     const connect=privatePanel.getByRole('button',{name:'Conectar mi WhatsApp',exact:true});
     assert.equal(await connect.isDisabled(),true);
+    assert.equal(await privatePanel.locator('.self-risk').isVisible(),true);
+    assert.equal(await privatePanel.locator('details').first().getAttribute('open'),null);
     await privatePanel.locator('input[type=checkbox]').check();
     await connect.click();
     await privatePanel.getByText('TEST1234',{exact:true}).waitFor();
+    assert.equal(await privatePanel.locator('.self-pairing ol li').count(),3);
     await privatePanel.getByText('Conectado. El sticker se enviará únicamente a tu propio chat.',{exact:true}).waitFor();
     const privateSend=privatePanel.getByRole('button',{name:'Enviar a mi propio chat',exact:true});
     const dismissed=mobileBridge.waitForEvent('dialog').then(d=>d.dismiss());

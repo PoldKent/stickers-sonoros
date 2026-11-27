@@ -8,7 +8,7 @@
 
 [![Checks](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![Production](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-**Current code version: 2026.11.27.50.** The operator confirmed first .49 self-chat delivery. [.49 checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publication](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) and [importer diagnostic](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) passed. See current runs for .50. This is not an independent security audit.
+**Current code version: 2026.11.27.51.** The operator confirmed first .49 self-chat delivery. [.49 checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publication](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) and [importer diagnostic](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) passed. See current runs for .51. All four screens show concise actions and expandable help. This is not an independent security audit.
 
 ## Four steps
 

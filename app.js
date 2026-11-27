@@ -966,7 +966,7 @@ function selectionInfo() {
   try {
     const t = mode === 'video' ? trimmed('v') : trimmed('a');
     info.textContent = 'Duración: ' + t.duration.toFixed(2) + ' s.';
-    if (t.duration > 30) info.textContent += ' · La animación puede reducir su calidad para respetar el tamaño elegido.';
+
 
     if (visual.kind !== 'image' && mode !== 'video') trimmed('v');
 
@@ -1071,7 +1071,7 @@ async function prepareSticker() {
     byId('sticker-info').textContent = (info.lado || '?') + ' px · ' + (info.fps ? info.fps + ' FPS' : 'Imagen fija') + ' · ' + Math.round(files.webp.size/1024) + ' KB + ' + Math.round(files.ogg.size/1024) + ' KB de audio';
     nativePackage = {webp:files.webp,ogg:files.ogg,info};
     byId('attribution-result').textContent=info.packName+' · '+info.publisher;
-    byId('quality-result').textContent = 'Calidad final: ' + info.lado + ' × ' + info.lado + ' px · ' + (info.fps ? info.fps + ' FPS' : 'Imagen fija') + (info.lado < 256 ? ' · Resolución reducida. Para mejorar la nitidez, elige un tramo más corto.' : '');
+    byId('quality-result').textContent = 'Calidad final: ' + info.lado + ' × ' + info.lado + ' px · ' + (info.fps ? info.fps + ' FPS' : 'Imagen fija');
     byId('quality-result').hidden = false;
     byId('size-result').textContent = 'Peso total: '+((files.webp.size+files.ogg.size)/1000000).toFixed(2)+' MB';
     byId('size-warning').hidden = files.webp.size + files.ogg.size <= 1000000;

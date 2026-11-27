@@ -103,7 +103,12 @@ class ImportFailure(ValueError):
         self.code = code
 
 def classify_download_error(log, returncode=1):
-    msg = log.lower().replace("’", "'")
+    # Verbose debug lines can contain names of dependencies and options.
+    # Prefer the actual fatal error, not informational diagnostic text.
+    lines = log.splitlines()
+    fatal = [line for line in lines if line.lstrip().startswith("ERROR:")]
+    relevant = fatal or [line for line in lines if not line.lstrip().startswith("[debug]")]
+    msg = "\n".join(relevant).lower().replace("’", "'")
     # Expose only fixed, safe messages; downloader logs may contain URLs or tokens.
     if any(x in msg for x in ("confirm you're not a bot", "confirm you are not a bot", "bot detection", "bot check")):
         return ImportFailure("SOURCE_BOT_CHECK", "YouTube ha bloqueado la descarga desde el servidor y exige una comprobación de acceso. No se puede importar este enlace automáticamente. Si tienes permiso para usar el video, sube el archivo original.")
@@ -149,13 +154,29 @@ def fetch_video(url, directory):
         "--no-progress", "--socket-timeout", "10",
         "--retries", "1", "--fragment-retries", "1", "--max-filesize", "50M",
         "--match-filters", "!is_live",
-        "--js-runtimes", "node",
+        "--js-runtimes", "deno", "--js-runtimes", "node", "--verbose",
         "-f", FORMAT_SELECTOR, "-S", FORMAT_SORT,
         "--merge-output-format", "mp4/mkv", "-o", src, "--", url,
     ], 100)
     files = [p for p in directory.glob("source.*") if p.suffix in (".mp4", ".mkv", ".webm", ".mov", ".m4v")]
     if rc or len(files) != 1:
         failure = classify_download_error(log, rc)
+        if urlsplit(url).hostname == 'www.youtube.com':
+            # Log fixed facts only; never emit raw verbose output or upstream URLs.
+            lower_log = log.lower()
+            print(json.dumps({
+                "event": "youtube_import_failure",
+                "code": failure.code,
+                "exit": rc,
+                "sourceFiles": len(files),
+                "denoInstalled": bool(DENO_VERSION),
+                "denoMentioned": "deno" in lower_log,
+                "ejsMentioned": "ejs" in lower_log,
+                "jsChallengeReported": "challenge solving" in lower_log or "signature solving" in lower_log,
+                "fatalErrorReported": any(line.lstrip().startswith("ERROR:") for line in log.splitlines()),
+                "formatFailureReported": "requested format is not available" in lower_log or "no video formats" in lower_log,
+                "botCheckReported": "confirm you're not a bot" in lower_log.replace("’", "'") or "confirm you are not a bot" in lower_log,
+            }), flush=True)
         if urlsplit(url).hostname == 'www.tiktok.com' and failure.code in ('SOURCE_FORMAT', 'DOWNLOAD_FAILED'):
             try:
                 files = [fetch_tiktok_download(url, directory)]

@@ -8,7 +8,7 @@ import makeWASocket,{useMultiFileAuthState,DisconnectReason,proto,Browsers} from
 import {sendSoundSticker,installSoundStickerCodec} from 'wa-sound-sticker';
 import pino from 'pino';
 import {preparePackage} from './package-adapter.mjs';
-import {ORIGIN,authorized,phoneNumber,trialPackage,readPackage,TIERS,SESSION_MS,MAX_SENDS,COOLDOWN_MS,newBudget,claim} from './web-policy.mjs';
+import {ORIGIN,authorized,phoneNumber,trialPackage,readPackage,TIERS,SESSION_MS,MAX_SENDS,COOLDOWN_MS,newBudget,claim,checkDecodedAudio} from './web-policy.mjs';
 const secret=process.env.BRIDGE_TOKEN, pairNumber=process.env.BRIDGE_PAIR_NUMBER, receiver=process.env.BRIDGE_RECIPIENT_NUMBER;
 const configured=Boolean(secret&&secret.length>=32&&phoneNumber(pairNumber)&&phoneNumber(receiver)&&pairNumber!==receiver);
 const logger=pino({level:'silent'});
@@ -70,9 +70,12 @@ const server=createServer({requestTimeout:20000,headersTimeout:10000},async(req,
     s.phase='validating';
     let p;
     try{
-      p=trialPackage(preparePackage(await readPackage(req)),req.headers['x-bridge-tier']||'small');
-      const audio=spawnSync('ffmpeg',['-v','error','-xerror','-f','ogg','-i','pipe:0','-t','61','-f','null','-'],{input:p.audioBuffer,timeout:10000,maxBuffer:65536});
+      const tier=req.headers['x-bridge-tier']||'small';
+      p=trialPackage(preparePackage(await readPackage(req)),tier);
+      // Bound decoded PCM to at most 60.5 s; do not trust JSON-declared duration.
+      const audio=spawnSync('ffmpeg',['-v','error','-xerror','-f','ogg','-i','pipe:0','-map','0:a:0','-t',String(TIERS[tier].maxSeconds+0.5),'-ac','1','-ar','48000','-f','s16le','pipe:1'],{input:p.audioBuffer,timeout:10000,maxBuffer:6_000_000});
       if(audio.status!==0)throw Error('decode');
+      checkDecodedAudio(audio.stdout.length,p.audioSeconds,tier);
       if(!active(s)||s.phase!=='validating')return reply(res,409,{error:'closed',...status()});
       claim(s.budget,p);
     }catch(e){if(active(s))s.phase='ready';const reason=['trial-limit','quota','cooldown','duplicate','size','decode'].includes(e.message)?e.message:'invalid-package';return reply(res,422,{error:reason,...status(),deliveryConfirmed:false});}

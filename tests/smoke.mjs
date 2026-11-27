@@ -97,18 +97,18 @@ try {
     await mobileBridge.locator('#mobile-result').waitFor({state:'visible'});
     // Mobile-only private bridge: simulate transport, never connect WhatsApp in CI.
     const endpoint='https://stickers-sonoros-bridge.onrender.com', token='test-token-'+('x'.repeat(32));
-    let posts=0, paired=false;
+    let posts=0, paired=false,connections=0;
     await mobileBridge.route(endpoint+'/**',async route=>{
       const request=route.request(),path=new URL(request.url()).pathname;
       const headers={'Access-Control-Allow-Origin':'http://127.0.0.1:8000','Access-Control-Allow-Headers':'authorization, content-type, x-bridge-tier','Access-Control-Allow-Methods':'GET, POST, OPTIONS'};
       if(request.method()==='OPTIONS')return route.fulfill({status:204,headers});
       assert.equal(request.headers().authorization,'Bearer '+token);
       let body;
-      if(path==='/v1/connect'){paired=true;body={phase:'pairing',pairingCode:'TEST1234'};}
+      if(path==='/v1/connect'){connections++;paired=true;body={phase:'pairing',pairingCode:'TEST1234'};}
       else if(path==='/v1/status'){assert(paired);body={phase:'ready'};}
-      else if(path==='/v1/send'){posts++;assert.deepEqual(request.postDataBuffer(),packageBytes);assert.equal(request.headers()['x-bridge-tier'],'small');body={phase:'ready',remaining:5-posts,relayed:true,deliveryConfirmed:false};}
+      else if(path==='/v1/send'){posts++;assert.deepEqual(request.postDataBuffer(),packageBytes);assert.equal(request.headers()['x-bridge-tier'],posts===1?'small':'medium');body={phase:'ready',remaining:5-posts,relayed:true,deliveryConfirmed:false};}
       else throw Error('Unexpected private endpoint');
-      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify(body)});
+      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.26.45',...body})});
     });
     const privatePanel=mobileBridge.locator('.private-bridge');
     await privatePanel.locator('summary').click();
@@ -128,6 +128,12 @@ try {
     await privatePanel.getByRole('button',{name:'Comprobar estado',exact:true}).click();
     await privatePanel.getByText('Vinculado. Confirma el envío de prueba.',{exact:true}).waitFor();
     assert.equal(await privateSend.isDisabled(),true);
+    await privatePanel.locator('select').selectOption('medium');
+    await privatePanel.locator('input[type=checkbox]').check();
+    await privateSend.click();
+    await privatePanel.getByText(/El puente procesó el envío/).waitFor();
+    assert.equal(posts,2);assert.equal(connections,1);assert.equal(await privateSend.isDisabled(),true);
+    // This is UI transport simulation; the actual duplicate-media rejection is tested by policy tests.
     await privatePanel.locator('summary').click();
     await mobileBridge.unroute(endpoint+'/**');
 

@@ -122,3 +122,5 @@ GitHub editor/converter smoke (45936518113), Pages deployment (45936517767), and
 ### 2026.11.26.45 — Bounded reusable mobile session
 
 Fixed official endpoint, automatic pairing status polling, individual confirmation, three progressive trial tiers, five attempts per 15-minute session, cooldown and duplicate media protection. Temporary auth cleanup and no automatic resend after uncertain relay. No arbitrary recipient, no inbox, no public bot, no persistent disk. Added policy and updated browser tests; larger-package and repeat-send acceptance remains unverified on actual WhatsApp. CI and deployments pending.
+
+Follow-up .45: validate actual decoded PCM duration against the selected tier and rounded metadata with bounded output, guard against mismatched bridge versions, and exercise two explicitly confirmed UI sends on the same mocked connection. No real 2 MB transmission or repeat-send acceptance inferred from mock results.

@@ -31,3 +31,11 @@ export async function readPackage(req){
   if(n!==size)throw Error('size');
   return Buffer.concat(chunks,n);
 }
+
+// 48 kHz mono signed 16-bit PCM. Accept the converter's integer-second rounding but enforce the real tier cap.
+export function checkDecodedAudio(bytes,declared,tier){
+  const t=Object.hasOwn(TIERS,tier)?TIERS[tier]:null;
+  const seconds=bytes/96000;
+  if(!t||!Number.isSafeInteger(bytes)||bytes<=0||bytes%2||seconds>t.maxSeconds+0.02||Math.max(1,Math.round(seconds))!==declared)throw Error('trial-limit');
+  return seconds;
+}

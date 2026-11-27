@@ -62,7 +62,7 @@ Es una integración no oficial adaptada de Shirtep; la sesión permanece en el n
 
 ### Android y iPhone
 
-En el teléfono, crea el sticker y utiliza el puente privado de la pantalla Enviar. Si ya tienes un archivo, abre [Enviar sticker guardado](https://poldkent.github.io/stickers-sonoros/mobile.html). El lector valida el JSON, muestra la imagen y el audio y los envía sin reconversión mediante el puente privado. Requiere una cuenta secundaria vinculada y una clave privada. Consulta la [guía móvil](docs/MOBILE.md#español). El marcador de WhatsApp Web sigue disponible en computadora.
+En el teléfono, crea el sticker y pulsa Enviar a mi WhatsApp. Introduce tu número propio, acepta la vinculación y confirma el envío a tu propio chat. También puedes [enviar un sticker guardado](https://poldkent.github.io/stickers-sonoros/mobile.html). La conexión no es oficial y el acceso individual aún requiere habilitación y pruebas reales.
 
 ## Verificación y compatibilidad
 
@@ -125,18 +125,6 @@ Si deseas apoyar voluntariamente el mantenimiento no comercial, consulta [las in
 ## Créditos y licencia
 
 El conversor y el mecanismo de publicación adaptado proceden de [Shirtep/WA-audio-stickers, commit 25f7909](https://github.com/Shirtep/WA-audio-stickers/tree/25f790945134f395c4bed4f0deea380ac3a2b778). Se conserva el [aviso de autoría y licencia PolyForm Noncommercial 1.0.0](vendor/shirtep/LICENSE.md); no se otorgan derechos de uso comercial ni se implica asociación oficial con WhatsApp, TikTok o Binance. Confirma con el titular de los derechos cualquier uso o financiación que pueda constituir explotación comercial.
-
-### Envío móvil privado (.45)
-
-El primer envío de sticker auténtico, audio, favoritos y reenvío fue confirmado por el operador con .44. La versión .45 incorpora URL fija, sesiones temporales reutilizables y niveles experimentales hasta 2 MB; su aceptación real está pendiente. Consulta [la guía móvil](docs/MOBILE.md). El puente usa un cliente no oficial con riesgo de restricciones; no es una API oficial.
-
-En .47 el envío móvil está guiado: introduce la clave de acceso, conecta WhatsApp y confirma el envío. El nivel de prueba se selecciona automáticamente; no necesitas configurar la URL ni conocer los límites técnicos. El marcador de computadora se encuentra en una sección desplegable.
-
-### .48 — Un único presupuesto de creación / One creation budget
-
-En Crear: 1 MB total recomendado por defecto, 2 MB total opcional experimental. En Enviar no se seleccionan tamaños ni niveles. El puente recibe el paquete original, valida hasta 2.000.000 bytes combinados y decodifica el audio completo sin tope fijo de duración; se mantienen límites de recursos y sesión. En computadora se elige WhatsApp App (predeterminado) o WhatsApp Web (marcador); en móvil solo WhatsApp App. El operador reportó compatibilidad hasta 1 MB sin límite fijo de duración observado; 2 MB y duraciones arbitrarias no son garantía de WhatsApp. La clave privada y el destinatario fijo se mantienen.
-
-In Create: 1 MB combined recommended by default, optional experimental 2 MB. Send does not select size or tier. The bridge receives the unchanged package, validates up to 2,000,000 combined bytes and decodes full audio without a fixed duration ceiling; resource/session guards remain. Desktop offers WhatsApp App (default) or WhatsApp Web (bookmark); mobile only WhatsApp App. The operator reported compatibility up to 1 MB without a fixed duration limit observed; 2 MB and arbitrary durations are not guaranteed by WhatsApp. Private key and fixed recipient remain.
 
 ### .49 — Sesión individual para todos / Individual sessions for everyone
 

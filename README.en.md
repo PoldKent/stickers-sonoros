@@ -62,7 +62,7 @@ This is an unofficial integration adapted from Shirtep; sessions remain in the b
 
 ### Android and iPhone
 
-On a phone, create a sticker and use the private bridge on the Send screen. To reuse an existing file, open [Send saved sticker](https://poldkent.github.io/stickers-sonoros/mobile.html). The reader validates the JSON, previews the image and audio and submits them unchanged through the private bridge. A linked secondary account and private access key are required. See the [mobile guide](docs/MOBILE.md#english). The WhatsApp Web bookmark remains available on desktop.
+On a phone, create a sticker and choose Send to my WhatsApp. Enter your own number, authorize linking and confirm sending to your own chat. You can also [send a saved sticker](https://poldkent.github.io/stickers-sonoros/mobile.html). The unofficial individual connection still requires activation and real-device tests.
 
 ## Verification and compatibility
 
@@ -125,18 +125,6 @@ To voluntarily support noncommercial maintenance, see [USDC or BBTC donation ins
 ## Credits and license
 
 The converter and adapted publishing mechanism come from [Shirtep/WA-audio-stickers, commit 25f7909](https://github.com/Shirtep/WA-audio-stickers/tree/25f790945134f395c4bed4f0deea380ac3a2b778). The original [copyright notice and PolyForm Noncommercial 1.0.0 license](vendor/shirtep/LICENSE.md) are retained. No commercial-use rights or official affiliation with WhatsApp, TikTok or Binance are implied. Confirm with the rights holder any use or funding that could constitute commercial exploitation.
-
-### Private mobile sending (.45)
-
-The operator confirmed first native sticker receipt, audio, favorites and forwarding on .44. Version .45 adds a fixed endpoint, bounded reusable sessions and experimental tiers up to 2 MB; real acceptance is pending. See the [mobile guide](docs/MOBILE.md). The bridge uses an unofficial client with account restriction risk; it is not an official API.
-
-In .47 mobile sending is guided: enter the access key, connect WhatsApp and confirm the send. The trial tier is selected automatically; no URL or technical limit configuration is required. The desktop bookmark is in a collapsible section.
-
-### .48 — Un único presupuesto de creación / One creation budget
-
-En Crear: 1 MB total recomendado por defecto, 2 MB total opcional experimental. En Enviar no se seleccionan tamaños ni niveles. El puente recibe el paquete original, valida hasta 2.000.000 bytes combinados y decodifica el audio completo sin tope fijo de duración; se mantienen límites de recursos y sesión. En computadora se elige WhatsApp App (predeterminado) o WhatsApp Web (marcador); en móvil solo WhatsApp App. El operador reportó compatibilidad hasta 1 MB sin límite fijo de duración observado; 2 MB y duraciones arbitrarias no son garantía de WhatsApp. La clave privada y el destinatario fijo se mantienen.
-
-In Create: 1 MB combined recommended by default, optional experimental 2 MB. Send does not select size or tier. The bridge receives the unchanged package, validates up to 2,000,000 combined bytes and decodes full audio without a fixed duration ceiling; resource/session guards remain. Desktop offers WhatsApp App (default) or WhatsApp Web (bookmark); mobile only WhatsApp App. The operator reported compatibility up to 1 MB without a fixed duration limit observed; 2 MB and arbitrary durations are not guaranteed by WhatsApp. Private key and fixed recipient remain.
 
 ### .49 — Sesión individual para todos / Individual sessions for everyone
 

@@ -1,5 +1,5 @@
 {
-  "name": "stickers-sonoros-private-test",
+  "name": "stickers-sonoros-self-send",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -7,13 +7,12 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --test package-adapter.test.mjs",
-    "start": "node private-test.mjs"
+    "test": "node --test package-adapter.test.mjs web-policy.test.mjs public-policy.test.mjs",
+    "start": "node web-service.mjs"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "7.0.0-rc14",
     "wa-sound-sticker": "git+https://github.com/alkhrzmy/wa-sound-sticker.git#5ffe38bad5434e94a62b3a5ddc26580c8a8844ff",
-    "pino": "10.4.0",
-    "qrcode-terminal": "0.12.0"
+    "pino": "10.4.0"
   }
 }

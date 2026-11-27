@@ -1,11 +1,6 @@
-import {timingSafeEqual,createHash} from 'node:crypto';
+import {createHash} from 'node:crypto';
 import {MAX_JSON_BYTES} from './package-adapter.mjs';
 export const ORIGIN='https://poldkent.github.io';
-export function authorized(header,secret){
-  if(typeof header!=='string'||typeof secret!=='string'||secret.length<32)return false;
-  const a=Buffer.from(header),b=Buffer.from('Bearer '+secret);
-  return a.length===b.length&&timingSafeEqual(a,b);
-}
 export function phoneNumber(s){return typeof s==='string'&&/^[1-9][0-9]{7,14}$/.test(s)}
 export const MAX_MEDIA_BYTES=2_000_000;
 export const SESSION_MS=15*60*1000,MAX_SENDS=5,COOLDOWN_MS=5000;

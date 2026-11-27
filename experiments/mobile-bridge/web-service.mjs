@@ -18,7 +18,7 @@ const snapshot=s=>({version:VERSION,phase:s.phase,remaining:Math.max(0,MAX_SENDS
 function reply(res,n,data){res.writeHead(n,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','X-Robots-Tag':'noindex, nofollow'});res.end(JSON.stringify(data))}
 async function close(s,phase='closed'){
  if(s.closed)return;s.closed=true;s.phase=phase;s.code='';clearTimeout(s.timer);
- try{if(s.auth?.state?.creds?.registered&&s.sock){let t;try{await Promise.race([s.sock.logout(),new Promise(resolve=>{t=setTimeout(resolve,3000)})])}finally{clearTimeout(t)}}}catch{}
+ try{if(s.auth?.state?.creds?.account&&s.sock){let t;try{await Promise.race([s.sock.logout(),new Promise(resolve=>{t=setTimeout(resolve,3000)})])}finally{clearTimeout(t)}}}catch{}
  try{s.sock?.end(undefined)}catch{}
  await s.saving.catch(()=>{});if(s.folder)await rm(s.folder,{recursive:true,force:true}).catch(()=>{});
  s.phone='';s.recipient='';s.auth=null;s.sock=null;store.remove(s.token,s);s.token='';
@@ -32,13 +32,13 @@ async function connect(s){
  sock.ev.on('connection.update',async u=>{
   if(s.closed||s.sock!==sock)return;
   try{
-   if(u.qr&&!s.requested&&!s.auth.state.creds.registered){
+   if(u.qr&&!s.requested&&!s.auth.state.creds.account){
     s.requested=true;const c=await sock.requestPairingCode(s.phone);
     if(s.closed||s.sock!==sock||s.phase==='ready')return;
     s.code=c;s.codeUntil=Date.now()+PAIR_MS;s.phase='pairing';
    }
    if(u.connection==='open'&&['connecting','pairing'].includes(s.phase)){
-    if(!s.auth.state.creds.registered)throw Error('identity');
+    if(!s.auth.state.creds.account)throw Error('identity');
     s.recipient=ownJid(sock.user?.id,s.phone);s.code='';s.phase='ready';
     clearTimeout(s.timer);s.timer=setTimeout(()=>void close(s,s.phase==='sending'?'uncertain':'closed'),SESSION_MS);
    }
@@ -110,9 +110,10 @@ const server=createServer({requestTimeout:20000,headersTimeout:10000},async(req,
   s.phase='validating';let p;
   try{p=trialPackage(preparePackage(await readPackage(req)));await decodeAudio(p);
    if(s.closed)return reply(res,410,{error:'expired'});
+   if(!s.auth.state.creds.account)throw Error('identity');
    if(ownJid(s.sock.user?.id,s.phone)!==s.recipient)throw Error('identity');
    claim(s.budget,p);
-  }catch(e){if(!s.closed)s.phase='ready';return reply(res,422,{error:['trial-limit','duplicate','quota','cooldown','decode','size','identity'].includes(e.message)?e.message:'invalid-package',...snapshot(s)})}
+  }catch(e){if(e.message==='identity')await close(s,'failed');else if(!s.closed)s.phase='ready';return reply(res,422,{error:['trial-limit','duplicate','quota','cooldown','decode','size','identity'].includes(e.message)?e.message:'invalid-package',...snapshot(s)})}
   s.phase='sending';
   try{
    const result=await sendSoundSticker(s.sock,s.recipient,{...p,baileys:await import('@whiskeysockets/baileys'),logger});

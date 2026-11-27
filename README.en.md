@@ -8,7 +8,7 @@
 
 [![Checks](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![Production](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-**Current code version: 2026.11.27.51.** The operator confirmed first .49 self-chat delivery. [.49 checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publication](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) and [importer diagnostic](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) passed. See current runs for .51. All four screens show concise actions and expandable help. This is not an independent security audit.
+**Current code version: 2026.11.27.52.** The operator confirmed first .49 self-chat delivery. [.49 checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publication](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) and [importer diagnostic](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) passed. See current runs for .52. All four screens show concise actions and expandable help. This is not an independent security audit.
 
 ## Four steps
 
@@ -16,7 +16,7 @@
 
 1. **Import:** select video, image or GIF and audio, or paste a supported public HTTPS media link.
 2. **Edit:** adjust trim, framing, zoom, position and rotation; use the full source if desired.
-3. **Create:** select quality and budget (recommended 1 MB, experimental 2 MB), add an optional signature and generate the sticker.
+3. **Create:** select quality (automatic 1 MB combined limit), add an optional signature and generate the sticker.
 4. **Send:** connect WhatsApp and confirm sending to your own chat. Desktop also offers WhatsApp Web.
 
 Editing is local; public links use the separate importer API. Try the built-in example if you have no media. Navigation retains the project; changing media or settings invalidates the previous result.
@@ -33,14 +33,14 @@ WhatsApp App uses the same individual flow as mobile. For WhatsApp Web choose th
 
 ## Quality and formats
 
-| Feature | Recommended | Experimental extended |
-|---|---:|---:|
-| Combined WebP + Ogg/Opus | 1 MB total | 2 MB total |
-| Maximum resolution | 512 × 512 | 512 × 512 |
-| Animation | ≥9 FPS | ≥9 FPS |
-| Duration | No fixed cap | No fixed cap |
+| Feature | Limit |
+|---|---|
+| Combined WebP + Ogg/Opus | 1 MB (1,000,000 bytes) |
+| Maximum resolution | 512 × 512 |
+| Animation | ≥9 FPS |
+| Duration | No fixed cap |
 
-The converter adapts resolution and compression to the budget without recording intermediate video. Base64 makes the JSON larger. Memory, codecs, input size (80 MiB) and processing time guards apply. If media cannot fit at 9 FPS, shorten the selection or use a still image. WhatsApp may reject files, particularly near 2 MB. The desktop bookmark supports older packages up to 4 MB; individual sending accepts up to 2 MB. Optional signature (40 characters) and official URL are embedded in EXIF, not drawn onto the image; SHA-256 links the audio.
+The converter adapts resolution and compression to the budget without recording intermediate video. Base64 makes the JSON larger. Memory, codecs, input size (80 MiB) and processing time guards apply. If media cannot fit at 9 FPS, shorten the selection or use a still image. The extended mode was retired after operator-reported failures. Both the updated bookmarklet and individual sender reject combined media above 1 MB. Recreate oversized older packages from the original media. WhatsApp may still reject files for other reasons. Optional signature (40 characters) and official URL are embedded in EXIF, not drawn onto the image; SHA-256 links the audio.
 
 ## Privacy and security
 

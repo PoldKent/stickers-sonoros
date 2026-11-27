@@ -114,7 +114,7 @@ const server=createServer({requestTimeout:20000,headersTimeout:10000},async(req,
    if(!s.auth.state.creds.account)throw Error('identity');
    if(ownJid(s.sock.user?.id,s.phone)!==s.recipient)throw Error('identity');
    claim(s.budget,p);
-  }catch(e){if(e.message==='identity')await close(s,'failed');else if(!s.closed)s.phase='ready';return reply(res,422,{error:['trial-limit','duplicate','quota','cooldown','decode','size','identity'].includes(e.message)?e.message:'invalid-package',...snapshot(s)})}
+  }catch(e){if(e.message==='identity')await close(s,'failed');else if(!s.closed)s.phase='ready';return reply(res,422,{error:['trial-limit','duplicate','quota','cooldown','decode','size','identity'].includes(e.message)?e.message:e.message==='Media exceeds 1 MB'?'trial-limit':'invalid-package',...snapshot(s)})}
   s.phase='sending';
   try{
    const result=await sendSoundSticker(s.sock,s.recipient,{...p,baileys:await import('@whiskeysockets/baileys'),logger});

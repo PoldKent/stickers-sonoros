@@ -8,7 +8,7 @@
 
 [![Pruebas](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![Producción](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-**Versión actual del código: 2026.11.27.51.** El operador confirmó el primer envío a chat propio de .49. Las [pruebas .49](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publicación](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) y [diagnóstico del importador](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) finalizaron correctamente. Consulta las ejecuciones actuales para .51. Las cuatro pantallas muestran acciones breves y ayuda desplegable. No equivale a una auditoría externa de seguridad.
+**Versión actual del código: 2026.11.27.52.** El operador confirmó el primer envío a chat propio de .49. Las [pruebas .49](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941677357), [publicación](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941676942) y [diagnóstico del importador](https://github.com/PoldKent/stickers-sonoros/actions/runs/45941827328) finalizaron correctamente. Consulta las ejecuciones actuales para .52. Las cuatro pantallas muestran acciones breves y ayuda desplegable. No equivale a una auditoría externa de seguridad.
 
 ## Cuatro pasos
 
@@ -16,7 +16,7 @@
 
 1. **Importar:** selecciona un video, imagen o GIF y audio, o pega un enlace multimedia HTTPS compatible.
 2. **Editar:** ajusta recorte, encuadre, zoom, posición y rotación; puedes usar el contenido completo.
-3. **Crear:** selecciona calidad y presupuesto (1 MB recomendado, 2 MB experimental), añade una firma opcional y genera el sticker.
+3. **Crear:** selecciona calidad (límite automático de 1 MB total), añade una firma opcional y genera el sticker.
 4. **Enviar:** conecta tu WhatsApp y confirma el envío a tu propio chat. En computadora también puedes elegir WhatsApp Web.
 
 La edición es local; los enlaces públicos usan la API auxiliar. Prueba el ejemplo integrado si no tienes medios. Los botones de navegación conservan el proyecto; cambiar los medios o ajustes invalida el resultado anterior.
@@ -33,14 +33,14 @@ WhatsApp App utiliza el mismo flujo individual que el celular. Si prefieres What
 
 ## Calidad y formatos
 
-| Característica | Recomendado | Ampliado experimental |
-|---|---:|---:|
-| WebP + Ogg/Opus | 1 MB total | 2 MB total |
-| Resolución máxima | 512 × 512 | 512 × 512 |
-| Animación | ≥9 FPS | ≥9 FPS |
-| Duración | Sin límite fijo | Sin límite fijo |
+| Característica | Límite |
+|---|---|
+| WebP + Ogg/Opus | 1 MB total (1.000.000 bytes) |
+| Resolución máxima | 512 × 512 |
+| Animación | ≥9 FPS |
+| Duración | Sin límite fijo |
 
-El conversor adapta resolución y compresión al presupuesto sin grabar un video intermedio. El JSON pesa más por Base64. Hay límites de memoria, códecs, entrada (80 MiB) y tiempo de procesamiento. Si no cabe a 9 FPS, acorta el tramo o usa una imagen fija. WhatsApp puede rechazar archivos, especialmente de 2 MB. El marcador de escritorio conserva compatibilidad con paquetes antiguos de hasta 4 MB; el envío individual admite hasta 2 MB. La firma opcional (40 caracteres) y la URL oficial se incluyen en EXIF, no sobre la imagen; SHA-256 vincula el audio.
+El conversor adapta resolución y compresión al presupuesto sin grabar un video intermedio. El JSON pesa más por Base64. Hay límites de memoria, códecs, entrada (80 MiB) y tiempo de procesamiento. Si no cabe a 9 FPS, acorta el tramo o usa una imagen fija. El modo ampliado se retiró tras fallos reportados por el usuario. Tanto el marcador actualizado como el envío individual rechazan archivos cuya imagen y audio sumen más de 1 MB. Si tienes un paquete antiguo más pesado, vuelve a crearlo desde los medios originales. WhatsApp todavía puede rechazar archivos por otros motivos. La firma opcional (40 caracteres) y la URL oficial se incluyen en EXIF, no sobre la imagen; SHA-256 vincula el audio.
 
 ## Privacidad y seguridad
 

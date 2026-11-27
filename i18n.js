@@ -285,7 +285,7 @@
     ["Guía de uso","User guide"],
     ["Tu sticker sonoro","Your sound sticker"],
     ["Cómo enviar tu sticker a WhatsApp","How to send your sticker to WhatsApp"],
-    ["Envía con sonido desde el puente móvil privado o utiliza el marcador de WhatsApp Web.","Send it with sound using WhatsApp Web, without installing extensions."],
+    ["Envía con sonido desde el puente móvil privado o utiliza el marcador de WhatsApp Web.","Send with sound using the private mobile bridge or the WhatsApp Web bookmark."],
     ["En el celular, guarda el archivo del sticker y pásalo a una computadora. El envío se realiza desde WhatsApp Web.","On your phone, save the sticker file and transfer it to a computer. Sending takes place in WhatsApp Web."],
     ["Guarda tu sticker","Save your sticker"],
     ["Descarga el archivo .sonoro.json. No lo abras ni lo adjuntes al chat.","Download the .sonoro.json file. Do not open it or attach it to the chat."],

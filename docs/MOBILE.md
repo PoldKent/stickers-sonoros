@@ -8,7 +8,7 @@ Si tienes un paquete anterior, abre [Enviar sticker guardado](https://poldkent.g
 
 La vinculación autoriza un dispositivo alojado en el servidor, que podría acceder a mensajes aunque no se solicite el historial completo ni se almacene una bandeja de entrada. El cliente es no oficial y puede causar restricciones. Se recomienda una cuenta secundaria propia. La sesión dura hasta 15 minutos y cinco envíos; capacidad beta de dos sesiones. Cierra la sesión y comprueba Dispositivos vinculados al terminar. Si la entrega es incierta, revisa el chat antes de repetirla. Hasta 1 MB funciona según pruebas reportadas del método anterior, no prueba de este nuevo método; 2 MB sigue experimental.
 
-Estado: acceso individual preparado, pendiente de activación de Turnstile y pruebas de recepción en chat propio, aislamiento y cierre con dos cuentas propias. [Configuración](../experiments/mobile-bridge/README.md).
+Estado: Turnstile activo y primer autoenvío .49 confirmado por el operador. Sigue pendiente una prueba simultánea con dos cuentas distintas, cierre verificable y pruebas ampliadas de 2 MB. [Configuración](../experiments/mobile-bridge/README.md).
 
 ## English
 
@@ -18,4 +18,4 @@ For a saved package, use [Send saved sticker](https://poldkent.github.io/sticker
 
 Linking authorizes a server-hosted device that may access messages even with full history sync disabled and no inbox storage. This unofficial client may cause restrictions; use an owned secondary account. Sessions last up to 15 minutes and five sends; beta capacity is two sessions. Disconnect and check Linked devices afterward. If delivery is uncertain, check the chat before retrying. Previous operator-reported 1 MB success does not prove this new self-send path; 2 MB remains experimental.
 
-Status: individual access prepared, pending Turnstile activation and real tests of self-chat delivery, isolation and closure on two owned accounts. [Setup](../experiments/mobile-bridge/README.md).
+Status: Turnstile active and first .49 self-send confirmed by the operator. Simultaneous two-account testing, verified closure and extended 2 MB testing remain pending. [Setup](../experiments/mobile-bridge/README.md).

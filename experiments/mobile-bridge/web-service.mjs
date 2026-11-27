@@ -10,7 +10,7 @@ import pino from 'pino';
 import {preparePackage} from './package-adapter.mjs';
 import {ORIGIN,phoneNumber,trialPackage,readPackage,newBudget,claim,checkDecodedAudio,MAX_SENDS,SESSION_MS} from './web-policy.mjs';
 import {CAPACITY,PAIR_MS,tokenKey,ownJid,limiter,sessionStore} from './public-policy.mjs';
-const VERSION='2026.11.27.49',siteKey=process.env.TURNSTILE_SITE_KEY,secret=process.env.TURNSTILE_SECRET_KEY;
+const VERSION='2026.11.27.50',siteKey=process.env.TURNSTILE_SITE_KEY,secret=process.env.TURNSTILE_SECRET_KEY;
 const enabled=process.env.PUBLIC_BRIDGE_ENABLED==='true'&&Boolean(siteKey&&secret);
 const logger=pino({level:'silent'}),store=sessionStore(),take=limiter();
 let pending=0;
@@ -75,6 +75,7 @@ function decodeAudio(p){return new Promise((resolve,reject)=>{
  child.stdin.end(p.audioBuffer);
 })}
 const server=createServer({requestTimeout:20000,headersTimeout:10000},async(req,res)=>{
+ if(['GET','HEAD'].includes(req.method)&&req.url==='/'){res.writeHead(308,{Location:ORIGIN+'/stickers-sonoros/','Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow'});return res.end()}
  if(req.method==='GET'&&req.url==='/health')return reply(res,200,{ok:true,version:VERSION,publicEnabled:enabled});
  if(req.headers.origin!==ORIGIN)return reply(res,403,{error:'origin'});
  res.setHeader('Access-Control-Allow-Origin',ORIGIN);res.setHeader('Vary','Origin');
@@ -124,5 +125,5 @@ const server=createServer({requestTimeout:20000,headersTimeout:10000},async(req,
  }
  return reply(res,404,{error:'route'});
 });
-server.listen(Number(process.env.PORT||8080),'0.0.0.0',()=>console.log(enabled?'Self-send bridge .49 enabled; no pairing started.':'Self-send bridge .49 disabled pending anti-abuse configuration.'));
+server.listen(Number(process.env.PORT||8080),'0.0.0.0',()=>console.log(enabled?'Self-send bridge .50 enabled; no pairing started.':'Self-send bridge .50 disabled pending anti-abuse configuration.'));
 process.once('SIGTERM',()=>void Promise.all(store.values().map(s=>close(s))).finally(()=>server.close()));

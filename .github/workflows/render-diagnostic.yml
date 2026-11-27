@@ -19,7 +19,7 @@ jobs:
   probe:
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
     continue-on-error: ${{ github.event_name == 'pull_request' }}
     steps:
       - name: Comprobar servidor y acceso público
@@ -97,3 +97,43 @@ jobs:
             exit 1
           fi
           exit 0
+      - name: Comprobar puente de envío individual
+        shell: bash
+        run: |
+          set -euo pipefail
+          bridge=https://stickers-sonoros-bridge.onrender.com
+          origin=https://poldkent.github.io
+          tmp=$(mktemp -d)
+          trap 'rm -rf "$tmp"' EXIT
+          curl -fsSL --max-time 40 "$origin/stickers-sonoros/" -o "$tmp/pages"
+          for attempt in $(seq 1 10); do
+            curl -fsS --max-time 100 "$bridge/health" -o "$tmp/health"
+            if python -c 'import json,sys; h=json.load(open(sys.argv[1])); p=open(sys.argv[2]).read(); sys.exit(0 if h.get("version") and ("data-version="+chr(34)+h["version"]+chr(34)) in p else 1)' "$tmp/health" "$tmp/pages"; then break; fi
+            if [[ "$attempt" != 10 ]]; then sleep 12; fi
+          done
+          python - "$tmp/health" "$tmp/pages" <<'PY'
+          import json,re,sys
+          h=json.load(open(sys.argv[1]))
+          assert h["ok"] is True and h["version"]==re.search(r'data-version="([^"]+)"',open(sys.argv[2]).read()).group(1)
+          assert h["publicEnabled"] is True
+          print("Bridge version:",h["version"],"Individual access enabled")
+          PY
+          curl -sS --max-time 30 -D "$tmp/root" -o /dev/null "$bridge/"
+          grep -iq '^HTTP/[^ ]* 308' "$tmp/root"
+          grep -iq "^Location: $origin/stickers-sonoros/" "$tmp/root"
+          test "$(curl -sS --max-time 30 -o /dev/null -w '%{http_code}' "$bridge/v2/config")" = 403
+          test "$(curl -sS --max-time 30 -o /dev/null -w '%{http_code}' -H "Origin: https://invalid.example" "$bridge/v2/config")" = 403
+          curl -fsS --max-time 30 -D "$tmp/config-headers" -H "Origin: $origin" "$bridge/v2/config" -o "$tmp/config"
+          grep -iq '^Cache-Control: no-store' "$tmp/config-headers"
+          grep -iq "^Access-Control-Allow-Origin: $origin" "$tmp/config-headers"
+          python - "$tmp/config" <<'PY'
+          import json,sys
+          c=json.load(open(sys.argv[1]))
+          assert set(c)=={"version","enabled","siteKey"} and c["enabled"] is True and c["siteKey"]
+          PY
+          test "$(curl -sS --max-time 30 -o /dev/null -w '%{http_code}' -H "Origin: $origin" "$bridge/v2/status")" = 401
+          token=$(python -c 'import secrets; print(secrets.token_hex(32))')
+          test "$(curl -sS --max-time 30 -o /dev/null -w '%{http_code}' -H "Origin: $origin" -H "Authorization: Bearer $token" "$bridge/v2/status")" = 410
+          test "$(curl -sS --max-time 30 -o /dev/null -w '%{http_code}' -X POST -H "Origin: $origin" "$bridge/v2/send")" = 401
+          test "$(curl -sS --max-time 30 -o /dev/null -w '%{http_code}' -H "Origin: $origin" "$bridge/v1/status")" = 404
+          echo 'Bridge: version, redirect, origin, session authorization and retired API verified; no account connected.' >> "$GITHUB_STEP_SUMMARY"

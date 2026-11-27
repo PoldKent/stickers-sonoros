@@ -42,10 +42,28 @@ MAX_BYTES = 80 * 1024 * 1024
 FORMAT_SELECTOR = "bv*+ba/b"
 FORMAT_SORT = "res:480,vcodec:h264,acodec:aac"
 SERVICE_VERSION = '2026.11.27.56'
-try:
-    DOWNLOADER_VERSION = package_version('yt-dlp')
-except PackageNotFoundError:
-    DOWNLOADER_VERSION = None
+def installed_version(name):
+    try:
+        return package_version(name)
+    except PackageNotFoundError:
+        return None
+
+DOWNLOADER_VERSION = installed_version('yt-dlp')
+EJS_VERSION = installed_version('yt-dlp-ejs')
+DEPLOY_COMMIT = os.environ.get('RENDER_GIT_COMMIT', '')
+if not re.fullmatch(r'[0-9a-f]{40}', DEPLOY_COMMIT):
+    DEPLOY_COMMIT = None
+
+def runtime_version(name):
+    try:
+        result = subprocess.run([name, '--version'], capture_output=True,
+                                text=True, timeout=3, check=True)
+        return result.stdout.splitlines()[0][:100]
+    except (OSError, subprocess.SubprocessError, IndexError):
+        return None
+
+DENO_VERSION = runtime_version('deno')
+NODE_VERSION = runtime_version('node')
 SLOTS = threading.BoundedSemaphore(1)
 LOCK = threading.Lock()
 RECENT = deque()
@@ -225,7 +243,7 @@ class Handler(BaseHTTPRequestHandler):
     def read_route(self, send_body):
         route = urlsplit(self.path).path
         if route == "/health":
-            self.reply(200, {"ok": True, "version": SERVICE_VERSION, "maxDuration": None, "downloader": DOWNLOADER_VERSION, "publicMedia": True, "tiktokPublicDownload": True})
+            self.reply(200, {"ok": True, "version": SERVICE_VERSION, "maxDuration": None, "downloader": DOWNLOADER_VERSION, "ejs": EJS_VERSION, "deno": DENO_VERSION, "node": NODE_VERSION, "commit": DEPLOY_COMMIT, "publicMedia": True, "tiktokPublicDownload": True})
             return
         if API_ONLY:
             if route in ("/", "/index.html", "/stickers-sonoros", "/stickers-sonoros/", "/stickers-sonoros/index.html"):

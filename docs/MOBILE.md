@@ -7,7 +7,7 @@
 1. Importa el contenido y audio.
 2. Edita el recorte y encuadre.
 3. Crea el sticker y revisa su vista previa.
-4. En la pantalla Enviar, abre el puente privado, introduce la clave, vincula tu cuenta secundaria si corresponde, selecciona el nivel y confirma el envío individual.
+4. En la pantalla Enviar, abre el puente privado, introduce la clave facilitada por el administrador, pulsa Conectar WhatsApp y sigue el código si aparece. Una vez conectado, pulsa Enviar sticker sonoro y confirma. El nivel se elige automáticamente.
 
 Si ya tienes un paquete, abre [Enviar sticker guardado](https://poldkent.github.io/stickers-sonoros/mobile.html), selecciona el JSON y continúa directamente desde el panel de envío. El lector verifica WebP, Ogg, dimensiones y SHA-256; admite hasta 2 MB combinados y conserva los archivos sin reconversión. La carga y vista previa son locales; solo al confirmar el envío se transmite el paquete al puente privado. No adjuntes el JSON al chat esperando un sticker. Las exportaciones PNG, WAV y video y las instrucciones de creación en el editor nativo fueron retiradas en .46.
 
@@ -18,7 +18,7 @@ El puente es experimental y no oficial: usa solo una cuenta secundaria propia; e
 1. Import content and audio.
 2. Edit trim and framing.
 3. Create the sticker and inspect the preview.
-4. On the Send screen, open the private bridge, enter your key, link your secondary account if needed, select the tier and authorize each send.
+4. On the Send screen, open the private bridge, enter the key provided by the administrator, choose Connect WhatsApp and follow the code if shown. Once connected, choose Send sound sticker and confirm. The tier is selected automatically.
 
 For an existing package, open [Send saved sticker](https://poldkent.github.io/stickers-sonoros/mobile.html), select the JSON and continue directly to the sending panel. The reader validates WebP, Ogg, dimensions and SHA-256; it accepts up to 2 MB combined and preserves original files. Loading and preview are local; the package is transmitted to the private bridge only when sending is confirmed. Do not attach JSON to a chat expecting a sticker. PNG, WAV and video exports and native-editor creation instructions were removed in .46.
 
@@ -35,3 +35,7 @@ The operator confirmed mobile-only sending, receipt as a sticker, audio playback
 La URL del puente se fija a su servicio Render oficial; la clave se mantiene en memoria de la página. Vinculación por código con consulta automática mientras el panel está abierto. Hasta cinco intentos de envío por sesión de 15 minutos, cinco segundos entre intentos, sin duplicados del mismo par de medios, destinatario fijo y confirmación individual. Niveles experimentales: inicial 1–3 s y <500 KB por componente; intermedio ≤15 s y ≤1 MB total; ampliado ≤60 s y ≤2 MB total. Estos límites son del puente, no del conversor ni de WhatsApp. No se ha validado todavía la aceptación real de los niveles ampliados ni los envíos múltiples. La sesión es efímera y se debe desvincular manualmente. En caso de envío incierto, no se reintenta automáticamente. El transporte no es oficial.
 
 The official bridge URL is fixed; the access key stays in page memory. Pairing status polls while the panel is open. Up to five send attempts per 15-minute session, five seconds between attempts, duplicate media rejected, fixed recipient and individual consent. Trial tiers: initial 1–3 s and <500 KB per component; intermediate ≤15 s and ≤1 MB combined; extended ≤60 s and ≤2 MB combined. These are bridge limits, not converter or WhatsApp limits. Larger tiers and repeat sends still require real device acceptance. Ephemeral session; manually unlink afterward. No automatic retry after uncertain delivery. Unofficial transport.
+
+### .47 — Envío guiado / Guided sending
+
+La interfaz muestra solo el paso necesario: acceso, código de vinculación o envío. El tamaño y duración del paquete determinan automáticamente el nivel; para paquetes ampliados aparece una confirmación específica. No hay selector técnico ni casilla repetitiva; cada envío requiere confirmar el diálogo. La opción de computadora queda plegada. Se mantienen el acceso privado, destinatario fijo, límites del servicio .45 y riesgo de cliente no oficial. / The interface shows only the necessary step: access, pairing code or send. Package size and duration select the tier automatically; extended packages show a specific confirmation. Each send requires confirmation. The desktop option is collapsed. Private access, fixed recipient, service .45 limits and unofficial-client risk remain unchanged.

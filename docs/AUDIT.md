@@ -128,3 +128,7 @@ Follow-up .45: validate actual decoded PCM duration against the selected tier an
 ### 2026.11.27.46 — Remove obsolete mobile media preparation
 
 Replaced the redundant native-editor preparation screen with a saved-package sender. Removed PNG/WAV/video exports, MediaRecorder, canvas capture, secondary download and native-editor instructions, obsolete translations/styles, and duplicate link in the Send stage. Kept the existing mobile URL, local package integrity validation, preview, fixed private bridge and desktop bookmark. Mobile package size matches bridge (2 MB combined); legacy 4 MB reading remains desktop-only. The private service protocol remains .45, so no bridge redeploy is required for this frontend cleanup. Updated tests and bilingual user guides. CI and importer synchronization pending.
+
+### 2026.11.27.47 — Guided nontechnical sending UI
+
+The .46 browser CI and Pages publication passed. Replaced the all-at-once technical panel with state-dependent access, pairing and send controls, immediate short-key feedback, automatic tier selection, explicit per-message confirmation, collapsed desktop bookmark instructions, and compact bilingual warnings. Added mocked cancellation, auto-poll pairing, two sends and tier selection tests. The bridge API remains .45 and is not redeployed for this frontend change. No new real-device claim. CI and public importer synchronization pending.

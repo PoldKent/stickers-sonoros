@@ -129,3 +129,5 @@ The converter and adapted publishing mechanism come from [Shirtep/WA-audio-stick
 ### Private mobile sending (.45)
 
 The operator confirmed first native sticker receipt, audio, favorites and forwarding on .44. Version .45 adds a fixed endpoint, bounded reusable sessions and experimental tiers up to 2 MB; real acceptance is pending. See the [mobile guide](docs/MOBILE.md). The bridge uses an unofficial client with account restriction risk; it is not an official API.
+
+In .47 mobile sending is guided: enter the access key, connect WhatsApp and confirm the send. The trial tier is selected automatically; no URL or technical limit configuration is required. The desktop bookmark is in a collapsible section.

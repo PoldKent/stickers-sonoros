@@ -58,7 +58,10 @@ try {
   assert.equal(await page.locator('.send-steps > li').count(),4);
   assert.equal(await page.locator('#download').count(),0);
   assert.equal(await page.locator('#share').count(),0);
+  assert.equal(await page.locator('#wa-bookmark').isVisible(),false);
+  await page.locator('#desktop-send-options > summary').click();
   assert.equal(await page.locator('#wa-bookmark').isVisible(),true);
+  await page.locator('#desktop-send-options > summary').click();
   await page.screenshot({path:'artifacts/screenshots/desktop-es.png',fullPage:true});
   await page.locator('#language').selectOption('en');
   await page.screenshot({path:'artifacts/screenshots/desktop-en.png',fullPage:true});
@@ -106,35 +109,36 @@ try {
       let body;
       if(path==='/v1/connect'){connections++;paired=true;body={phase:'pairing',pairingCode:'TEST1234'};}
       else if(path==='/v1/status'){assert(paired);body={phase:'ready'};}
-      else if(path==='/v1/send'){posts++;assert.deepEqual(request.postDataBuffer(),packageBytes);assert.equal(request.headers()['x-bridge-tier'],posts===1?'small':'medium');body={phase:'ready',remaining:5-posts,relayed:true,deliveryConfirmed:false};}
+      else if(path==='/v1/send'){posts++;assert.deepEqual(request.postDataBuffer(),packageBytes);assert.equal(request.headers()['x-bridge-tier'],'small');body={phase:'ready',remaining:5-posts,relayed:true,deliveryConfirmed:false};}
       else throw Error('Unexpected private endpoint');
       return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.26.45',...body})});
     });
     const privatePanel=mobileBridge.locator('.private-bridge');
     assert.equal(await privatePanel.getAttribute('open'),'');
+    const connect=privatePanel.getByRole('button',{name:'Conectar WhatsApp',exact:true});
+    await privatePanel.locator('input[type=password]').fill('short');
+    assert.equal(await connect.isDisabled(),true);
     await privatePanel.locator('input[type=password]').fill(token);
     const privateSend=privatePanel.getByRole('button',{name:'Enviar sticker sonoro',exact:true});
-    assert.equal(await privateSend.isDisabled(),true);
-    await privatePanel.getByRole('button',{name:'Vincular cuenta de prueba',exact:true}).click();
+    assert.equal(await privateSend.isVisible(),false);
+    await connect.click();
     await privatePanel.getByText('TEST1234',{exact:true}).waitFor();
-    await privatePanel.getByRole('button',{name:'Comprobar estado',exact:true}).click();
-    await privatePanel.getByText('Vinculado. Confirma el envío de prueba.',{exact:true}).waitFor();
-    assert.equal(await privateSend.isDisabled(),true);
-    await privatePanel.locator('input[type=checkbox]').check();
-    await privateSend.click();
+    await privatePanel.getByText('WhatsApp conectado. Ya puedes enviar tu sticker.',{exact:true}).waitFor();
+    assert.equal(await privatePanel.locator('input[type=password]').isVisible(),false);
+    assert.equal(await privatePanel.locator('select,input[type=checkbox]').count(),0);
+    mobileBridge.once('dialog',dialog=>dialog.dismiss());await privateSend.click();
+    assert.equal(posts,0);
+    mobileBridge.once('dialog',dialog=>dialog.accept());await privateSend.click();
     await privatePanel.getByText(/El puente procesó el envío/).waitFor();
-    assert.equal(posts,1);assert.equal(await privateSend.isDisabled(),true);
-    assert.equal(await privatePanel.locator('input[type=checkbox]').isChecked(),false);
-    await privatePanel.getByRole('button',{name:'Comprobar estado',exact:true}).click();
-    await privatePanel.getByText('Vinculado. Confirma el envío de prueba.',{exact:true}).waitFor();
-    assert.equal(await privateSend.isDisabled(),true);
-    await privatePanel.locator('select').selectOption('medium');
-    await privatePanel.locator('input[type=checkbox]').check();
-    await privateSend.click();
+    assert.equal(posts,1);
+    await privateSend.waitFor({state:'visible'});
+    mobileBridge.once('dialog',dialog=>dialog.accept());await privateSend.click();
     await privatePanel.getByText(/El puente procesó el envío/).waitFor();
-    assert.equal(posts,2);assert.equal(connections,1);assert.equal(await privateSend.isDisabled(),true);
-    // This is UI transport simulation; the actual duplicate-media rejection is tested by policy tests.
-    await privatePanel.locator('summary').click();
+    assert.equal(posts,2);assert.equal(connections,1);
+    const tiers=await mobileBridge.evaluate(()=>[1,10,40,61].map(segundosAudio=>SonoroPrivateMobile.chooseTier({format:'stickers-sonoros/1',webp:'YQ==',ogg:'Yg==',info:{segundosAudio}})));
+    assert.deepEqual(tiers,['small','medium','extended',null]);
+    // Two confirmed UI requests are mocked; actual duplicate rejection is tested separately.
+    await mobileBridge.screenshot({path:'artifacts/screenshots/mobile-send-es.png',fullPage:true});
     await mobileBridge.unroute(endpoint+'/**');
 
     const saved=await mobileBridge.evaluate(async()=>{const p=await SonoroMobile.validate(document.querySelector('#mobile-package').files[0]);return {side:p.side,seconds:p.seconds,webp:p.webp.size,ogg:p.ogg.size};});

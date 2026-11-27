@@ -1243,7 +1243,7 @@ byId('package-download').onclick=async()=>{
     const name=(visual?.name || 'sticker').replace(/\.[^.]+$/,'').replace(/[\\/:*?"<>|\u0000-\u001f\u007f]/g,'_').trim().slice(0,120) || 'sticker';
     link.href=url;link.download=name+'.sonoro.json';document.body.append(link);link.click();link.remove();
     setTimeout(()=>URL.revokeObjectURL(url),30000);
-    byId('bridge-status').textContent='Archivo preparado para descargar. Continúa con el paso 2 si es tu primera vez, o con el paso 3 si ya tienes el favorito.';
+    byId('bridge-status').textContent='Sticker guardado. Puedes enviarlo más tarde desde la web.';
   }catch(e){byId('bridge-status').textContent=e.message||'No se pudo guardar el paquete.';}
   finally{button.disabled=false;}
 };

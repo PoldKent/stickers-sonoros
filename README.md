@@ -129,3 +129,5 @@ El conversor y el mecanismo de publicación adaptado proceden de [Shirtep/WA-aud
 ### Envío móvil privado (.45)
 
 El primer envío de sticker auténtico, audio, favoritos y reenvío fue confirmado por el operador con .44. La versión .45 incorpora URL fija, sesiones temporales reutilizables y niveles experimentales hasta 2 MB; su aceptación real está pendiente. Consulta [la guía móvil](docs/MOBILE.md). El puente usa un cliente no oficial con riesgo de restricciones; no es una API oficial.
+
+En .47 el envío móvil está guiado: introduce la clave de acceso, conecta WhatsApp y confirma el envío. El nivel de prueba se selecciona automáticamente; no necesitas configurar la URL ni conocer los límites técnicos. El marcador de computadora se encuentra en una sección desplegable.

@@ -6,6 +6,7 @@ import os
 import re
 import signal
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -50,6 +51,12 @@ def installed_version(name):
 
 DOWNLOADER_VERSION = installed_version('yt-dlp')
 EJS_VERSION = installed_version('yt-dlp-ejs')
+ALTERNATE_VERSION = installed_version('pytubefix')
+# yt-dlp: only yt-dlp. auto: yt-dlp, then pytubefix for format/JS failures
+# (never for bot checks or access restrictions). pytubefix: only pytubefix.
+YOUTUBE_ENGINE = os.environ.get('YOUTUBE_ENGINE', 'yt-dlp')
+if YOUTUBE_ENGINE not in ('yt-dlp', 'auto', 'pytubefix'):
+    raise ValueError('Invalid YOUTUBE_ENGINE')
 DEPLOY_COMMIT = os.environ.get('RENDER_GIT_COMMIT', '')
 if not re.fullmatch(r'[0-9a-f]{40}', DEPLOY_COMMIT):
     DEPLOY_COMMIT = None
@@ -147,7 +154,26 @@ def run(args, timeout):
         log.seek(max(0, size - 32768))
         return rc, log.read().decode("utf-8", errors="replace")
 
+def fetch_youtube_alternate(url, directory):
+    output = directory / "alternate.mp4"
+    try:
+        rc, _ = run([sys.executable, str(Path(__file__).with_name("youtube_alternate.py")),
+                     url, str(output)], 35)
+    except (OSError, subprocess.TimeoutExpired):
+        rc = 1
+    if rc == 0 and output.is_file() and 0 < output.stat().st_size <= 50 * 1024 * 1024:
+        return output
+    output.unlink(missing_ok=True)
+    return None
+
 def fetch_video(url, directory):
+    if urlsplit(url).hostname == 'www.youtube.com' and YOUTUBE_ENGINE == 'pytubefix':
+        if not ALTERNATE_VERSION:
+            raise ImportFailure("DOWNLOAD_FAILED", "El motor experimental no está instalado.")
+        alternative = fetch_youtube_alternate(url, directory)
+        if alternative is None:
+            raise ImportFailure("DOWNLOAD_FAILED", "El motor experimental no obtuvo un video accesible.")
+        return normalize_downloaded_video(alternative, directory)
     src = str(directory / "source.%(ext)s")
     rc, log = run([
         "yt-dlp", "--ignore-config", "--no-cache-dir", "--no-playlist",
@@ -177,13 +203,23 @@ def fetch_video(url, directory):
                 "formatFailureReported": "requested format is not available" in lower_log or "no video formats" in lower_log,
                 "botCheckReported": "confirm you're not a bot" in lower_log.replace("’", "'") or "confirm you are not a bot" in lower_log,
             }), flush=True)
-        if urlsplit(url).hostname == 'www.tiktok.com' and failure.code in ('SOURCE_FORMAT', 'DOWNLOAD_FAILED'):
+        if (urlsplit(url).hostname == 'www.youtube.com' and YOUTUBE_ENGINE == 'auto' and ALTERNATE_VERSION
+                and failure.code in ('SOURCE_FORMAT', 'SOURCE_JS', 'DOWNLOAD_FAILED')):
+            alternative = fetch_youtube_alternate(url, directory)
+            if alternative is None:
+                raise failure
+            files = [alternative]
+        elif urlsplit(url).hostname == 'www.tiktok.com' and failure.code in ('SOURCE_FORMAT', 'DOWNLOAD_FAILED'):
             try:
                 files = [fetch_tiktok_download(url, directory)]
             except TikTokDownloadUnavailable as error:
                 raise ImportFailure(failure.code, str(failure) + ' Alternativa de descarga pública: ' + str(error)) from None
         else:
             raise failure
+    return normalize_downloaded_video(files[0], directory)
+
+def normalize_downloaded_video(file, directory):
+    files = [file]
     if not 0 < files[0].stat().st_size <= MAX_BYTES:
         raise ImportFailure("SOURCE_SIZE", "El archivo descargado está vacío o supera 80 MB.")
     # A compatible original can be remuxed instead of re-encoded.
@@ -264,7 +300,7 @@ class Handler(BaseHTTPRequestHandler):
     def read_route(self, send_body):
         route = urlsplit(self.path).path
         if route == "/health":
-            self.reply(200, {"ok": True, "version": SERVICE_VERSION, "maxDuration": None, "downloader": DOWNLOADER_VERSION, "ejs": EJS_VERSION, "deno": DENO_VERSION, "node": NODE_VERSION, "commit": DEPLOY_COMMIT, "publicMedia": True, "tiktokPublicDownload": True})
+            self.reply(200, {"ok": True, "version": SERVICE_VERSION, "maxDuration": None, "downloader": DOWNLOADER_VERSION, "ejs": EJS_VERSION, "youtubeAlternate": ALTERNATE_VERSION, "youtubeEngine": YOUTUBE_ENGINE, "deno": DENO_VERSION, "node": NODE_VERSION, "commit": DEPLOY_COMMIT, "publicMedia": True, "tiktokPublicDownload": True})
             return
         if API_ONLY:
             if route in ("/", "/index.html", "/stickers-sonoros", "/stickers-sonoros/", "/stickers-sonoros/index.html"):

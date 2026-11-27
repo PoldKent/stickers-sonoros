@@ -6,10 +6,10 @@ COPY --from=js /usr/local/bin/node /usr/local/bin/node
 # Deno is the preferred yt-dlp runtime; Node remains available.
 COPY --from=deno /deno /usr/local/bin/deno
 ARG DOWNLOADER_BUILD=2026-11-27
-RUN echo "Downloader build ${DOWNLOADER_BUILD}" && pip install --no-cache-dir --upgrade --pre "yt-dlp[default]" && yt-dlp --version && node --version && deno --version && python -m pip check && python -c "from importlib.metadata import version; print('yt-dlp-ejs', version('yt-dlp-ejs'))" && ffmpeg -version
+RUN echo "Downloader build ${DOWNLOADER_BUILD}" && pip install --no-cache-dir --upgrade --pre "yt-dlp[default]" "pytubefix==11.3.0" && yt-dlp --version && node --version && deno --version && python -m pip check && python -c "from importlib.metadata import version; print('yt-dlp-ejs', version('yt-dlp-ejs'))" && ffmpeg -version
 RUN useradd --create-home --uid 10001 app
 WORKDIR /app
-COPY importer/server.py importer/public_media.py importer/tiktok_public.py ./importer/
+COPY importer/server.py importer/public_media.py importer/tiktok_public.py importer/youtube_alternate.py ./importer/
 USER app
 ENV PORT=8080 PYTHONUNBUFFERED=1 WEB_ROOT=/app
 EXPOSE 8080

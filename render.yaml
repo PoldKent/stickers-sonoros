@@ -13,3 +13,5 @@ services:
         value: https://poldkent.github.io
       - key: API_ONLY
         value: "1"
+      - key: YOUTUBE_ENGINE
+        value: auto

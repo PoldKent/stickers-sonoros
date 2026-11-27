@@ -42,7 +42,7 @@ MAX_BYTES = 80 * 1024 * 1024
 # Sort by the short edge; vertical videos must not be filtered by height.
 FORMAT_SELECTOR = "bv*+ba/b"
 FORMAT_SORT = "res:480,vcodec:h264,acodec:aac"
-SERVICE_VERSION = '2026.11.27.56'
+SERVICE_VERSION = '2026.11.27.57'
 def installed_version(name):
     try:
         return package_version(name)

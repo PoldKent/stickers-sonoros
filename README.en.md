@@ -8,7 +8,7 @@
 
 [![Checks](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![Production](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-**Current version: 2026.11.27.56.** Desktop and mobile share a refreshed visual identity. The previous release .55 passed [browser checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/45948897847), [Pages deployment](https://github.com/PoldKent/stickers-sonoros/actions/runs/45948896952) and [Render diagnostics](https://github.com/PoldKent/stickers-sonoros/actions/runs/45949028717). Check [current CI runs](https://github.com/PoldKent/stickers-sonoros/actions) for .56. Real sound delivery and physical iOS/Android validation are separate from automated tests.
+**Current version: 2026.11.27.57.** YouTube import uses a fallback engine when the primary one finds no compatible format (never for access checks). The previous release .56 passed [browser checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/46055132477), [Pages deployment](https://github.com/PoldKent/stickers-sonoros/actions/runs/46055131718) and [Render diagnostics](https://github.com/PoldKent/stickers-sonoros/actions/runs/46055289410). Check [current CI runs](https://github.com/PoldKent/stickers-sonoros/actions) for .57. Real sound delivery and physical iOS/Android validation are separate from automated tests.
 
 ## Create a sticker in four steps
 

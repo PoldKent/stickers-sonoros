@@ -1,4 +1,8 @@
-# Auditoría / Audit — 2026.11.26.20
+# Auditoría / Audit — 2026.11.27.57
+
+Historial de auditorías por versión; la entrada más reciente está al final. / Per-version audit history; latest entry at the end.
+
+## Auditoría inicial / Initial audit — 2026.11.26.20
 
 ## Alcance / Scope
 
@@ -174,3 +178,7 @@ Operator reported the .54 bookmarklet blocks sending because the creation flag i
 ### 2026.11.27.56 — Visual refresh and maintenance cleanup
 
 Baseline .55: browser CI 45948897847, Pages 45948896952 and Render diagnostic 45949028717 passed. Shared slate/lavender design tokens, refreshed sticker/wave logo, updated project banner, workflow artwork, mobile handoff and bookmarklet styling. Retire unused CSS selectors and obsolete translation phrases; clarify bookmark replacement instructions. Keep four-stage navigation, direct native desktop attempt without creation gate, explicit recipient confirmation, account consent, size limits and deployment architecture unchanged. Historical audit and upstream attribution retained. New CI and real device/send verification pending.
+
+### 2026.11.27.57 — YouTube fallback engine and maintenance cleanup
+
+Baseline .56 plus importer runtime work: browser CI 46055132477, Pages 46055131718 and Render diagnostic 46055289410 passed on cb2140a (Deno-preferred yt-dlp runtime, yt-dlp-ejs build check, `/health` runtime/commit fields, fatal-line error classification and fixed-field failure log). Merged the experimental pytubefix engine with an explicit `YOUTUBE_ENGINE` mode: `yt-dlp` (code default, no fallback), `auto` (Render Blueprint; pytubefix only after format, JS or generic download failures, never after bot checks or access restrictions) and `pytubefix` (isolated testing). `/health` reports `youtubeEngine` and `youtubeAlternate`. Added a test that the default mode never falls back. Removed 37 translation entries no page, script or service produces. Version identifiers synchronized. Render must apply the Blueprint variable; confirm `youtubeEngine: auto` in `/health`. Real YouTube acceptance and device sends remain pending. Historical audit retained.

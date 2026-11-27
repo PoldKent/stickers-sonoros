@@ -304,7 +304,7 @@
     ["Preparando tu sticker con sonido…","Preparing your sound sticker…"],
     ["Tu sticker está listo para enviar.","Your sticker is ready to send."],
     ["Sticker listo. Sigue los pasos para enviarlo a WhatsApp.","Sticker ready. Follow the steps to send it to WhatsApp."],
-    ["Archivo preparado para descargar. Continúa con el paso 2 si es tu primera vez, o con el paso 3 si ya tienes el favorito.","File ready to download. Continue with step 2 if this is your first time, or step 3 if you already have the bookmark."],
+    ["Sticker guardado. Puedes enviarlo más tarde desde la web.","Sticker saved. You can send it later from the website."],
     ["Conversión cancelada. Puedes reintentar.","Conversion canceled. You can retry."],
     ["No se pudo preparar el sticker. Revisa el aviso junto a la vista previa.","Could not prepare the sticker. Check the message next to the preview."],
     ["Vista previa del sticker final","Final sticker preview"],

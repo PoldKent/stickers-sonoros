@@ -89,12 +89,12 @@ function mount(root,getPackage){
   copy.onclick=async()=>{try{if(code.textContent){await navigator.clipboard.writeText(code.textContent);msg='copied';update()}}catch{code.scrollIntoView({block:'nearest'})}};
   send.onclick=async()=>{
     if(working||preparing||uncertain||phase!=='ready')return;
-    preparing=true;update();
+    preparing=true;msg='busy';update();
     try{
       const body=await getPackage();if(!body){msg='missing';return;}
       const p=JSON.parse(await body.text()),tier=chooseTier(p);
       if(!tier){msg='trial-limit';return;}
-      if(!window.confirm(t(tier==='extended'?'confirmExtended':'confirmSend')))return;
+      if(!window.confirm(t(tier==='extended'?'confirmExtended':'confirmSend'))){msg='ready';return;}
       await request('/v1/send','POST',body,tier);
     }catch{msg='missing'}finally{preparing=false;update()}
   };

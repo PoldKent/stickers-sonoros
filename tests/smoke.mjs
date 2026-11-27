@@ -127,6 +127,7 @@ try {
     assert.equal(await privatePanel.locator('input[type=password]').isVisible(),false);
     assert.equal(await privatePanel.locator('select,input[type=checkbox]').count(),0);
     mobileBridge.once('dialog',dialog=>dialog.dismiss());await privateSend.click();
+    await privatePanel.getByText('WhatsApp conectado. Ya puedes enviar tu sticker.',{exact:true}).waitFor();
     assert.equal(posts,0);
     mobileBridge.once('dialog',dialog=>dialog.accept());await privateSend.click();
     await privatePanel.getByText(/El puente procesó el envío/).waitFor();

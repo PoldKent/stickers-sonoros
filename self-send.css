@@ -19,3 +19,4 @@
 .self-pairing ol{padding-left:22px;margin:8px 0;font-size:.9rem;line-height:1.55}.self-pairing li+li{margin-top:4px}.self-bridge .step-help{margin:6px 0}.self-bridge .self-risk{font-size:.83rem;line-height:1.5}
 
 #native-bridge>.desktop-send-options{margin:12px 0 0;padding-top:9px;border-top:1px solid var(--line)}#native-bridge>.desktop-send-options>summary{cursor:pointer;font-size:.82rem;font-weight:500;color:var(--muted);padding:8px 0;min-height:36px;box-sizing:border-box}#native-bridge>.desktop-send-options>summary:hover{color:var(--accent)}#native-bridge .alternate-send-title{margin:8px 0 4px}
+.self-how{margin:4px 0 14px;padding-left:20px;font-size:.88rem;line-height:1.5;color:var(--muted,#b2b6cc)}.self-how li{margin-bottom:4px}

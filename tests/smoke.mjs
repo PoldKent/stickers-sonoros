@@ -8,26 +8,59 @@ import {join} from 'node:path';
 
 mkdirSync('artifacts/screenshots',{recursive:true});
 const browser = await chromium.launch({headless:true,args:['--autoplay-policy=no-user-gesture-required']});
+// Returning-visitor pages skip the welcome screen; the first-visit flow is tested separately.
+const rawNewPage=browser.newPage.bind(browser);
+browser.newPage=async(options)=>{const created=await rawNewPage(options);await created.addInitScript(()=>{try{localStorage.setItem('stickers-sonoros-welcome','seen')}catch{}});return created;};
 try {
+  // First visit: welcome screen explains the journey, then opens the editor and is remembered.
+  const first=await rawNewPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  await first.goto('http://127.0.0.1:8000');
+  assert.equal(await first.locator('#welcome').isVisible(),true);
+  assert.equal(await first.locator('.workspace').isVisible(),false);
+  assert.equal(await first.locator('.wizard-navigation').isVisible(),false);
+  assert.equal(await first.locator('#show-welcome').isVisible(),false);
+  assert.equal(await first.locator('.welcome-steps > li').count(),4);
+  assert.equal(await first.locator('.welcome-faq details[open]').count(),0);
+  assert(await first.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+  await first.screenshot({path:'artifacts/screenshots/mobile-welcome-es.png',fullPage:true});
+  await first.locator('.welcome-faq summary').first().click();
+  assert.match(await first.locator('.welcome-faq').innerText(),/Vincular con número de teléfono/);
+  await first.locator('#language').selectOption('en');
+  assert.match(await first.locator('#welcome').innerText(),/How it works/);
+  assert.match(await first.locator('.welcome-faq').innerText(),/Link with phone number/);
+  assert.equal(await first.locator('#welcome-start').textContent(),'Get started');
+  await first.screenshot({path:'artifacts/screenshots/mobile-welcome-en.png',fullPage:true});
+  await first.locator('#language').selectOption('es');
+  await first.locator('#welcome-start').click();
+  assert.equal(await first.locator('#welcome').isVisible(),false);
+  assert.equal(await first.locator('#link-input').isVisible(),true);
+  assert.match(await first.locator('#link-status').textContent(),/TikTok, Instagram/);
+  await first.reload();
+  assert.equal(await first.locator('#welcome').isVisible(),false);
+  await first.locator('#show-welcome').click();
+  assert.equal(await first.locator('#welcome').isVisible(),true);
+  await first.locator('#welcome-start').click();
+  assert.equal(await first.locator('.workspace').isVisible(),true);
+  await first.close();
+  const firstDesktop=await rawNewPage();
+  await firstDesktop.goto('http://127.0.0.1:8000');
+  assert.equal(await firstDesktop.locator('#welcome').isVisible(),true);
+  await firstDesktop.screenshot({path:'artifacts/screenshots/desktop-welcome-es.png',fullPage:true});
+  await firstDesktop.close();
   const page = await browser.newPage({acceptDownloads:true});
   const errors = [];
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto('http://127.0.0.1:8000');
   assert.equal(await page.locator('html').getAttribute('data-editor-ready'),'true');
-  assert.equal(await page.locator('#mobile-onboarding').isVisible(),true);
+  assert.equal(await page.locator('#welcome').isVisible(),false);
+  assert.equal(await page.locator('#show-welcome').isVisible(),true);
   await page.screenshot({path:'artifacts/screenshots/desktop-import-es.png',fullPage:true});
   assert.equal(await page.getByText('Ayuda para importar',{exact:true}).isVisible(),true);
   assert.equal(await page.locator('[data-screen="1"] .step-help').getAttribute('open'),null);
-  assert.match(await page.locator('#mobile-onboarding').textContent(),/Todo desde tu celular/);
-  assert.equal(await page.locator('#mobile-onboarding details').getAttribute('open'),null);
-  await page.locator('#mobile-onboarding summary').click();
-  assert.match(await page.locator('#mobile-onboarding').innerText(),/dispositivo vinculado puede acceder a mensajes/);
   await page.locator('#language').selectOption('en');
-  assert.match(await page.locator('#mobile-onboarding').innerText(),/Everything from your phone/);
-  assert.match(await page.locator('#mobile-onboarding').innerText(),/linked device can access messages/);
+  assert.equal(await page.locator('[data-mode="image"]').textContent(),'Image + sound');
   await page.screenshot({path:'artifacts/screenshots/desktop-import-en.png',fullPage:true});
   await page.locator('#language').selectOption('es');
-  await page.locator('#mobile-onboarding summary').click();
   await page.locator('#load-link').click();
   assert.match(await page.locator('#link-status').textContent(),/Pega primero/);
   assert.equal(await page.locator('#link-status').getAttribute('data-state'),'error');
@@ -38,7 +71,8 @@ try {
   await page.locator('#wizard-next').click();
   assert.equal(await page.locator('#position').isVisible(),true);
   assert.equal(await page.locator('[data-screen="2"] .step-help').getAttribute('open'),null);
-  assert.equal(await page.locator('#mobile-onboarding').isVisible(),false);
+  assert.equal(await page.locator('#welcome').isVisible(),false);
+  assert.equal(await page.locator('#status').textContent(),'');
   assert.equal(await page.locator('#visual').isVisible(),false);
   await page.screenshot({path:'artifacts/screenshots/desktop-edit-es.png',fullPage:true});
   await page.locator('#language').selectOption('en');
@@ -47,6 +81,9 @@ try {
   await page.locator('#wizard-next').click();
   assert.equal(await page.locator('#position').isVisible(),false);
   assert.equal(await page.locator('[data-screen="3"] .step-help').getAttribute('open'),null);
+  assert.equal(await page.locator('#quality').isVisible(),false);
+  assert.equal(await page.locator('#create-done').isVisible(),false);
+  await page.locator('#create-options summary').click();
   assert.equal(await page.locator('#quality').isVisible(),true);
   assert.equal(await page.locator('#size-budget').count(),0);
   await page.screenshot({path:'artifacts/screenshots/desktop-create-es.png',fullPage:true});
@@ -57,6 +94,7 @@ try {
   await page.locator('#export').click();
   await page.waitForFunction(()=>!document.querySelector('#sticker-files').hidden || !document.querySelector('#prepare-sticker').hidden || (!document.querySelector('#export').disabled && !document.querySelector('#components').hidden),{},{timeout:120000}).catch(async error=>{throw new Error('Conversion timeout: '+await page.locator('#sticker-state').textContent()+' / '+await page.locator('#status').textContent(),{cause:error});});
   assert.equal(await page.locator('#sticker-files').isVisible(),true,await page.locator('#sticker-state').textContent());
+  assert.equal(await page.locator('#create-done').isVisible(),true);
   assert.equal(await page.locator('#output').count(),0);
   assert.equal(await page.locator('#cancel-export').count(),0);
   assert.equal(await page.locator('#sticker-advanced').getAttribute('open'),'');
@@ -149,7 +187,7 @@ try {
       else if(path==='/v2/status'){assert(paired);assert.equal(request.headers().authorization,sessionToken);body={phase:'ready'}}
       else if(path==='/v2/send'){posts++;assert.equal(request.headers().authorization,sessionToken);assert.deepEqual(request.postDataBuffer(),packageBytes);body={phase:'ready',remaining:5-posts,relayed:true,deliveryConfirmed:false}}
       else throw Error('Unexpected endpoint');
-      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.27.57',...body})});
+      return route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({version:'2026.11.28.58',...body})});
     });
     const privatePanel=mobileBridge.locator('.self-bridge');
     assert.equal(await privatePanel.locator('input[type=password]').count(),0);
@@ -171,7 +209,7 @@ try {
     assert.equal(posts,0);
     const accepted=mobileBridge.waitForEvent('dialog').then(d=>d.accept());
     await Promise.all([accepted,privateSend.click()]);
-    await privatePanel.getByText('Envío procesado. Comprueba tu propio chat y el sonido.',{exact:true}).waitFor();
+    await privatePanel.getByText('¡Listo! Abre tu chat personal en WhatsApp: ahí está tu sticker. Mantenlo presionado para reenviarlo o guardarlo en favoritos.',{exact:true}).waitFor();
     assert.equal(posts,1);assert.equal(connections,1);
     assert.equal(await mobileBridge.evaluate(()=>typeof SonoroPackage.validate),'function');
     await mobileBridge.screenshot({path:'artifacts/screenshots/mobile-send-es.png',fullPage:true});
@@ -504,6 +542,7 @@ try {
     assert(fps>=9);
     assert.equal(await qualityPage.locator('#size-warning').count(),0);
     assert.match(await qualityPage.locator('#size-result').textContent(),/Peso total:/);
+    await qualityPage.locator('#create-options').evaluate(details=>{details.open=true;});
     await qualityPage.locator('#quality').selectOption('balanced');
     assert.equal(await qualityPage.locator('#sticker-files').isVisible(),false);
   } finally {await qualityPage.close();rmSync(qualityTemp,{recursive:true,force:true});}
@@ -668,7 +707,7 @@ try {
     assert.equal(await phone.locator('#wizard-prev').textContent(),'← Back');
     assert.match(await phone.locator('#export').textContent(),/Create sound sticker/);
     assert.equal(await phone.locator('#signature').getAttribute('placeholder'),'Your name or nickname');
-    assert.equal(await phone.locator('#link-input').getAttribute('placeholder'),'Video, image or audio link');
+    assert.equal(await phone.locator('#link-input').getAttribute('placeholder'),'TikTok, Instagram or other website link');
     assert.equal(await phone.locator('#support-link').textContent(),'Support the project');
     assert.match(await phone.locator('#support-link').getAttribute('href'),/#english$/);
     assert.match(await phone.locator('#guide-link').getAttribute('href'),/README\.en\.md$/);

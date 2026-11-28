@@ -129,11 +129,12 @@ function syncWizard(){
   byId('wizard-next').disabled=locked||wizardStep===4||!wizardAvailable(wizardStep+1);
   byId('wizard-next').hidden=wizardStep===4;
   byId('wizard-counter').textContent=wizardStep+' / 4';
+  byId('create-done').hidden=!(wizardStep===3&&nativePackage&&!locked);
 }
 function goWizard(step){
   if(step===wizardStep || busy||importing||loadingVisual||loadingAudio||stickerJob||!wizardAvailable(step)||step>wizardStep+1)return;
   stopSourcePreview();byId('sticker-audio').pause();
-  wizardStep=step;sync();
+  wizardStep=step;status.textContent='';sync();
   if(step===2&&visual)previewFrame(byId('scrub').valueAsNumber);
   const target=step===4?byId('send-title'):byId('editor');
   target.setAttribute('tabindex','-1');target.focus({preventScroll:true});
@@ -142,6 +143,23 @@ function goWizard(step){
 byId('wizard-prev').onclick=()=>goWizard(wizardStep-1);
 byId('wizard-next').onclick=()=>goWizard(wizardStep+1);
 for(const button of document.querySelectorAll('[data-wizard]'))button.onclick=()=>goWizard(Number(button.dataset.wizard));
+byId('go-send').onclick=()=>goWizard(4);
+// Welcome screen: shown on the first visit and from "How it works".
+const welcomeKey='stickers-sonoros-welcome';
+function setView(view){document.documentElement.dataset.view=view;}
+function showWelcome(){
+  stopSourcePreview();byId('sticker-audio').pause();
+  byId('welcome-start').textContent=visual?'Continuar':'Comenzar';
+  setView('welcome');window.scrollTo(0,0);
+  const title=byId('welcome-title');title.setAttribute('tabindex','-1');title.focus({preventScroll:true});
+}
+byId('welcome-start').onclick=()=>{
+  try{localStorage.setItem(welcomeKey,'seen')}catch{}
+  setView('editor');window.scrollTo(0,0);
+  const heading=byId('editor');heading.setAttribute('tabindex','-1');heading.focus({preventScroll:true});
+};
+byId('show-welcome').onclick=showWelcome;
+if(!document.documentElement.dataset.view)setView('welcome');
 
 
 // All crop positions are in output-canvas pixels; guides never enter the canvas.
@@ -1156,7 +1174,7 @@ byId('play-source').onclick = async () => {
   } catch (error) { if (previewSession === session) stopSourcePreview(); status.textContent=error.message; }
 };
 
-showLinkState(importEndpoint ? 'Pega un enlace para detectar video, imagen o audio.' : 'Importa un archivo de video mediante un enlace directo. YouTube, TikTok e Instagram requieren el servidor de descarga, todavía sin conectar.');
+showLinkState(importEndpoint ? 'Funciona con TikTok, Instagram y enlaces directos.' : 'Importa un archivo de video mediante un enlace directo. YouTube, TikTok e Instagram requieren el servidor de descarga, todavía sin conectar.');
 
 byId('use-frame').onclick = async () => {
   if (busy || importing || !visual || visual.kind==='image' || !audio) return;

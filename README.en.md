@@ -8,7 +8,7 @@
 
 [![Checks](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/smoke.yml) [![Production](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml/badge.svg)](https://github.com/PoldKent/stickers-sonoros/actions/workflows/render-diagnostic.yml)
 
-**Current version: 2026.11.27.57.** YouTube import uses a fallback engine when the primary one finds no compatible format (never for access checks). The previous release .56 passed [browser checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/46055132477), [Pages deployment](https://github.com/PoldKent/stickers-sonoros/actions/runs/46055131718) and [Render diagnostics](https://github.com/PoldKent/stickers-sonoros/actions/runs/46055289410). Check [current CI runs](https://github.com/PoldKent/stickers-sonoros/actions) for .57. Real sound delivery and physical iOS/Android validation are separate from automated tests.
+**Current version: 2026.11.28.58.** A new start screen explains in four steps how the sticker is made and how it reaches your WhatsApp, and each step uses shorter text. The previous release .57 passed [browser checks](https://github.com/PoldKent/stickers-sonoros/actions/runs/46068204141) and [Pages deployment](https://github.com/PoldKent/stickers-sonoros/actions/runs/46068203068); Render was checked at `/health`. Check [current CI runs](https://github.com/PoldKent/stickers-sonoros/actions) for .58. Real sound delivery and physical iOS/Android validation are separate from automated tests.
 
 ## Create a sticker in four steps
 
